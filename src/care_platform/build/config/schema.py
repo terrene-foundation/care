@@ -374,6 +374,41 @@ class TeamConfig(BaseModel):
     )
 
 
+# --- Department Config ---
+
+
+class DepartmentConfig(BaseModel):
+    """Configuration for a department — an intermediate grouping between org and team.
+
+    Departments enable 3-level monotonic constraint tightening:
+    org envelope >= department envelope >= team envelope >= agent envelope.
+
+    Each department groups related teams under a single constraint envelope
+    that is tighter than the org-level envelope but looser than individual
+    team envelopes.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    department_id: str = Field(description="Unique department identifier")
+    name: str = Field(description="Human-readable department name")
+    description: str = Field(default="", description="Optional department description")
+    teams: list[str] = Field(
+        default_factory=list, description="Team IDs belonging to this department"
+    )
+    head_agent_id: str | None = Field(
+        default=None,
+        description="Department head agent — must be an agent in one of the department's teams",
+    )
+    envelope: ConstraintEnvelopeConfig | None = Field(
+        default=None,
+        description=(
+            "Department-level constraint envelope. Must be tighter than the org "
+            "envelope and looser than or equal to team envelopes."
+        ),
+    )
+
+
 # --- Platform Config (Top Level) ---
 
 

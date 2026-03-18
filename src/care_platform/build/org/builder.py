@@ -18,6 +18,7 @@ from pydantic import BaseModel, Field
 from care_platform.build.config.schema import (
     AgentConfig,
     ConstraintEnvelopeConfig,
+    DepartmentConfig,
     PlatformConfig,
     TeamConfig,
     WorkspaceConfig,
@@ -57,14 +58,26 @@ class ValidationResult(BaseModel):
 class OrgDefinition(BaseModel):
     """Complete organization definition.
 
-    Contains all agents, teams, envelopes, and workspaces for an organization.
-    Provides validation to ensure internal consistency (no dangling references,
-    no duplicate IDs).
+    Contains all agents, teams, envelopes, workspaces, and departments for an
+    organization.  Provides validation to ensure internal consistency (no dangling
+    references, no duplicate IDs) and monotonic constraint tightening across four
+    levels: org -> department -> team -> agent.
     """
 
     org_id: str = Field(description="Unique organization identifier")
     name: str = Field(description="Human-readable organization name")
     authority_id: str = Field(default="", description="Genesis authority identifier")
+    org_envelope: ConstraintEnvelopeConfig | None = Field(
+        default=None,
+        description=(
+            "Organization-level constraint envelope. When set, department and "
+            "team envelopes are validated as monotonic tightenings of this envelope."
+        ),
+    )
+    departments: list[DepartmentConfig] = Field(
+        default_factory=list,
+        description="All department definitions (intermediate grouping between org and team)",
+    )
     teams: list[TeamConfig] = Field(default_factory=list, description="All team definitions")
     agents: list[AgentConfig] = Field(default_factory=list, description="All agent definitions")
     envelopes: list[ConstraintEnvelopeConfig] = Field(
@@ -104,9 +117,12 @@ class OrgDefinition(BaseModel):
         """Validate org definition for internal consistency.
 
         Checks:
-        - No duplicate IDs across agents, teams, envelopes, workspaces
+        - No duplicate IDs across agents, teams, envelopes, workspaces, departments
         - All agent envelope references resolve to defined envelopes
         - All team workspace references resolve to defined workspaces
+        - All department team references resolve to defined teams
+        - No team appears in multiple departments
+        - Department head agent must be in one of the department's teams
 
         Returns:
             (True, []) if valid, (False, [list of error messages]) otherwise.
@@ -145,6 +161,13 @@ class OrgDefinition(BaseModel):
                 errors.append(f"Duplicate workspace ID: '{wid}'")
             seen_workspaces.add(wid)
 
+        # Check duplicate department IDs
+        seen_depts: set[str] = set()
+        for dept in self.departments:
+            if dept.department_id in seen_depts:
+                errors.append(f"Duplicate department ID: '{dept.department_id}'")
+            seen_depts.add(dept.department_id)
+
         # Check all agent envelope references resolve
         envelope_id_set = set(envelope_ids)
         for agent in self.agents:
@@ -161,6 +184,48 @@ class OrgDefinition(BaseModel):
                 errors.append(
                     f"Team '{team.id}' references workspace '{team.workspace}' "
                     f"which does not exist. Available workspaces: {sorted(workspace_id_set)}"
+                )
+
+        # Department validation
+        team_id_set = set(team_ids)
+
+        # Build team -> agents mapping for head validation
+        team_agent_map: dict[str, list[str]] = {}
+        for team in self.teams:
+            team_agent_map[team.id] = list(team.agents)
+
+        # Track which teams belong to which departments
+        team_to_dept: dict[str, list[str]] = {}
+        for dept in self.departments:
+            # Check department team references resolve
+            for team_ref in dept.teams:
+                if team_ref not in team_id_set:
+                    errors.append(
+                        f"Department '{dept.department_id}' references team '{team_ref}' "
+                        f"which does not exist. Available teams: {sorted(team_id_set)}"
+                    )
+                team_to_dept.setdefault(team_ref, []).append(dept.department_id)
+
+            # Check department head is in one of the department's teams
+            if dept.head_agent_id is not None:
+                dept_agent_ids: set[str] = set()
+                for team_ref in dept.teams:
+                    if team_ref in team_agent_map:
+                        dept_agent_ids.update(team_agent_map[team_ref])
+                if dept.head_agent_id not in dept_agent_ids:
+                    errors.append(
+                        f"Department '{dept.department_id}' head agent "
+                        f"'{dept.head_agent_id}' is not in any of the department's "
+                        f"teams ({dept.teams}). The head must be an agent in one of "
+                        f"the department's teams."
+                    )
+
+        # Check no team appears in multiple departments
+        for team_ref, dept_list in team_to_dept.items():
+            if len(dept_list) > 1:
+                errors.append(
+                    f"Team '{team_ref}' appears in multiple departments: "
+                    f"{sorted(dept_list)}. A team can only belong to one department."
                 )
 
         return (len(errors) == 0, errors)
@@ -260,6 +325,76 @@ class OrgDefinition(BaseModel):
                         code="ERR_DANGLING_WORKSPACE_REF",
                     )
                 )
+
+        # --- Department structural checks (M39/6021) ---
+        team_id_set = {t.id for t in self.teams}
+        team_agent_map_d: dict[str, list[str]] = {}
+        for team in self.teams:
+            team_agent_map_d[team.id] = list(team.agents)
+
+        # Duplicate department IDs
+        seen_dept_ids: set[str] = set()
+        for dept in self.departments:
+            if dept.department_id in seen_dept_ids:
+                results.append(
+                    ValidationResult(
+                        severity=ValidationSeverity.ERROR,
+                        message=f"Duplicate department ID: '{dept.department_id}'",
+                        code="ERR_DUPLICATE_DEPARTMENT",
+                    )
+                )
+            seen_dept_ids.add(dept.department_id)
+
+        # Department team references
+        team_to_dept_map: dict[str, list[str]] = {}
+        for dept in self.departments:
+            for team_ref in dept.teams:
+                if team_ref not in team_id_set:
+                    results.append(
+                        ValidationResult(
+                            severity=ValidationSeverity.ERROR,
+                            message=(
+                                f"Department '{dept.department_id}' references team "
+                                f"'{team_ref}' which does not exist"
+                            ),
+                            code="ERR_DANGLING_DEPT_TEAM_REF",
+                        )
+                    )
+                team_to_dept_map.setdefault(team_ref, []).append(dept.department_id)
+
+        # Team in multiple departments
+        for team_ref, dept_list in team_to_dept_map.items():
+            if len(dept_list) > 1:
+                results.append(
+                    ValidationResult(
+                        severity=ValidationSeverity.ERROR,
+                        message=(
+                            f"Team '{team_ref}' appears in multiple departments: "
+                            f"{sorted(dept_list)}"
+                        ),
+                        code="TEAM_IN_MULTIPLE_DEPARTMENTS",
+                    )
+                )
+
+        # Department head must be in department's teams
+        for dept in self.departments:
+            if dept.head_agent_id is not None:
+                dept_agent_ids_set: set[str] = set()
+                for team_ref in dept.teams:
+                    if team_ref in team_agent_map_d:
+                        dept_agent_ids_set.update(team_agent_map_d[team_ref])
+                if dept.head_agent_id not in dept_agent_ids_set:
+                    results.append(
+                        ValidationResult(
+                            severity=ValidationSeverity.ERROR,
+                            message=(
+                                f"Department '{dept.department_id}' head agent "
+                                f"'{dept.head_agent_id}' is not in any of the "
+                                f"department's teams ({dept.teams})"
+                            ),
+                            code="ERR_DEPT_HEAD_NOT_IN_TEAMS",
+                        )
+                    )
 
         # --- Capability-envelope alignment (5029) ---
         envelope_index = {e.id: e for e in self.envelopes}
@@ -505,6 +640,200 @@ class OrgDefinition(BaseModel):
                                 )
                             )
 
+        # --- 3-Level Monotonic Tightening (M39/6022) ---
+        # Checks: org -> department -> team (for teams in departments)
+        # Builds on existing team lead -> member tightening above.
+
+        # Build lookup: team_id -> department (if any)
+        team_dept_lookup: dict[str, DepartmentConfig] = {}
+        for dept in self.departments:
+            for tid in dept.teams:
+                team_dept_lookup[tid] = dept
+
+        def _check_envelope_tightening(
+            child_env: ConstraintEnvelopeConfig,
+            parent_env: ConstraintEnvelopeConfig,
+            child_label: str,
+            parent_label: str,
+            code: str,
+        ) -> None:
+            """Check that child_env is tighter than or equal to parent_env."""
+            # Financial tightening
+            if (
+                parent_env.financial
+                and child_env.financial
+                and parent_env.financial.max_spend_usd is not None
+                and child_env.financial.max_spend_usd is not None
+                and child_env.financial.max_spend_usd > parent_env.financial.max_spend_usd
+            ):
+                results.append(
+                    ValidationResult(
+                        severity=ValidationSeverity.ERROR,
+                        message=(
+                            f"{child_label} financial limit "
+                            f"(${child_env.financial.max_spend_usd}) exceeds "
+                            f"{parent_label} (${parent_env.financial.max_spend_usd})"
+                        ),
+                        code=code,
+                    )
+                )
+
+            # Operational tightening — allowed actions
+            if parent_env.operational and child_env.operational:
+                parent_actions = set(parent_env.operational.allowed_actions or [])
+                child_actions = set(child_env.operational.allowed_actions or [])
+                if parent_actions and child_actions:
+                    extra = child_actions - parent_actions
+                    if extra:
+                        results.append(
+                            ValidationResult(
+                                severity=ValidationSeverity.ERROR,
+                                message=(
+                                    f"{child_label} has actions {sorted(extra)} "
+                                    f"not in {parent_label} envelope"
+                                ),
+                                code=code,
+                            )
+                        )
+
+                # Operational tightening — rate limit
+                parent_rate = parent_env.operational.max_actions_per_day
+                child_rate = child_env.operational.max_actions_per_day
+                if parent_rate and child_rate and child_rate > parent_rate:
+                    results.append(
+                        ValidationResult(
+                            severity=ValidationSeverity.ERROR,
+                            message=(
+                                f"{child_label} rate limit ({child_rate}/day) "
+                                f"exceeds {parent_label} ({parent_rate}/day)"
+                            ),
+                            code=code,
+                        )
+                    )
+
+            # Communication tightening
+            if parent_env.communication and child_env.communication:
+                if (
+                    parent_env.communication.internal_only
+                    and not child_env.communication.internal_only
+                ):
+                    results.append(
+                        ValidationResult(
+                            severity=ValidationSeverity.ERROR,
+                            message=(
+                                f"{child_label} allows external communication "
+                                f"but {parent_label} is internal-only"
+                            ),
+                            code=code,
+                        )
+                    )
+
+            # Temporal tightening
+            if parent_env.temporal and child_env.temporal:
+                if (
+                    parent_env.temporal.active_hours_start
+                    and child_env.temporal.active_hours_start
+                    and child_env.temporal.active_hours_start
+                    < parent_env.temporal.active_hours_start
+                ):
+                    results.append(
+                        ValidationResult(
+                            severity=ValidationSeverity.ERROR,
+                            message=(
+                                f"{child_label} starts at "
+                                f"{child_env.temporal.active_hours_start} "
+                                f"before {parent_label} "
+                                f"({parent_env.temporal.active_hours_start})"
+                            ),
+                            code=code,
+                        )
+                    )
+                if (
+                    parent_env.temporal.active_hours_end
+                    and child_env.temporal.active_hours_end
+                    and child_env.temporal.active_hours_end > parent_env.temporal.active_hours_end
+                ):
+                    results.append(
+                        ValidationResult(
+                            severity=ValidationSeverity.ERROR,
+                            message=(
+                                f"{child_label} ends at "
+                                f"{child_env.temporal.active_hours_end} "
+                                f"after {parent_label} "
+                                f"({parent_env.temporal.active_hours_end})"
+                            ),
+                            code=code,
+                        )
+                    )
+
+            # Data access tightening
+            if parent_env.data_access and child_env.data_access:
+                parent_read = set(parent_env.data_access.read_paths or [])
+                child_read = set(child_env.data_access.read_paths or [])
+                if parent_read and child_read:
+                    uncovered = [p for p in child_read if not _path_covered_by(p, parent_read)]
+                    if uncovered:
+                        results.append(
+                            ValidationResult(
+                                severity=ValidationSeverity.ERROR,
+                                message=(
+                                    f"{child_label} has read paths "
+                                    f"{sorted(uncovered)} outside "
+                                    f"{parent_label} scope"
+                                ),
+                                code=code,
+                            )
+                        )
+                parent_write = set(parent_env.data_access.write_paths or [])
+                child_write = set(child_env.data_access.write_paths or [])
+                if parent_write and child_write:
+                    uncovered = [p for p in child_write if not _path_covered_by(p, parent_write)]
+                    if uncovered:
+                        results.append(
+                            ValidationResult(
+                                severity=ValidationSeverity.ERROR,
+                                message=(
+                                    f"{child_label} has write paths "
+                                    f"{sorted(uncovered)} outside "
+                                    f"{parent_label} scope"
+                                ),
+                                code=code,
+                            )
+                        )
+
+        # Check org -> department tightening
+        if self.org_envelope:
+            for dept in self.departments:
+                if dept.envelope is not None:
+                    _check_envelope_tightening(
+                        child_env=dept.envelope,
+                        parent_env=self.org_envelope,
+                        child_label=f"Department '{dept.department_id}'",
+                        parent_label=f"org '{self.org_id}'",
+                        code="DEPT_ORG_TIGHTENING",
+                    )
+
+        # Check department -> team tightening
+        # For each team that belongs to a department with an envelope,
+        # check that the team lead's envelope is tighter than the department's.
+        for team in self.teams:
+            dept = team_dept_lookup.get(team.id)
+            if dept is None or dept.envelope is None:
+                continue
+            # Use team lead's envelope as the team-level envelope
+            lead_id = team.team_lead
+            if lead_id and lead_id in agent_index:
+                lead_agent = agent_index[lead_id]
+                lead_env = envelope_index.get(lead_agent.constraint_envelope)
+                if lead_env:
+                    _check_envelope_tightening(
+                        child_env=lead_env,
+                        parent_env=dept.envelope,
+                        child_label=f"Team '{team.id}'",
+                        parent_label=f"department '{dept.department_id}'",
+                        code="TEAM_DEPT_TIGHTENING",
+                    )
+
         # --- Multi-team validation (5034) ---
         agent_team_map: dict[str, list[str]] = {}
         for team in self.teams:
@@ -578,6 +907,33 @@ class OrgBuilder:
     def add_workspace(self, workspace: WorkspaceConfig) -> OrgBuilder:
         """Add a workspace to the organization."""
         self._org.workspaces.append(workspace)
+        return self
+
+    def add_department(self, department: DepartmentConfig) -> OrgBuilder:
+        """Add a department to the organization.
+
+        Args:
+            department: The DepartmentConfig to add.
+
+        Returns:
+            The builder instance for fluent chaining.
+        """
+        self._org.departments.append(department)
+        return self
+
+    def set_org_envelope(self, envelope: ConstraintEnvelopeConfig) -> OrgBuilder:
+        """Set the organization-level constraint envelope.
+
+        This envelope serves as the broadest constraint boundary. All department
+        envelopes must be tighter than or equal to this envelope.
+
+        Args:
+            envelope: The org-level ConstraintEnvelopeConfig.
+
+        Returns:
+            The builder instance for fluent chaining.
+        """
+        self._org.org_envelope = envelope
         return self
 
     def build(self) -> OrgDefinition:

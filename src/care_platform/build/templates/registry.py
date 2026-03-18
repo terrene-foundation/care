@@ -59,6 +59,13 @@ class TeamTemplate(BaseModel):
     agents: list[AgentConfig] = Field(default_factory=list)
     envelopes: list[ConstraintEnvelopeConfig] = Field(default_factory=list)
     team: TeamConfig = Field(description="Team configuration")
+    department: str | None = Field(
+        default=None,
+        description=(
+            "Optional department name this template's team belongs to. "
+            "Used when composing multiple templates to group teams by department."
+        ),
+    )
 
 
 # ---------------------------------------------------------------------------
