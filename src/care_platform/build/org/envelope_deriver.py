@@ -20,6 +20,7 @@ satisfies monotonic tightening against its parent.
 from __future__ import annotations
 
 import logging
+import math
 
 from care_platform.build.config.schema import (
     CommunicationConstraintConfig,
@@ -30,13 +31,9 @@ from care_platform.build.config.schema import (
     TemporalConstraintConfig,
 )
 from care_platform.build.org.role_catalog import RoleDefinition
+from care_platform.build.org.utils import _slugify
 
 logger = logging.getLogger(__name__)
-
-
-def _slugify(name: str) -> str:
-    """Convert a human-readable name to a slug for use as an ID."""
-    return name.lower().replace(" ", "-").replace("_", "-")
 
 
 class EnvelopeDeriver:
@@ -73,6 +70,12 @@ class EnvelopeDeriver:
         Returns:
             A new ConstraintEnvelopeConfig tighter than the org envelope.
         """
+        if (
+            not math.isfinite(tightening_factor)
+            or tightening_factor < 0.0
+            or tightening_factor > 1.0
+        ):
+            raise ValueError(f"tightening_factor must be in [0.0, 1.0], got {tightening_factor}")
         slug = _slugify(dept_name)
         envelope_id = f"dept-{slug}-envelope"
 
@@ -185,6 +188,12 @@ class EnvelopeDeriver:
         Returns:
             A new ConstraintEnvelopeConfig tighter than the department envelope.
         """
+        if (
+            not math.isfinite(tightening_factor)
+            or tightening_factor < 0.0
+            or tightening_factor > 1.0
+        ):
+            raise ValueError(f"tightening_factor must be in [0.0, 1.0], got {tightening_factor}")
         slug = _slugify(team_name)
         envelope_id = f"team-{slug}-envelope"
 
@@ -301,6 +310,12 @@ class EnvelopeDeriver:
         Returns:
             A new ConstraintEnvelopeConfig tighter than the team envelope.
         """
+        if (
+            not math.isfinite(tightening_factor)
+            or tightening_factor < 0.0
+            or tightening_factor > 1.0
+        ):
+            raise ValueError(f"tightening_factor must be in [0.0, 1.0], got {tightening_factor}")
         slug = _slugify(role.role_id)
         envelope_id = f"agent-{slug}-envelope"
 
@@ -495,8 +510,14 @@ class EnvelopeDeriver:
         Returns:
             True if child is a valid tightening of parent, False otherwise.
         """
-        # 1. Financial tightening
-        if parent.financial and child.financial:
+        # 1. Financial tightening (fail-closed: None parent means no authority granted)
+        if child.financial is not None:
+            if parent.financial is None:
+                logger.debug(
+                    "Financial tightening violation: child introduces financial authority "
+                    "that parent never granted (parent.financial is None)"
+                )
+                return False
             if child.financial.max_spend_usd > parent.financial.max_spend_usd:
                 logger.debug(
                     "Financial tightening violation: child spend $%.2f > parent $%.2f",
@@ -505,10 +526,18 @@ class EnvelopeDeriver:
                 )
                 return False
 
-        # 2. Operational tightening — allowed actions
+        # 2. Operational tightening — allowed actions (fail-closed)
         if parent.operational and child.operational:
             parent_actions = set(parent.operational.allowed_actions or [])
             child_actions = set(child.operational.allowed_actions or [])
+            # Fail-closed: if parent has empty allowed_actions, child must also have none
+            if not parent_actions and child_actions:
+                logger.debug(
+                    "Operational tightening violation: child has actions %s "
+                    "but parent allowed_actions is empty",
+                    sorted(child_actions),
+                )
+                return False
             if parent_actions and child_actions:
                 extra = child_actions - parent_actions
                 if extra:
@@ -530,8 +559,26 @@ class EnvelopeDeriver:
                     )
                     return False
 
-        # 3. Temporal tightening
-        if parent.temporal and child.temporal:
+        # 3. Temporal tightening (fail-closed: None parent means no time window)
+        if child.temporal is not None and parent.temporal is not None:
+            if (
+                parent.temporal.active_hours_start is None
+                and child.temporal.active_hours_start is not None
+            ):
+                logger.debug(
+                    "Temporal tightening violation: child introduces time window "
+                    "that parent never granted (parent.active_hours_start is None)"
+                )
+                return False
+            if (
+                parent.temporal.active_hours_end is None
+                and child.temporal.active_hours_end is not None
+            ):
+                logger.debug(
+                    "Temporal tightening violation: child introduces time window "
+                    "that parent never granted (parent.active_hours_end is None)"
+                )
+                return False
             if (
                 parent.temporal.active_hours_start
                 and child.temporal.active_hours_start

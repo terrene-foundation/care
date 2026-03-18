@@ -11,7 +11,7 @@ All CARE Platform configuration is supplied through environment variables. The `
 
 ## How Configuration Is Loaded
 
-1. At startup, `care_platform.config.env.load_env_config()` is called.
+1. At startup, `care_platform.build.config.env.load_env_config()` is called.
 2. It searches for a `.env` file starting from the current working directory, walking up to three parent directories.
 3. Variables already present in the process environment take precedence over `.env` values.
 4. In Docker Compose, `env_file: .env` injects the file into the container environment before the process starts.

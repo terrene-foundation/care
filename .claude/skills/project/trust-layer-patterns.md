@@ -26,7 +26,7 @@ async def read_data(agent_id: str, path: str) -> dict:
 ### Enforcement Pipeline (`constraint/enforcement.py`)
 
 ```python
-from care_platform.constraint.enforcement import CareEnforcementPipeline
+from care_platform.trust.constraint.enforcement import CareEnforcementPipeline
 
 pipeline = CareEnforcementPipeline(gradient, on_held=HeldBehavior.CALLBACK, held_callback=callback)
 result = pipeline.classify_and_enforce(action="draft_content", agent_id="agent-001")

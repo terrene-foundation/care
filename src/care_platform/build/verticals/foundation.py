@@ -29,7 +29,7 @@ Department groupings:
     Standards & Governance: Standards, Governance, Legal, Certification
     Growth: Partnerships, Developer Relations, Finance, Training
 
-Cross-team bridges:
+Cross-Functional Bridges:
     Standing bridges for commonly collaborating teams.
 """
 
@@ -146,7 +146,7 @@ FOUNDATION_ORG_CONFIG = OrgGeneratorConfig(
 
 
 # ---------------------------------------------------------------------------
-# Cross-Team Bridge Definitions (Task 6044)
+# Cross-Functional Bridge Definitions (Task 6044)
 # ---------------------------------------------------------------------------
 
 FOUNDATION_BRIDGES: list[dict] = [

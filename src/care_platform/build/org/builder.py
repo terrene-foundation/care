@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import enum
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -23,9 +23,6 @@ from care_platform.build.config.schema import (
     TeamConfig,
     WorkspaceConfig,
 )
-
-if TYPE_CHECKING:
-    pass
 
 logger = logging.getLogger(__name__)
 

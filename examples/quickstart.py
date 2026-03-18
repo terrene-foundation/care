@@ -21,7 +21,7 @@ from care_platform import (
     TrustScore,
     calculate_trust_score,
 )
-from care_platform.config.schema import (
+from care_platform.build.config.schema import (
     CommunicationConstraintConfig,
     ConstraintEnvelopeConfig,
     DataAccessConstraintConfig,

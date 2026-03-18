@@ -44,6 +44,7 @@ from care_platform.build.config.schema import (
 from care_platform.build.org.builder import OrgDefinition
 from care_platform.build.org.envelope_deriver import EnvelopeDeriver
 from care_platform.build.org.role_catalog import RoleCatalog, RoleDefinition
+from care_platform.build.org.utils import _slugify
 
 logger = logging.getLogger(__name__)
 
@@ -125,9 +126,9 @@ class OrgGeneratorConfig(BaseModel):
         return v
 
 
-def _slugify(name: str) -> str:
-    """Convert a human-readable name to a slug for use as an ID."""
-    return name.lower().replace(" ", "-").replace("_", "-")
+COORDINATOR_CAPABILITIES: frozenset[str] = frozenset(
+    {"bridge_management", "cross_team_communication", "task_routing"}
+)
 
 
 # ---------------------------------------------------------------------------
@@ -192,8 +193,7 @@ class OrgGenerator:
                     all_capabilities.update(role.default_capabilities)
 
         # Add coordinator capabilities
-        coordinator_caps = {"bridge_management", "cross_team_communication", "task_routing"}
-        all_capabilities.update(coordinator_caps)
+        all_capabilities.update(COORDINATOR_CAPABILITIES)
 
         org_envelope = ConstraintEnvelopeConfig(
             id=f"{config.org_id}-org-envelope",
@@ -283,8 +283,7 @@ class OrgGenerator:
                     all_team_capabilities.update(agent_envelope.operational.allowed_actions)
 
                 # Add coordinator capabilities to the team lead's superset
-                coordinator_caps = {"bridge_management", "cross_team_communication", "task_routing"}
-                all_team_capabilities.update(coordinator_caps)
+                all_team_capabilities.update(COORDINATOR_CAPABILITIES)
 
                 # Coordinator envelope (created early so lead can account for it)
                 coordinator_id = f"{team_id}-coordinator"

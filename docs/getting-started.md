@@ -122,7 +122,7 @@ reports, but cannot publish externally:
 
 ```python
 from care_platform import ConstraintEnvelope, EvaluationResult
-from care_platform.config.schema import (
+from care_platform.build.config.schema import (
     CommunicationConstraintConfig,
     ConstraintEnvelopeConfig,
     DataAccessConstraintConfig,
@@ -223,7 +223,7 @@ established:
 
 ```python
 from care_platform import TrustScore, calculate_trust_score
-from care_platform.config.schema import TrustPostureLevel
+from care_platform.build.config.schema import TrustPostureLevel
 from care_platform.trust.scoring import TrustFactors
 
 factors = TrustFactors(
@@ -260,7 +260,7 @@ chains to the previous record for integrity verification:
 
 ```python
 from care_platform import AuditChain
-from care_platform.config.schema import VerificationLevel
+from care_platform.build.config.schema import VerificationLevel
 
 chain = AuditChain(chain_id="analytics-team-chain")
 

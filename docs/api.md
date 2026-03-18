@@ -22,14 +22,14 @@ This document covers the public interfaces of the CARE Platform. For architectur
 
 ## Configuration Models
 
-**Module**: `care_platform.config.schema`
+**Module**: `care_platform.build.config.schema`
 
 ### PlatformConfig
 
 Top-level configuration for the entire platform. Contains all organization structure: genesis, teams, agents, constraint envelopes, and workspaces.
 
 ```python
-from care_platform.config.schema import PlatformConfig, GenesisConfig
+from care_platform.build.config.schema import PlatformConfig, GenesisConfig
 
 config = PlatformConfig(
     name="My Organization",
@@ -57,7 +57,7 @@ workspace = config.get_workspace("workspace-id")  # -> WorkspaceConfig | None
 Defines the five constraint dimensions governing an agent.
 
 ```python
-from care_platform.config.schema import (
+from care_platform.build.config.schema import (
     ConstraintEnvelopeConfig,
     FinancialConstraintConfig,
     OperationalConstraintConfig,
@@ -110,7 +110,7 @@ envelope = ConstraintEnvelopeConfig(
 ### TrustPostureLevel
 
 ```python
-from care_platform.config.schema import TrustPostureLevel
+from care_platform.build.config.schema import TrustPostureLevel
 
 TrustPostureLevel.PSEUDO_AGENT        # No autonomous action
 TrustPostureLevel.SUPERVISED           # Every action requires approval (default)
@@ -122,7 +122,7 @@ TrustPostureLevel.DELEGATED            # Autonomous within constraints
 ### VerificationLevel
 
 ```python
-from care_platform.config.schema import VerificationLevel
+from care_platform.build.config.schema import VerificationLevel
 
 VerificationLevel.AUTO_APPROVED  # Execute and log
 VerificationLevel.FLAGGED        # Execute but highlight for review
@@ -133,7 +133,7 @@ VerificationLevel.BLOCKED        # Reject outright
 ### AgentConfig
 
 ```python
-from care_platform.config.schema import AgentConfig
+from care_platform.build.config.schema import AgentConfig
 
 agent = AgentConfig(
     id="analyst-01",
@@ -149,7 +149,7 @@ agent = AgentConfig(
 ### VerificationGradientConfig
 
 ```python
-from care_platform.config.schema import VerificationGradientConfig, GradientRuleConfig
+from care_platform.build.config.schema import VerificationGradientConfig, GradientRuleConfig
 
 gradient = VerificationGradientConfig(
     rules=[
@@ -195,7 +195,7 @@ await bridge.initialize()       # Must be called before any operations
 Create the root of trust for an organization.
 
 ```python
-from care_platform.config.schema import GenesisConfig
+from care_platform.build.config.schema import GenesisConfig
 
 genesis_config = GenesisConfig(
     authority="my-org.example",
@@ -383,14 +383,14 @@ result = await delegation_mgr.walk_chain("analyst-01")
 
 ## Constraint Envelopes
 
-**Module**: `care_platform.constraint.envelope`
+**Module**: `care_platform.trust.constraint.envelope`
 
 ### ConstraintEnvelope
 
 Runtime wrapper around `ConstraintEnvelopeConfig` with evaluation logic, versioning, and expiry.
 
 ```python
-from care_platform.constraint.envelope import ConstraintEnvelope
+from care_platform.trust.constraint.envelope import ConstraintEnvelope
 
 envelope = ConstraintEnvelope(config=envelope_config)
 # Default expiry: 90 days from creation
@@ -401,7 +401,7 @@ envelope = ConstraintEnvelope(config=envelope_config)
 Evaluate an agent action against all five constraint dimensions.
 
 ```python
-from care_platform.constraint.envelope import EvaluationResult
+from care_platform.trust.constraint.envelope import EvaluationResult
 
 evaluation = envelope.evaluate_action(
     action="draft",
@@ -445,14 +445,14 @@ envelope.content_hash()    # -> str (SHA-256 of envelope content)
 
 ## Verification Gradient
 
-**Module**: `care_platform.constraint.gradient`
+**Module**: `care_platform.trust.constraint.gradient`
 
 ### GradientEngine
 
 Classifies agent actions into verification levels using pattern matching and envelope evaluation.
 
 ```python
-from care_platform.constraint.gradient import GradientEngine, VerificationThoroughness
+from care_platform.trust.constraint.gradient import GradientEngine, VerificationThoroughness
 
 engine = GradientEngine(gradient_config)
 
@@ -638,15 +638,15 @@ is_consistent, drift = attestation.verify_consistency(
 
 ## Audit Chain
 
-**Module**: `care_platform.audit.anchor`
+**Module**: `care_platform.trust.audit.anchor`
 
 ### AuditAnchor
 
 A single tamper-evident record. Each anchor contains a SHA-256 hash of its content plus the hash of the previous anchor, forming an integrity chain.
 
 ```python
-from care_platform.audit.anchor import AuditAnchor, AuditChain
-from care_platform.config.schema import VerificationLevel
+from care_platform.trust.audit.anchor import AuditAnchor, AuditChain
+from care_platform.build.config.schema import VerificationLevel
 
 anchor = AuditAnchor(
     anchor_id="chain-001-0",
@@ -701,14 +701,14 @@ records = chain.export(agent_id="analyst-01", since=some_datetime)
 
 ## Storage
 
-**Module**: `care_platform.persistence.store`
+**Module**: `care_platform.trust.store`
 
 ### TrustStore Protocol
 
 Abstract interface for trust object persistence. Implement this protocol to add custom storage backends.
 
 ```python
-from care_platform.persistence.store import TrustStore
+from care_platform.trust.store import TrustStore
 
 class MyStore:
     """Custom storage implementation."""
@@ -734,7 +734,7 @@ class MyStore:
 ### Built-in Implementations
 
 ```python
-from care_platform.persistence.store import MemoryStore, FilesystemStore
+from care_platform.trust.store import MemoryStore, FilesystemStore
 
 # In-memory (development/testing)
 store = MemoryStore()

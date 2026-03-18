@@ -82,7 +82,7 @@ Every agent's authority traces back to a cryptographically signed root of trust:
 The CARE Platform operates on two planes, following the CARE Dual Plane Model:
 
 ```
- Trust Plane (care_platform.trust, care_platform.constraint)
+ Trust Plane (care_platform.trust)
  +---------------------------------------------------------+
  | Genesis -> Delegation -> Envelope -> Attestation -> Audit|
  | Verification Gradient | Trust Postures | Trust Scoring   |
@@ -90,7 +90,7 @@ The CARE Platform operates on two planes, following the CARE Dual Plane Model:
                           |
                     verify/enforce
                           |
- Execution Plane (care_platform.execution)
+ Execution Plane (care_platform.use.execution)
  +---------------------------------------------------------+
  | Agent Teams | Workspaces | Session Management            |
  | Cross-Functional Bridges | Approval Queues               |
@@ -100,17 +100,26 @@ The CARE Platform operates on two planes, following the CARE Dual Plane Model:
 ### Package Structure
 
 ```
-care_platform/
-  trust/          EATP trust layer (genesis, delegation, posture, attestation, scoring)
-  constraint/     Constraint envelope evaluation and verification gradient engine
-  execution/      Agent execution runtime (teams, sessions, approval queues)
-  audit/          Tamper-evident audit anchor chains
-  workspace/      Workspace-as-knowledge-base management, cross-functional bridges
-  config/         Platform configuration schema (Pydantic models) and YAML loader
-  persistence/    Storage abstraction (MemoryStore, FilesystemStore)
-  org/            Organization builder
-  verticals/      Domain-specific team templates
-  cli/            Command-line interface
+src/care_platform/
+├── trust/       — TRUST plane (governance primitives)
+│   ├── constraint/     Constraint envelope evaluation and verification gradient engine
+│   ├── audit/          Tamper-evident audit anchor chains
+│   ├── auth/           Authentication and authorization
+│   ├── store/          Storage abstraction (MemoryStore, FilesystemStore)
+│   ├── store_isolation/ Tenant isolation for multi-org deployments
+│   └── resilience/     Circuit breakers and fault tolerance
+├── build/       — BUILD plane (define organizations)
+│   ├── config/         Platform configuration schema (Pydantic models) and YAML loader
+│   ├── org/            Organization builder
+│   ├── templates/      Reusable organization templates
+│   ├── verticals/      Domain-specific team templates
+│   ├── workspace/      Workspace-as-knowledge-base management
+│   ├── bootstrap/      Platform initialization helpers
+│   └── cli/            Command-line interface
+└── use/         — USE plane (run & observe)
+    ├── api/            REST API layer
+    ├── execution/      Agent execution runtime (teams, sessions, approval queues)
+    └── observability/  Metrics, tracing, and monitoring
 ```
 
 ---
@@ -144,7 +153,7 @@ cp .env.example .env
 Create a platform configuration (YAML or Python):
 
 ```python
-from care_platform.config.schema import (
+from care_platform.build.config.schema import (
     PlatformConfig,
     GenesisConfig,
     AgentConfig,

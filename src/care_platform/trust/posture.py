@@ -345,6 +345,12 @@ class TrustPosture(BaseModel):
 
             if not result.success:
                 raise ValueError(f"EATP state machine rejected transition: {result.reason}")
+        else:
+            logger.warning(
+                "EATP posture mapping unavailable for %s → %s; skipping state machine validation",
+                self.current_level,
+                next_level,
+            )
 
         change = PostureChange(
             agent_id=self.agent_id,
@@ -393,6 +399,12 @@ class TrustPosture(BaseModel):
                     requester_id=self.agent_id,
                 )
                 eatp_machine.transition(transition_request)
+        else:
+            logger.warning(
+                "EATP posture mapping unavailable for %s → %s; skipping state machine validation",
+                self.current_level,
+                target,
+            )
 
         change = PostureChange(
             agent_id=self.agent_id,

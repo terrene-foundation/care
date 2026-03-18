@@ -11,7 +11,7 @@ Load a YAML configuration and inspect the resulting platform structure.
 
 ```python
 from care_platform import PlatformConfig
-from care_platform.config.schema import GenesisConfig
+from care_platform.build.config.schema import GenesisConfig
 
 # Option A: Build configuration in Python
 config = PlatformConfig(
@@ -55,7 +55,7 @@ tightening of the parent.
 
 ```python
 from care_platform import ConstraintEnvelope
-from care_platform.config.schema import (
+from care_platform.build.config.schema import (
     CommunicationConstraintConfig,
     ConstraintEnvelopeConfig,
     DataAccessConstraintConfig,
@@ -149,7 +149,7 @@ results.
 from datetime import UTC, datetime
 
 from care_platform import ConstraintEnvelope, EvaluationResult
-from care_platform.config.schema import (
+from care_platform.build.config.schema import (
     CommunicationConstraintConfig,
     ConstraintEnvelopeConfig,
     DataAccessConstraintConfig,
@@ -216,7 +216,7 @@ the parent.
 
 ```python
 from care_platform import ConstraintEnvelope
-from care_platform.config.schema import (
+from care_platform.build.config.schema import (
     CommunicationConstraintConfig,
     ConstraintEnvelopeConfig,
     FinancialConstraintConfig,
@@ -289,7 +289,7 @@ Build an audit chain, append actions, then walk the chain to verify integrity.
 
 ```python
 from care_platform import AuditAnchor, AuditChain
-from care_platform.config.schema import VerificationLevel
+from care_platform.build.config.schema import VerificationLevel
 
 # Create a new chain
 chain = AuditChain(chain_id="content-team-2026-03")
@@ -359,7 +359,7 @@ Record a complete audit trail for a work session, then export it for review.
 from datetime import UTC, datetime
 
 from care_platform import AuditChain
-from care_platform.config.schema import VerificationLevel
+from care_platform.build.config.schema import VerificationLevel
 
 chain = AuditChain(chain_id="dm-team-session-001")
 
