@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import pytest
 
-from care_platform.use.api.endpoints import ApiResponse, PlatformAPI
 from care_platform.build.config.schema import (
     ConstraintEnvelopeConfig,
     FinancialConstraintConfig,
@@ -20,10 +19,11 @@ from care_platform.build.config.schema import (
 )
 from care_platform.trust.constraint.envelope import ConstraintEnvelope
 from care_platform.trust.constraint.gradient import GradientEngine
+from care_platform.trust.shadow_enforcer import ShadowEnforcer
+from care_platform.trust.store.cost_tracking import CostTracker
+from care_platform.use.api.endpoints import ApiResponse, PlatformAPI
 from care_platform.use.execution.approval import ApprovalQueue
 from care_platform.use.execution.registry import AgentRegistry
-from care_platform.trust.store.cost_tracking import CostTracker
-from care_platform.trust.shadow_enforcer import ShadowEnforcer
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -263,8 +263,8 @@ class TestShadowRouteWiring:
         """Create a test client with ShadowEnforcer wired in."""
         from fastapi.testclient import TestClient
 
-        from care_platform.use.api.server import create_app
         from care_platform.build.config.env import EnvConfig
+        from care_platform.use.api.server import create_app
 
         enforcer = _make_shadow_enforcer()
         # Pre-populate some evaluations

@@ -17,7 +17,6 @@ import threading
 import time
 from typing import Any
 
-from care_platform.trust.audit.anchor import AuditChain
 from care_platform.build.config.schema import (
     ConstraintEnvelopeConfig,
     FinancialConstraintConfig,
@@ -25,8 +24,12 @@ from care_platform.build.config.schema import (
     VerificationGradientConfig,
     VerificationLevel,
 )
+from care_platform.trust.audit.anchor import AuditChain
 from care_platform.trust.constraint.envelope import ConstraintEnvelope
 from care_platform.trust.constraint.gradient import GradientEngine
+from care_platform.trust.posture import TrustPosture
+from care_platform.trust.revocation import RevocationManager
+from care_platform.trust.store.store import MemoryStore
 from care_platform.use.execution.approval import ApprovalQueue
 from care_platform.use.execution.registry import AgentRegistry
 from care_platform.use.execution.runtime import (
@@ -35,9 +38,6 @@ from care_platform.use.execution.runtime import (
     TaskResult,
     TaskStatus,
 )
-from care_platform.trust.store.store import MemoryStore
-from care_platform.trust.posture import TrustPosture
-from care_platform.trust.revocation import RevocationManager
 
 # ---------------------------------------------------------------------------
 # Shared helpers

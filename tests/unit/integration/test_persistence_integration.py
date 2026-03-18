@@ -18,8 +18,8 @@ from decimal import Decimal
 
 import pytest
 
-from care_platform.trust.audit.anchor import AuditChain
 from care_platform.build.config.schema import VerificationLevel
+from care_platform.trust.audit.anchor import AuditChain
 from care_platform.trust.store.audit_query import AuditQuery, AuditReport
 from care_platform.trust.store.cost_tracking import ApiCostRecord, CostTracker
 from care_platform.trust.store.posture_history import (

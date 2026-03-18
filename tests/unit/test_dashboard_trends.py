@@ -14,14 +14,14 @@ import httpx
 import pytest
 
 import care_platform.use.api.server as server_module
-from care_platform.use.api.endpoints import PlatformAPI
-from care_platform.use.api.server import create_app
-from care_platform.trust.audit.anchor import AuditChain
 from care_platform.build.config.env import EnvConfig
 from care_platform.build.config.schema import VerificationLevel
+from care_platform.trust.audit.anchor import AuditChain
+from care_platform.trust.store.cost_tracking import CostTracker
+from care_platform.use.api.endpoints import PlatformAPI
+from care_platform.use.api.server import create_app
 from care_platform.use.execution.approval import ApprovalQueue
 from care_platform.use.execution.registry import AgentRegistry
-from care_platform.trust.store.cost_tracking import CostTracker
 
 
 @pytest.fixture(autouse=True)

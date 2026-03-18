@@ -8,6 +8,7 @@ dataclasses/Pydantic — not FastAPI or Nexus (which are not installed).
 
 import pytest
 
+from care_platform.trust.store.cost_tracking import CostTracker
 from care_platform.use.api.endpoints import (
     ApiResponse,
     EndpointDefinition,
@@ -15,7 +16,6 @@ from care_platform.use.api.endpoints import (
 )
 from care_platform.use.execution.approval import ApprovalQueue, UrgencyLevel
 from care_platform.use.execution.registry import AgentRegistry
-from care_platform.trust.store.cost_tracking import CostTracker
 
 # ---------------------------------------------------------------------------
 # Fixtures

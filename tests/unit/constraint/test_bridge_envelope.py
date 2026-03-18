@@ -12,6 +12,7 @@ from care_platform.build.config.schema import (
     OperationalConstraintConfig,
     TemporalConstraintConfig,
 )
+from care_platform.build.workspace.bridge import BridgePermission
 from care_platform.trust.constraint.bridge_envelope import (
     BridgeSharingPolicy,
     FieldSharingRule,
@@ -19,7 +20,6 @@ from care_platform.trust.constraint.bridge_envelope import (
     compute_bridge_envelope,
     validate_bridge_tightening,
 )
-from care_platform.build.workspace.bridge import BridgePermission
 
 
 def _make_envelope(id: str = "test", **kwargs) -> ConstraintEnvelopeConfig:

@@ -15,12 +15,6 @@ Covers:
 
 import pytest
 
-from care_platform.trust.audit.bridge_audit import (
-    BridgeAuditAnchor,
-    _compute_anchor_hash,
-    _compute_counterpart_hash,
-    create_bridge_audit_pair,
-)
 from care_platform.build.config.schema import (
     AgentConfig,
     CommunicationConstraintConfig,
@@ -33,6 +27,13 @@ from care_platform.build.config.schema import (
     TrustPostureLevel,
     VerificationLevel,
 )
+from care_platform.build.workspace.bridge import BridgeType
+from care_platform.trust.audit.bridge_audit import (
+    BridgeAuditAnchor,
+    _compute_anchor_hash,
+    _compute_counterpart_hash,
+    create_bridge_audit_pair,
+)
 from care_platform.trust.bridge_posture import bridge_verification_level, effective_posture
 from care_platform.trust.bridge_trust import (
     BridgeDelegation,
@@ -40,7 +41,6 @@ from care_platform.trust.bridge_trust import (
     BridgeTrustRecord,
 )
 from care_platform.trust.eatp_bridge import EATPBridge
-from care_platform.build.workspace.bridge import BridgeType
 
 # ---------------------------------------------------------------------------
 # Fixtures

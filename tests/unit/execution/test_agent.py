@@ -5,8 +5,8 @@
 import pytest
 
 from care_platform.build.config.schema import AgentConfig, TeamConfig, TrustPostureLevel
-from care_platform.use.execution.agent import AgentDefinition, TeamDefinition
 from care_platform.trust.attestation import CapabilityAttestation
+from care_platform.use.execution.agent import AgentDefinition, TeamDefinition
 
 
 class TestAgentDefinition:

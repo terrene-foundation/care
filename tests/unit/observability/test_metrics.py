@@ -142,8 +142,8 @@ class TestMetricsEndpointInServer:
 
         from httpx import ASGITransport, AsyncClient
 
-        from care_platform.use.api.server import create_app
         from care_platform.build.config.env import load_env_config
+        from care_platform.use.api.server import create_app
 
         env_config = load_env_config(load_dotenv=False)
         app = create_app(env_config=env_config)

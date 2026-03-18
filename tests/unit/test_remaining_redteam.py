@@ -8,7 +8,6 @@ import asyncio
 
 import pytest
 
-from care_platform.trust.audit.anchor import AuditAnchor, AuditChain
 from care_platform.build.config.schema import (
     ConstraintEnvelopeConfig,
     DataAccessConstraintConfig,
@@ -16,7 +15,6 @@ from care_platform.build.config.schema import (
     TemporalConstraintConfig,
     VerificationLevel,
 )
-from care_platform.trust.eatp_bridge import EATPBridge
 from care_platform.build.workspace.bridge import (
     Bridge,
     BridgeManager,
@@ -24,6 +22,8 @@ from care_platform.build.workspace.bridge import (
     BridgeStatus,
     BridgeType,
 )
+from care_platform.trust.audit.anchor import AuditAnchor, AuditChain
+from care_platform.trust.eatp_bridge import EATPBridge
 
 # ---------------------------------------------------------------------------
 # RT-11: No wildcard capabilities in delegated agents

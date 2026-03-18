@@ -13,13 +13,13 @@ Validates that:
 
 import pytest
 
-from care_platform.trust.audit.anchor import AuditChain
 from care_platform.build.config.schema import (
     ConstraintEnvelopeConfig,
     OperationalConstraintConfig,
     VerificationGradientConfig,
     VerificationLevel,
 )
+from care_platform.trust.audit.anchor import AuditChain
 from care_platform.trust.constraint.enforcer import ConstraintEnforcer, EnforcerRequiredError
 from care_platform.trust.constraint.envelope import ConstraintEnvelope
 from care_platform.trust.constraint.gradient import GradientEngine

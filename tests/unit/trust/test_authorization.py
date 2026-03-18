@@ -16,9 +16,9 @@ Validates that:
 import pytest
 
 from care_platform.build.config.schema import ConstraintEnvelopeConfig, OperationalConstraintConfig
-from care_platform.trust.constraint.envelope import ConstraintEnvelope
 from care_platform.trust.attestation import CapabilityAttestation
 from care_platform.trust.authorization import AuthorizationCheck, AuthorizationResult
+from care_platform.trust.constraint.envelope import ConstraintEnvelope
 
 
 def _make_envelope(

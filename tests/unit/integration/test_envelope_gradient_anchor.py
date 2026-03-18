@@ -12,7 +12,6 @@ Tests the full EATP trust chain flow:
 
 from datetime import UTC, datetime
 
-from care_platform.trust.audit.anchor import AuditChain
 from care_platform.build.config.schema import (
     CommunicationConstraintConfig,
     ConstraintEnvelopeConfig,
@@ -24,6 +23,8 @@ from care_platform.build.config.schema import (
     VerificationGradientConfig,
     VerificationLevel,
 )
+from care_platform.trust.attestation import CapabilityAttestation
+from care_platform.trust.audit.anchor import AuditChain
 from care_platform.trust.constraint.envelope import (
     ConstraintEnvelope,
     EvaluationResult,
@@ -32,7 +33,6 @@ from care_platform.trust.constraint.gradient import (
     GradientEngine,
     VerificationThoroughness,
 )
-from care_platform.trust.attestation import CapabilityAttestation
 
 
 def _make_full_envelope(envelope_id: str = "env-full") -> ConstraintEnvelope:

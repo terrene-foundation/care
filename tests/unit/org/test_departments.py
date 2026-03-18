@@ -26,10 +26,7 @@ from care_platform.build.config.schema import (
 from care_platform.build.org.builder import (
     OrgBuilder,
     OrgDefinition,
-    ValidationResult,
-    ValidationSeverity,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

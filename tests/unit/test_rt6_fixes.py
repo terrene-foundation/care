@@ -20,7 +20,6 @@ from datetime import UTC, datetime
 
 import pytest
 
-from care_platform.trust.audit.anchor import AuditChain
 from care_platform.build.config.schema import (
     ConstraintEnvelopeConfig,
     FinancialConstraintConfig,
@@ -28,10 +27,22 @@ from care_platform.build.config.schema import (
     VerificationGradientConfig,
     VerificationLevel,
 )
+from care_platform.build.workspace.bridge import (
+    _TERMINAL_STATES,
+    Bridge,
+    BridgeManager,
+    BridgePermission,
+    BridgeStatus,
+    BridgeType,
+)
+from care_platform.trust.audit.anchor import AuditChain
 from care_platform.trust.constraint.envelope import (
     ConstraintEnvelope,
 )
 from care_platform.trust.constraint.gradient import GradientEngine
+from care_platform.trust.posture import TrustPosture
+from care_platform.trust.revocation import RevocationManager
+from care_platform.trust.store.store import MemoryStore
 from care_platform.use.execution.approval import ApprovalQueue
 from care_platform.use.execution.approver_auth import (
     ApproverRegistry,
@@ -43,17 +54,6 @@ from care_platform.use.execution.runtime import (
     ExecutionRuntime,
     Task,
     TaskStatus,
-)
-from care_platform.trust.store.store import MemoryStore
-from care_platform.trust.posture import TrustPosture
-from care_platform.trust.revocation import RevocationManager
-from care_platform.build.workspace.bridge import (
-    _TERMINAL_STATES,
-    Bridge,
-    BridgeManager,
-    BridgePermission,
-    BridgeStatus,
-    BridgeType,
 )
 
 # ---------------------------------------------------------------------------

@@ -36,18 +36,10 @@ from decimal import Decimal
 
 import pytest
 
-from care_platform.trust.audit.pipeline import AuditPipeline
 from care_platform.build.config.schema import (
     GenesisConfig,
     VerificationLevel,
 )
-from care_platform.trust.constraint.envelope import ConstraintEnvelope
-from care_platform.trust.constraint.gradient import GradientEngine
-from care_platform.use.execution.approval import ApprovalQueue, UrgencyLevel
-from care_platform.trust.store.cost_tracking import ApiCostRecord, CostTracker
-from care_platform.trust.delegation import DelegationManager
-from care_platform.trust.eatp_bridge import EATPBridge
-from care_platform.trust.genesis import GenesisManager
 from care_platform.build.verticals.dm_team import (
     DM_ANALYTICS,
     DM_ANALYTICS_ENVELOPE,
@@ -57,6 +49,14 @@ from care_platform.build.verticals.dm_team import (
     DM_TEAM_LEAD,
     DM_VERIFICATION_GRADIENT,
 )
+from care_platform.trust.audit.pipeline import AuditPipeline
+from care_platform.trust.constraint.envelope import ConstraintEnvelope
+from care_platform.trust.constraint.gradient import GradientEngine
+from care_platform.trust.delegation import DelegationManager
+from care_platform.trust.eatp_bridge import EATPBridge
+from care_platform.trust.genesis import GenesisManager
+from care_platform.trust.store.cost_tracking import ApiCostRecord, CostTracker
+from care_platform.use.execution.approval import ApprovalQueue, UrgencyLevel
 
 # ---------------------------------------------------------------------------
 # Constants

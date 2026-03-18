@@ -502,17 +502,17 @@ export default function PostureUpgradeWizard({
     );
 
     // Use real API data when available
-    if (evidenceData?.data) {
-      const apiData = evidenceData.data;
-      const totalOps = apiData.total_operations ?? 0;
-      const successOps = apiData.successful_operations ?? 0;
+    if (evidenceData) {
+      const totalOps = evidenceData.total_operations ?? 0;
+      const successOps = evidenceData.successful_operations ?? 0;
       return {
         days_at_current_posture: daysSince,
         total_operations: totalOps,
         successful_operations: successOps,
         success_rate: totalOps > 0 ? successOps / totalOps : 0,
-        shadow_enforcer_pass_rate: apiData.shadow_enforcer_pass_rate ?? null,
-        incidents: apiData.incidents ?? 0,
+        shadow_enforcer_pass_rate:
+          evidenceData.shadow_enforcer_pass_rate ?? null,
+        incidents: evidenceData.incidents ?? 0,
       };
     }
 

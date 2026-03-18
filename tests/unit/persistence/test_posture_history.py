@@ -6,6 +6,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
+from care_platform.trust.reasoning import ReasoningTrace
 from care_platform.trust.store.posture_history import (
     EligibilityResult,
     PostureChangeRecord,
@@ -14,7 +15,6 @@ from care_platform.trust.store.posture_history import (
     PostureHistoryError,
     PostureHistoryStore,
 )
-from care_platform.trust.reasoning import ReasoningTrace
 
 # ---------------------------------------------------------------------------
 # PostureChangeRecord model

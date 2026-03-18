@@ -25,7 +25,6 @@ from datetime import UTC, datetime
 
 import pytest
 
-from care_platform.trust.audit.anchor import AuditChain
 from care_platform.build.config.schema import (
     AgentConfig,
     CommunicationConstraintConfig,
@@ -40,6 +39,13 @@ from care_platform.build.config.schema import (
     VerificationLevel,
     WorkspaceConfig,
 )
+from care_platform.build.org.builder import OrgBuilder
+from care_platform.build.workspace.models import (
+    Workspace,
+    WorkspacePhase,
+    WorkspaceState,
+)
+from care_platform.trust.audit.anchor import AuditChain
 from care_platform.trust.constraint.enforcer import ConstraintEnforcer
 from care_platform.trust.constraint.envelope import ConstraintEnvelope
 from care_platform.trust.constraint.gradient import GradientEngine
@@ -47,18 +53,12 @@ from care_platform.trust.constraint.middleware import (
     ActionOutcome,
     VerificationMiddleware,
 )
-from care_platform.build.org.builder import OrgBuilder
 from care_platform.trust.credentials import CredentialManager
 from care_platform.trust.delegation import ChainStatus, DelegationManager
 from care_platform.trust.eatp_bridge import EATPBridge
 from care_platform.trust.genesis import GenesisManager
 from care_platform.trust.integrity import TrustChainIntegrity
 from care_platform.trust.revocation import RevocationManager
-from care_platform.build.workspace.models import (
-    Workspace,
-    WorkspacePhase,
-    WorkspaceState,
-)
 
 # ===========================================================================
 # 1901: Test Harness — Shared Fixtures

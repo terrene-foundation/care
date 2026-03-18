@@ -12,17 +12,12 @@ run through the same machinery it provides to external users.
 
 from __future__ import annotations
 
-import yaml
 import pytest
+import yaml
 
-from care_platform.build.config.schema import (
-    ConstraintEnvelopeConfig,
-    TrustPostureLevel,
-)
-from care_platform.build.org.builder import OrgDefinition, ValidationSeverity
+from care_platform.build.org.builder import OrgDefinition
 from care_platform.build.org.envelope_deriver import EnvelopeDeriver
 from care_platform.build.org.generator import OrgGenerator, OrgGeneratorConfig
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

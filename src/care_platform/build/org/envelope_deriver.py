@@ -20,7 +20,6 @@ satisfies monotonic tightening against its parent.
 from __future__ import annotations
 
 import logging
-import math
 
 from care_platform.build.config.schema import (
     CommunicationConstraintConfig,

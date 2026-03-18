@@ -402,9 +402,9 @@ class TestInflightRevocationCheck:
     def test_runtime_checks_revocation_at_execution_time(self):
         """ExecutionRuntime should re-check revocation before executing a task."""
         from care_platform.trust.audit.anchor import AuditChain
+        from care_platform.trust.revocation import RevocationManager
         from care_platform.use.execution.registry import AgentRegistry
         from care_platform.use.execution.runtime import ExecutionRuntime, TaskStatus
-        from care_platform.trust.revocation import RevocationManager
 
         registry = AgentRegistry()
         registry.register(agent_id="agent-1", name="Agent 1", role="worker")

@@ -28,13 +28,6 @@ from datetime import UTC, datetime
 import pytest
 
 from care_platform.build.config.schema import VerificationLevel
-from care_platform.trust.constraint.envelope import ConstraintEnvelope
-from care_platform.trust.constraint.gradient import GradientEngine
-from care_platform.trust.shadow_enforcer import (
-    ShadowEnforcer,
-    ShadowReport,
-    ShadowResult,
-)
 from care_platform.build.verticals.dm_team import (
     DM_ANALYTICS_ENVELOPE,
     DM_COMMUNITY_ENVELOPE,
@@ -42,6 +35,13 @@ from care_platform.build.verticals.dm_team import (
     DM_LEAD_ENVELOPE,
     DM_SEO_ENVELOPE,
     DM_VERIFICATION_GRADIENT,
+)
+from care_platform.trust.constraint.envelope import ConstraintEnvelope
+from care_platform.trust.constraint.gradient import GradientEngine
+from care_platform.trust.shadow_enforcer import (
+    ShadowEnforcer,
+    ShadowReport,
+    ShadowResult,
 )
 
 # ---------------------------------------------------------------------------

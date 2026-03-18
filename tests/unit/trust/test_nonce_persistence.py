@@ -16,12 +16,12 @@ from datetime import UTC, datetime
 
 import pytest
 
-from care_platform.trust.store.store import MemoryStore
 from care_platform.trust.messaging import (
     AgentMessage,
     MessageChannel,
     MessageType,
 )
+from care_platform.trust.store.store import MemoryStore
 
 # ---------------------------------------------------------------------------
 # Fixtures

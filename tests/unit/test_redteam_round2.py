@@ -14,8 +14,6 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from care_platform.trust.audit.anchor import AuditAnchor, AuditChain, _redact_metadata
-from care_platform.trust.audit.pipeline import AuditPipeline
 from care_platform.build.config.schema import (
     AgentConfig,
     CommunicationConstraintConfig,
@@ -30,6 +28,16 @@ from care_platform.build.config.schema import (
     VerificationGradientConfig,
     VerificationLevel,
 )
+from care_platform.build.workspace.bridge import (
+    Bridge,
+    BridgeManager,
+    BridgePermission,
+    BridgeStatus,
+    BridgeType,
+)
+from care_platform.trust.attestation import CapabilityAttestation
+from care_platform.trust.audit.anchor import AuditAnchor, AuditChain, _redact_metadata
+from care_platform.trust.audit.pipeline import AuditPipeline
 from care_platform.trust.constraint.cache import CachedVerification, VerificationCache
 from care_platform.trust.constraint.circuit_breaker import CircuitBreaker
 from care_platform.trust.constraint.envelope import ConstraintEnvelope, EvaluationResult
@@ -38,20 +46,12 @@ from care_platform.trust.constraint.middleware import (
     ActionOutcome,
     VerificationMiddleware,
 )
-from care_platform.use.execution.approval import ApprovalQueue, PendingAction
-from care_platform.use.execution.hook_enforcer import HookEnforcer, HookVerdict
-from care_platform.trust.attestation import CapabilityAttestation
 from care_platform.trust.eatp_bridge import EATPBridge
 from care_platform.trust.messaging import AgentMessage, MessageChannel, MessageType
 from care_platform.trust.revocation import RevocationManager
 from care_platform.trust.shadow_enforcer import ShadowEnforcer
-from care_platform.build.workspace.bridge import (
-    Bridge,
-    BridgeManager,
-    BridgePermission,
-    BridgeStatus,
-    BridgeType,
-)
+from care_platform.use.execution.approval import ApprovalQueue, PendingAction
+from care_platform.use.execution.hook_enforcer import HookEnforcer, HookVerdict
 
 # ---------------------------------------------------------------------------
 # Helper factories

@@ -28,7 +28,6 @@ from care_platform.build.config.schema import (
     GradientRuleConfig,
     OperationalConstraintConfig,
     TemporalConstraintConfig,
-    TrustPostureLevel,
     VerificationGradientConfig,
     VerificationLevel,
 )
@@ -37,10 +36,9 @@ from care_platform.trust.constraint.envelope import ConstraintEnvelope
 from care_platform.trust.constraint.gradient import GradientEngine
 from care_platform.trust.shadow_enforcer import ShadowEnforcer
 from care_platform.trust.store.cost_tracking import CostTracker
-from care_platform.use.api.endpoints import ApiResponse, PlatformAPI
+from care_platform.use.api.endpoints import PlatformAPI
 from care_platform.use.execution.approval import ApprovalQueue
 from care_platform.use.execution.registry import AgentRegistry
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -569,9 +567,9 @@ class TestUpgradeEvidenceHTTPEndpoint:
         """Create a FastAPI test client with seeded data, auth disabled."""
         from fastapi.testclient import TestClient
 
+        import care_platform.use.api.server as server_module
         from care_platform.build.config.env import EnvConfig
         from care_platform.use.api.server import create_app
-        import care_platform.use.api.server as server_module
 
         # Disable auth for unit testing
         dev_config = EnvConfig(care_dev_mode=True, care_api_token="")

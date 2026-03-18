@@ -14,23 +14,17 @@ import yaml
 from click.testing import CliRunner
 
 from care_platform.build.config.schema import (
-    AgentConfig,
     CommunicationConstraintConfig,
     ConstraintEnvelopeConfig,
     DataAccessConstraintConfig,
-    DepartmentConfig,
     FinancialConstraintConfig,
     OperationalConstraintConfig,
-    TeamConfig,
     TemporalConstraintConfig,
     TrustPostureLevel,
-    WorkspaceConfig,
 )
 from care_platform.build.org.builder import (
     OrgDefinition,
-    ValidationSeverity,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -1021,7 +1015,7 @@ class TestOrgGeneratorEdgeCases:
         org = generator.generate(config)
         results = org.validate_org_detailed()
         errors = [r for r in results if r.is_error]
-        assert len(errors) == 0, f"Multi-dept org has errors:\n" + "\n".join(
+        assert len(errors) == 0, "Multi-dept org has errors:\n" + "\n".join(
             f"  [{r.code}] {r.message}" for r in errors
         )
         assert len(org.departments) == 2

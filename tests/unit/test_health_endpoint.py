@@ -12,8 +12,8 @@ import httpx
 import pytest
 
 import care_platform
-from care_platform.use.api.server import create_app
 from care_platform.build.config.env import EnvConfig
+from care_platform.use.api.server import create_app
 
 
 @pytest.fixture()

@@ -15,8 +15,8 @@ Tests cover:
 import pytest
 
 from care_platform.build.config.schema import TrustPostureLevel, VerificationLevel
-from care_platform.use.execution.posture_enforcer import PostureEnforcer
 from care_platform.trust.posture import TrustPosture
+from care_platform.use.execution.posture_enforcer import PostureEnforcer
 
 # ---------------------------------------------------------------------------
 # Fixtures
