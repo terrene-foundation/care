@@ -1,0 +1,71 @@
+# Copyright 2026 Terrene Foundation
+# Licensed under the Apache License, Version 2.0
+
+site_name: CARE Platform
+site_description: Governed operational model for running organizations with AI agents under EATP trust governance
+site_author: Terrene Foundation
+site_url: https://terrene-foundation.github.io/care/
+
+repo_name: terrene-foundation/care
+repo_url: https://github.com/terrene-foundation/care
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - search.suggest
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Quickstart: quickstart.md
+      - Installation: getting-started.md
+      - Architecture: architecture.md
+  - API Reference:
+      - REST API: rest-api.md
+      - Python API: api.md
+      - Cookbook: cookbook.md
+  - Architecture:
+      - Trust Model: architecture/trust-model.md
+      - Constraint Envelopes: architecture/constraint-envelopes.md
+      - Verification Gradient: architecture/verification-gradient.md
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
+  - tables
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/terrene-foundation/care
+  version:
+    provider: mike

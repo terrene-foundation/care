@@ -14,18 +14,14 @@ Tests constraint-level security improvements:
 from __future__ import annotations
 
 import threading
-import time
 from datetime import UTC, datetime, timedelta
 
 import pytest
 
 from care_platform.config.schema import (
-    CommunicationConstraintConfig,
     ConstraintEnvelopeConfig,
-    DataAccessConstraintConfig,
     FinancialConstraintConfig,
     OperationalConstraintConfig,
-    TemporalConstraintConfig,
     VerificationGradientConfig,
     VerificationLevel,
 )
@@ -38,7 +34,6 @@ from care_platform.constraint.middleware import (
     ActionOutcome,
     VerificationMiddleware,
 )
-
 
 # ---------------------------------------------------------------------------
 # 2301: Financial Constraint Optional Pattern (RT5-19)
@@ -71,9 +66,9 @@ class TestFinancialConstraintOptional:
         )
         # Financial check should be skipped — no financial dimension in results
         financial_dims = [d for d in result.dimensions if d.dimension == "financial"]
-        assert (
-            len(financial_dims) == 0
-        ), "Financial dimension should not be evaluated when financial config is None"
+        assert len(financial_dims) == 0, (
+            "Financial dimension should not be evaluated when financial config is None"
+        )
 
     def test_envelope_with_financial_none_allows_non_financial_actions(self):
         """Non-financial actions should still work with financial=None."""

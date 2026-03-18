@@ -19,7 +19,6 @@ import pytest
 
 from care_platform.audit.anchor import AuditChain
 from care_platform.config.schema import (
-    TrustPostureLevel,
     VerificationGradientConfig,
     VerificationLevel,
 )
@@ -29,19 +28,14 @@ from care_platform.execution.kaizen_bridge import KaizenBridge
 from care_platform.execution.lifecycle import TaskLifecycle, TaskLifecycleState
 from care_platform.execution.llm_backend import (
     BackendRouter,
-    LLMProvider,
-    LLMRequest,
     StubBackend,
 )
-from care_platform.execution.registry import AgentRecord, AgentRegistry
+from care_platform.execution.registry import AgentRegistry
 from care_platform.execution.runtime import (
     ExecutionRuntime,
     Task,
-    TaskResult,
-    TaskStatus,
 )
 from care_platform.persistence.store import MemoryStore
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

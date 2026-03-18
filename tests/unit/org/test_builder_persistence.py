@@ -20,8 +20,8 @@ from care_platform.config.schema import (
     WorkspaceConfig,
 )
 from care_platform.org.builder import OrgBuilder, OrgDefinition
-from care_platform.persistence.store import MemoryStore, FilesystemStore
 from care_platform.persistence.sqlite_store import SQLiteTrustStore
+from care_platform.persistence.store import FilesystemStore, MemoryStore
 
 
 def _make_org() -> OrgDefinition:

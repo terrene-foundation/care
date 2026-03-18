@@ -9,8 +9,7 @@ Covers RT-15, RT-16, RT-17, RT-24, RT-27, RT-28, RT-35 findings:
 - Financial: soft-limit HELD result, cumulative budget tracking
 """
 
-from datetime import UTC, datetime, timezone, timedelta
-from zoneinfo import ZoneInfo
+from datetime import UTC, datetime
 
 from care_platform.config.schema import (
     CommunicationConstraintConfig,
@@ -108,8 +107,7 @@ class TestTemporalOvernightWindows:
         result = env.evaluate_action("read", "agent-1", current_time=midday)
         temp_dim = next(d for d in result.dimensions if d.dimension == "temporal")
         assert temp_dim.result == EvaluationResult.DENIED, (
-            f"Expected DENIED at 14:00 outside overnight 22:00-06:00 window, "
-            f"got {temp_dim.result}"
+            f"Expected DENIED at 14:00 outside overnight 22:00-06:00 window, got {temp_dim.result}"
         )
 
     def test_overnight_window_denied_just_after_end(self):
@@ -139,9 +137,9 @@ class TestTemporalBlackoutPeriods:
         blackout_day = datetime(2026, 3, 15, 12, 0, tzinfo=UTC)
         result = env.evaluate_action("read", "agent-1", current_time=blackout_day)
         temp_dim = next(d for d in result.dimensions if d.dimension == "temporal")
-        assert (
-            temp_dim.result == EvaluationResult.DENIED
-        ), f"Expected DENIED on blackout date 2026-03-15, got {temp_dim.result}"
+        assert temp_dim.result == EvaluationResult.DENIED, (
+            f"Expected DENIED on blackout date 2026-03-15, got {temp_dim.result}"
+        )
         assert "blackout" in temp_dim.reason.lower()
 
     def test_blackout_period_month_day_match_denied(self):
@@ -154,9 +152,9 @@ class TestTemporalBlackoutPeriods:
         christmas = datetime(2026, 12, 25, 10, 0, tzinfo=UTC)
         result = env.evaluate_action("read", "agent-1", current_time=christmas)
         temp_dim = next(d for d in result.dimensions if d.dimension == "temporal")
-        assert (
-            temp_dim.result == EvaluationResult.DENIED
-        ), f"Expected DENIED on blackout date 12-25, got {temp_dim.result}"
+        assert temp_dim.result == EvaluationResult.DENIED, (
+            f"Expected DENIED on blackout date 12-25, got {temp_dim.result}"
+        )
 
     def test_no_blackout_day_before(self):
         """Day before a blackout should be ALLOWED."""

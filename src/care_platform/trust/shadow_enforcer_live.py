@@ -57,11 +57,16 @@ class ShadowEnforcerLive:
     Thread-safe: all state mutations are lock-protected.
     """
 
+    # L2-FIX: Maximum number of distinct agents tracked to prevent unbounded growth.
+    _MAX_AGENTS: int = 1000
+
     def __init__(self, *, enabled: bool = False) -> None:
         self._enabled = enabled
         self._lock = threading.Lock()
         self._metrics: dict[str, ShadowMetrics] = {}
         self._posture_metrics: dict[str, dict[TrustPostureLevel, ShadowMetrics]] = {}
+        # L2-FIX: Insertion-ordered tracking for eviction (Python 3.7+ dicts are ordered)
+        self._agent_order: list[str] = []
 
     @property
     def is_enabled(self) -> bool:
@@ -88,7 +93,18 @@ class ShadowEnforcerLive:
 
         with self._lock:
             if agent_id not in self._metrics:
+                # L2-FIX: Evict oldest agent when at capacity
+                if len(self._metrics) >= self._MAX_AGENTS:
+                    evict_id = self._agent_order.pop(0)
+                    self._metrics.pop(evict_id, None)
+                    self._posture_metrics.pop(evict_id, None)
+                    logger.info(
+                        "ShadowEnforcer: evicted oldest agent '%s' (capacity %d reached)",
+                        evict_id,
+                        self._MAX_AGENTS,
+                    )
                 self._metrics[agent_id] = ShadowMetrics()
+                self._agent_order.append(agent_id)
 
             m = self._metrics[agent_id]
             m.total_evaluations += 1
@@ -130,9 +146,7 @@ class ShadowEnforcerLive:
         with self._lock:
             return self._metrics[agent_id]
 
-    def get_posture_metrics(
-        self, agent_id: str
-    ) -> dict[TrustPostureLevel, ShadowMetrics]:
+    def get_posture_metrics(self, agent_id: str) -> dict[TrustPostureLevel, ShadowMetrics]:
         """Get per-posture metrics for an agent.
 
         Raises:

@@ -14,11 +14,9 @@ from pathlib import Path
 import pytest
 
 from care_platform.workspace.discovery import (
-    DiscoveredWorkspace,
     WorkspaceDiscovery,
     WorkspaceManifest,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers

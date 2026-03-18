@@ -27,10 +27,8 @@ from enum import Enum
 from typing import Any, ClassVar, Protocol, runtime_checkable
 from uuid import uuid4
 
-from pydantic import BaseModel, Field, PrivateAttr
-
 from eatp.messaging.envelope import SecureMessageEnvelope
-from eatp.messaging.replay_protection import InMemoryReplayProtection
+from pydantic import BaseModel, Field, PrivateAttr
 
 
 @runtime_checkable

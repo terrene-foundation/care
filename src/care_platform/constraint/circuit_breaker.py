@@ -19,8 +19,9 @@ from __future__ import annotations
 import logging
 import threading
 import time
+from collections.abc import Callable
 from enum import Enum
-from typing import Callable, TypeVar
+from typing import TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -121,7 +122,7 @@ class CircuitBreaker:
 
             if effective == CircuitState.OPEN:
                 logger.warning(
-                    "Circuit breaker is OPEN: rejecting call. " "failure_count=%d threshold=%d",
+                    "Circuit breaker is OPEN: rejecting call. failure_count=%d threshold=%d",
                     self._failure_count,
                     self._failure_threshold,
                 )

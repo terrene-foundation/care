@@ -1135,8 +1135,7 @@ class BridgeManager:
             # RT2-16: Verify agent belongs to source or target team
             if agent_team_id != bridge.source_team_id and agent_team_id != bridge.target_team_id:
                 logger.warning(
-                    "Bridge %s: access DENIED — agent=%s team=%s "
-                    "not in source (%s) or target (%s)",
+                    "Bridge %s: access DENIED — agent=%s team=%s not in source (%s) or target (%s)",
                     bridge_id,
                     agent_id,
                     agent_team_id,

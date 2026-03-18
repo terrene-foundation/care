@@ -12,8 +12,7 @@ Validates that:
 
 from __future__ import annotations
 
-from collections import OrderedDict
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 
 import pytest
 
@@ -23,7 +22,6 @@ from care_platform.trust.messaging import (
     MessageChannel,
     MessageType,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

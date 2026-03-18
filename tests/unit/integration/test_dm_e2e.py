@@ -35,7 +35,6 @@ from datetime import UTC, datetime
 from decimal import Decimal
 
 import pytest
-import pytest_asyncio
 
 from care_platform.audit.pipeline import AuditPipeline
 from care_platform.config.schema import (
@@ -46,19 +45,16 @@ from care_platform.constraint.envelope import ConstraintEnvelope
 from care_platform.constraint.gradient import GradientEngine
 from care_platform.execution.approval import ApprovalQueue, UrgencyLevel
 from care_platform.persistence.cost_tracking import ApiCostRecord, CostTracker
-from care_platform.trust.credentials import CredentialManager
 from care_platform.trust.delegation import DelegationManager
 from care_platform.trust.eatp_bridge import EATPBridge
 from care_platform.trust.genesis import GenesisManager
-from care_platform.trust.revocation import RevocationManager
-from care_platform.trust.shadow_enforcer import ShadowEnforcer
 from care_platform.verticals.dm_team import (
+    DM_ANALYTICS,
+    DM_ANALYTICS_ENVELOPE,
     DM_CONTENT_CREATOR,
     DM_CONTENT_ENVELOPE,
     DM_LEAD_ENVELOPE,
     DM_TEAM_LEAD,
-    DM_ANALYTICS,
-    DM_ANALYTICS_ENVELOPE,
     DM_VERIFICATION_GRADIENT,
 )
 
@@ -197,9 +193,9 @@ class TestDmTeamE2E:
         grad_read = gradient_engine.classify(
             "analyze_metrics", "dm-team-lead", envelope_evaluation=eval_read
         )
-        assert (
-            grad_read.is_auto_approved
-        ), f"Team Lead analyze_metrics should be auto-approved, got {grad_read.level}"
+        assert grad_read.is_auto_approved, (
+            f"Team Lead analyze_metrics should be auto-approved, got {grad_read.level}"
+        )
 
         audit_pipeline.record_action(
             agent_id="dm-team-lead",
@@ -276,9 +272,9 @@ class TestDmTeamE2E:
         grad_draft = gradient_engine.classify(
             "draft_post", "dm-content-creator", envelope_evaluation=eval_draft
         )
-        assert (
-            grad_draft.is_auto_approved
-        ), f"draft_post should be auto-approved, got {grad_draft.level}"
+        assert grad_draft.is_auto_approved, (
+            f"draft_post should be auto-approved, got {grad_draft.level}"
+        )
 
         audit_pipeline.record_action(
             agent_id="dm-content-creator",
@@ -340,9 +336,9 @@ class TestDmTeamE2E:
         grad_approve = gradient_engine.classify(
             "approve_publication", "dm-team-lead", envelope_evaluation=eval_approve
         )
-        assert (
-            grad_approve.level == VerificationLevel.HELD
-        ), f"approve_publication should be HELD, got {grad_approve.level}"
+        assert grad_approve.level == VerificationLevel.HELD, (
+            f"approve_publication should be HELD, got {grad_approve.level}"
+        )
 
         # Submit to approval queue
         pending_action = approval_queue.submit(
@@ -409,16 +405,16 @@ class TestDmTeamE2E:
             ]
         )
         # We recorded actions for multiple agents
-        assert (
-            len(team_timeline) >= 10
-        ), f"Expected at least 10 audit anchors, got {len(team_timeline)}"
+        assert len(team_timeline) >= 10, (
+            f"Expected at least 10 audit anchors, got {len(team_timeline)}"
+        )
 
         # ---- Step 14: Verify cost tracking ----
         report = cost_tracker.spend_report(team_id="dm-team", days=1)
         assert report.total_cost > Decimal("0"), "No costs recorded"
-        assert (
-            report.total_calls >= 3
-        ), f"Expected at least 3 API calls recorded, got {report.total_calls}"
+        assert report.total_calls >= 3, (
+            f"Expected at least 3 API calls recorded, got {report.total_calls}"
+        )
 
         # Verify per-agent costs
         assert "dm-team-lead" in report.by_agent
@@ -431,12 +427,12 @@ class TestDmTeamE2E:
             if record["verification_level"] == VerificationLevel.AUTO_APPROVED.value:
                 action = record["action"]
                 # External/publish actions must never be auto-approved
-                assert not action.startswith(
-                    "publish_"
-                ), f"External action '{action}' was auto-approved -- policy violation"
-                assert not action.startswith(
-                    "external_"
-                ), f"External action '{action}' was auto-approved -- policy violation"
+                assert not action.startswith("publish_"), (
+                    f"External action '{action}' was auto-approved -- policy violation"
+                )
+                assert not action.startswith("external_"), (
+                    f"External action '{action}' was auto-approved -- policy violation"
+                )
 
         # Check that the HELD action was properly approved before proceeding
         assert approval_queue.queue_depth == 0, "Queue should be empty after approval"

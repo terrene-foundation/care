@@ -60,7 +60,7 @@ node_modules/
 .github/
 .pre-commit-config.yaml
 .claude/
-scripts/
+# scripts/ included for seeded server
 
 # ── Workspaces (runtime data, not app code) ───────────────────────────────────
 workspaces/

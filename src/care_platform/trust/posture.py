@@ -24,15 +24,16 @@ import logging
 from datetime import UTC, datetime
 from enum import IntEnum
 
-from pydantic import BaseModel, Field
-
 from eatp.postures import (
     PostureStateMachine as EATPPostureStateMachine,
-    PostureTransition,
+)
+from eatp.postures import (
     PostureTransitionRequest,
-    TransitionGuard,
+)
+from eatp.postures import (
     TrustPosture as EATPTrustPosture,
 )
+from pydantic import BaseModel, Field
 
 from care_platform.config.schema import TrustPostureLevel
 
@@ -45,13 +46,24 @@ logger = logging.getLogger(__name__)
 # configuration consistency. This mapping connects CARE levels to the
 # EATP SDK's TrustPosture enum for state machine operations.
 
-_CARE_TO_EATP: dict[TrustPostureLevel, EATPTrustPosture] = {
-    TrustPostureLevel.PSEUDO_AGENT: EATPTrustPosture.PSEUDO_AGENT,
-    TrustPostureLevel.SUPERVISED: EATPTrustPosture.SUPERVISED,
-    TrustPostureLevel.SHARED_PLANNING: EATPTrustPosture.SHARED_PLANNING,
-    TrustPostureLevel.CONTINUOUS_INSIGHT: EATPTrustPosture.CONTINUOUS_INSIGHT,
-    TrustPostureLevel.DELEGATED: EATPTrustPosture.DELEGATED,
-}
+
+def _build_posture_mapping() -> dict[TrustPostureLevel, EATPTrustPosture]:
+    """Build CARE-to-EATP posture mapping, tolerating missing EATP enum values."""
+    mapping: dict[TrustPostureLevel, EATPTrustPosture] = {}
+    for care_level in TrustPostureLevel:
+        eatp_name = care_level.name  # e.g., "PSEUDO_AGENT"
+        eatp_val = getattr(EATPTrustPosture, eatp_name, None)
+        if eatp_val is not None:
+            mapping[care_level] = eatp_val
+        else:
+            logger.debug(
+                "EATP TrustPosture has no '%s' — CARE level will use identity mapping",
+                eatp_name,
+            )
+    return mapping
+
+
+_CARE_TO_EATP: dict[TrustPostureLevel, EATPTrustPosture] = _build_posture_mapping()
 
 _EATP_TO_CARE: dict[EATPTrustPosture, TrustPostureLevel] = {v: k for k, v in _CARE_TO_EATP.items()}
 

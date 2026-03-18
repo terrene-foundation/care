@@ -19,7 +19,6 @@ from starlette.websockets import WebSocketDisconnect
 from care_platform.api.server import create_app
 from care_platform.config.env import EnvConfig
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -131,9 +130,8 @@ class TestWebSocketDevMode:
     def test_websocket_requires_token_in_dev_mode_when_configured(self, app_dev_with_token):
         """Dev mode with a token configured still requires that token."""
         client = TestClient(app_dev_with_token)
-        with pytest.raises(Exception):
-            with client.websocket_connect("/ws"):
-                pass
+        with pytest.raises(Exception), client.websocket_connect("/ws"):
+            pass
 
     def test_websocket_accepts_token_in_dev_mode_when_configured(self, app_dev_with_token):
         """Dev mode with a token configured accepts correct token."""

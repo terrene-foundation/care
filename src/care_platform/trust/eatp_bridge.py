@@ -20,7 +20,6 @@ from typing import Any
 from uuid import uuid4
 
 from eatp import InMemoryTrustStore, TrustKeyManager, TrustOperations, generate_keypair
-from eatp.exceptions import TrustChainNotFoundError
 from eatp.authority import (
     AuthorityPermission,
     AuthorityType,
@@ -36,6 +35,7 @@ from eatp.chain import (
     VerificationLevel,
     VerificationResult,
 )
+from eatp.exceptions import TrustChainNotFoundError
 from eatp.operations import CapabilityRequest
 from eatp.store import TrustStore
 

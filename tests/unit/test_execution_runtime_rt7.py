@@ -16,27 +16,21 @@ from __future__ import annotations
 import threading
 import time
 from typing import Any
-from unittest.mock import MagicMock
-
-import pytest
 
 from care_platform.audit.anchor import AuditChain
 from care_platform.config.schema import (
     ConstraintEnvelopeConfig,
-    DataAccessConstraintConfig,
     FinancialConstraintConfig,
     OperationalConstraintConfig,
-    TrustPostureLevel,
     VerificationGradientConfig,
     VerificationLevel,
 )
 from care_platform.constraint.envelope import ConstraintEnvelope
 from care_platform.constraint.gradient import GradientEngine
 from care_platform.execution.approval import ApprovalQueue
-from care_platform.execution.registry import AgentRegistry, AgentStatus
+from care_platform.execution.registry import AgentRegistry
 from care_platform.execution.runtime import (
     ExecutionRuntime,
-    Task,
     TaskExecutor,
     TaskResult,
     TaskStatus,
@@ -44,7 +38,6 @@ from care_platform.execution.runtime import (
 from care_platform.persistence.store import MemoryStore
 from care_platform.trust.posture import TrustPosture
 from care_platform.trust.revocation import RevocationManager
-
 
 # ---------------------------------------------------------------------------
 # Shared helpers

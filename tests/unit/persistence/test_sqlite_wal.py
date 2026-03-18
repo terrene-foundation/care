@@ -9,13 +9,9 @@ Validates that:
 - Concurrent reads/writes work correctly under WAL mode
 """
 
-import sqlite3
 import threading
 
-import pytest
-
 from care_platform.persistence.sqlite_store import SQLiteTrustStore
-
 
 # ---------------------------------------------------------------------------
 # WAL Mode Verification
@@ -77,9 +73,9 @@ class TestSQLiteJournalSizeLimit:
         store = SQLiteTrustStore(db_path=str(db_path))
         conn = store._get_connection()
         result = conn.execute("PRAGMA journal_size_limit").fetchone()
-        assert (
-            result[0] == 67108864
-        ), f"Expected journal_size_limit=67108864 (64 MB), got {result[0]}"
+        assert result[0] == 67108864, (
+            f"Expected journal_size_limit=67108864 (64 MB), got {result[0]}"
+        )
         store.close()
 
 

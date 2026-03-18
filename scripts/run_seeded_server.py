@@ -9,7 +9,6 @@ Usage:
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import os
 import sys
@@ -42,6 +41,10 @@ def main() -> None:
         cost_tracker=components["cost_tracker"],
         workspace_registry=components["workspace_registry"],
         bridge_manager=components["bridge_manager"],
+        envelope_registry=components["envelope_registry"],
+        verification_stats=components["verification_stats"],
+        posture_store=components.get("posture_store"),
+        shadow_enforcer=components.get("shadow_enforcer"),
     )
 
     # Create the app with the seeded PlatformAPI
@@ -51,13 +54,20 @@ def main() -> None:
     os.environ.setdefault("CARE_API_HOST", "0.0.0.0")
     os.environ.setdefault("CARE_API_PORT", "8000")
 
-    app = create_app(platform_api=platform_api)
+    app = create_app(
+        platform_api=platform_api,
+        dm_runner=components.get("dm_runner"),
+    )
 
-    logger.info("Starting CARE Platform API with seeded data on http://localhost:8000")
+    host = os.environ.get("CARE_API_HOST", "0.0.0.0")
+    # Cloud Run sets PORT; fall back to CARE_API_PORT then 8080
+    port = int(os.environ.get("PORT", os.environ.get("CARE_API_PORT", "8080")))
+
+    logger.info("Starting CARE Platform API with seeded data on http://%s:%d", host, port)
 
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host=host, port=port)
 
 
 if __name__ == "__main__":

@@ -550,8 +550,7 @@ class ShadowEnforcer:
         min_operations = reqs.get("min_operations", 100)
         if metrics.total_evaluations < min_operations:
             blockers.append(
-                f"Total evaluations {metrics.total_evaluations} is below required "
-                f"{min_operations}"
+                f"Total evaluations {metrics.total_evaluations} is below required {min_operations}"
             )
 
         if metrics.blocked_count > 0:
@@ -578,6 +577,5 @@ class ShadowEnforcer:
 
         blocker_text = "; ".join(blockers)
         return (
-            f"Agent '{agent_id}' is not yet eligible for posture upgrade. "
-            f"Blockers: {blocker_text}"
+            f"Agent '{agent_id}' is not yet eligible for posture upgrade. Blockers: {blocker_text}"
         )

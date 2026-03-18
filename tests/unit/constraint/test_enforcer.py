@@ -13,6 +13,7 @@ Validates that:
 
 import pytest
 
+from care_platform.audit.anchor import AuditChain
 from care_platform.config.schema import (
     ConstraintEnvelopeConfig,
     OperationalConstraintConfig,
@@ -27,7 +28,6 @@ from care_platform.constraint.middleware import (
     MiddlewareResult,
     VerificationMiddleware,
 )
-from care_platform.audit.anchor import AuditChain
 
 
 def _make_middleware(

@@ -9,7 +9,6 @@ and its extended methods (genesis, delegations, attestations).
 from __future__ import annotations
 
 import sqlite3
-import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import UTC, datetime
 
@@ -17,7 +16,6 @@ import pytest
 
 from care_platform.persistence.sqlite_store import GenesisAlreadyExistsError, SQLiteTrustStore
 from care_platform.persistence.store import TrustStore
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -161,7 +159,7 @@ class TestAuditAnchors:
     def test_query_with_limit(self, store: SQLiteTrustStore):
         for i in range(10):
             store.store_audit_anchor(
-                f"a{i}", {"agent_id": "a", "timestamp": f"2026-01-{i+1:02d}T00:00:00+00:00"}
+                f"a{i}", {"agent_id": "a", "timestamp": f"2026-01-{i + 1:02d}T00:00:00+00:00"}
             )
         results = store.query_anchors(limit=3)
         assert len(results) == 3

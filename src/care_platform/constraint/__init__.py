@@ -3,6 +3,13 @@
 """Constraint evaluation — envelope evaluation, verification gradient, middleware, signing,
 caching, circuit breaker, and adaptive verification level selection."""
 
+from care_platform.constraint.bridge_envelope import (
+    BridgeSharingPolicy,
+    FieldSharingRule,
+    SharingMode,
+    compute_bridge_envelope,
+    validate_bridge_tightening,
+)
 from care_platform.constraint.cache import (
     CachedVerification,
     CacheStats,
@@ -13,16 +20,16 @@ from care_platform.constraint.circuit_breaker import (
     CircuitBreakerOpen,
     CircuitState,
 )
-from care_platform.constraint.enforcer import (
-    ConstraintEnforcer,
-    EnforcerRequiredError,
-)
 from care_platform.constraint.enforcement import (
     CareEnforcementPipeline,
     EnforcementResult,
     care_result_to_eatp_result,
     create_approval_held_callback,
     verdict_to_care_level,
+)
+from care_platform.constraint.enforcer import (
+    ConstraintEnforcer,
+    EnforcerRequiredError,
 )
 from care_platform.constraint.envelope import (
     ConstraintEnvelope,
@@ -41,23 +48,15 @@ from care_platform.constraint.middleware import (
     MiddlewareResult,
     VerificationMiddleware,
 )
-from care_platform.constraint.signing import (
-    EnvelopeVersionHistory,
-    SignedEnvelope,
-)
-from care_platform.constraint.bridge_envelope import (
-    BridgeSharingPolicy,
-    FieldSharingRule,
-    SharingMode,
-    compute_bridge_envelope,
-    validate_bridge_tightening,
-)
 from care_platform.constraint.resolution import (
     ConstraintResolutionError,
     resolve_constraints,
 )
+from care_platform.constraint.signing import (
+    EnvelopeVersionHistory,
+    SignedEnvelope,
+)
 from care_platform.constraint.verification_level import (
-    VerificationThoroughness as VerificationThoroughness,
     select_verification_level,
 )
 

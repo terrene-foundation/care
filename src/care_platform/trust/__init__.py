@@ -4,6 +4,12 @@
 
 from care_platform.trust.attestation import CapabilityAttestation
 from care_platform.trust.authorization import AuthorizationCheck, AuthorizationResult
+from care_platform.trust.bridge_posture import bridge_verification_level, effective_posture
+from care_platform.trust.bridge_trust import (
+    BridgeDelegation,
+    BridgeTrustManager,
+    BridgeTrustRecord,
+)
 from care_platform.trust.credentials import CredentialManager, VerificationToken
 from care_platform.trust.decorators import (
     CareTrustOpsProvider,
@@ -38,12 +44,6 @@ from care_platform.trust.reasoning import (
     ConfidentialityLevel,
     ReasoningTrace,
     ReasoningTraceStore,
-)
-from care_platform.trust.bridge_posture import bridge_verification_level, effective_posture
-from care_platform.trust.bridge_trust import (
-    BridgeDelegation,
-    BridgeTrustManager,
-    BridgeTrustRecord,
 )
 from care_platform.trust.revocation import RevocationManager, RevocationRecord
 from care_platform.trust.scoring import (

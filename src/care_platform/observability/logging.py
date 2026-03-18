@@ -1,9 +1,11 @@
 # Copyright 2026 Terrene Foundation
 # Licensed under the Apache License, Version 2.0
-"""Structured logging with correlation IDs — M23/2308.
+"""Structured logging with structlog and correlation IDs — M23/2308, 5024.
 
 Provides:
-- JSON-formatted structured logging for production
+- structlog as the default logging library for the CARE Platform
+- JSON output for production (CARE_LOG_FORMAT=json)
+- Human-readable console output for development (CARE_LOG_FORMAT=console, default)
 - Correlation ID generation and propagation via context managers
 - Agent context propagation for per-agent log enrichment
 - CareLogProcessor for structlog integration
@@ -16,7 +18,7 @@ Usage:
         get_correlation_id,
     )
 
-    logger = configure_logging(json_output=True)
+    logger = configure_logging(log_format="json")
 
     with correlation_context("request-abc-123"):
         with agent_context("agent-42"):
@@ -27,12 +29,20 @@ from __future__ import annotations
 
 import contextvars
 import logging
+import sys
 import uuid
+from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import UTC, datetime
-from typing import Any, Generator
+from typing import Any
 
+import structlog
+
+# Module-level stdlib logger for internal use within this module
 logger = logging.getLogger(__name__)
+
+# Valid log formats — reject anything else explicitly
+_VALID_LOG_FORMATS = {"json", "console"}
 
 # Context variables for correlation and agent tracking
 _correlation_id_var: contextvars.ContextVar[str | None] = contextvars.ContextVar(
@@ -135,58 +145,102 @@ class CareLogProcessor:
         return logger_obj, method_name, event_dict
 
 
+def _add_care_context(
+    logger_obj: Any,
+    method_name: str,
+    event_dict: dict[str, Any],
+) -> dict[str, Any]:
+    """Structlog processor that injects CARE context (correlation ID, agent ID).
+
+    This is a proper structlog processor (returns event_dict only).
+    Used in the structlog processor chain.
+    """
+    event_dict["correlation_id"] = get_correlation_id()
+
+    agent_id = get_agent_id()
+    if agent_id is not None:
+        event_dict["agent_id"] = agent_id
+
+    return event_dict
+
+
 def configure_logging(
     *,
-    json_output: bool = False,
+    log_format: str = "console",
+    json_output: bool | None = None,
     level: str = "INFO",
-) -> logging.Logger:
-    """Configure structured logging for the CARE Platform.
+) -> structlog.stdlib.BoundLogger:
+    """Configure structured logging for the CARE Platform using structlog.
+
+    Sets up structlog with the appropriate renderer (JSON for production,
+    human-readable console for development) and configures the stdlib
+    logging integration so all loggers benefit from structured output.
 
     Args:
-        json_output: When True, configure JSON-formatted output (production).
-            When False, use human-readable format (development).
+        log_format: Output format — "json" for production or "console" for
+            development. Read from CARE_LOG_FORMAT env var at the call site.
+            Defaults to "console".
+        json_output: Deprecated — use log_format="json" instead. When provided,
+            True maps to log_format="json", False maps to log_format="console".
         level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL).
 
     Returns:
-        A configured root logger for the care_platform package.
+        A structlog BoundLogger configured for the care_platform namespace.
+
+    Raises:
+        ValueError: If log_format is not one of "json" or "console".
     """
+    # Handle backward-compatible json_output parameter
+    if json_output is not None:
+        log_format = "json" if json_output else "console"
+
+    if log_format not in _VALID_LOG_FORMATS:
+        raise ValueError(
+            f"Invalid log_format={log_format!r}. "
+            f"Must be one of: {sorted(_VALID_LOG_FORMATS)}. "
+            f"Set CARE_LOG_FORMAT environment variable to 'json' or 'console'."
+        )
+
+    # Choose renderer based on format
+    if log_format == "json":
+        renderer: structlog.types.Processor = structlog.processors.JSONRenderer()
+    else:
+        renderer = structlog.dev.ConsoleRenderer()
+
+    # Configure structlog globally
+    structlog.configure(
+        processors=[
+            structlog.contextvars.merge_contextvars,
+            structlog.stdlib.filter_by_level,
+            structlog.stdlib.add_logger_name,
+            structlog.stdlib.add_log_level,
+            structlog.processors.TimeStamper(fmt="iso"),
+            _add_care_context,
+            structlog.processors.StackInfoRenderer(),
+            structlog.processors.format_exc_info,
+            structlog.processors.UnicodeDecoder(),
+            renderer,
+        ],
+        context_class=dict,
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        wrapper_class=structlog.stdlib.BoundLogger,
+        cache_logger_on_first_use=False,
+    )
+
+    # Configure stdlib logging to match the level
+    log_level = getattr(logging, level.upper(), logging.INFO)
+
+    # Set up the root handler for stdlib logging
+    root_logger = logging.getLogger()
+    # Configure care_platform logger level
     care_logger = logging.getLogger("care_platform")
-    care_logger.setLevel(getattr(logging, level.upper(), logging.INFO))
+    care_logger.setLevel(log_level)
 
-    if not care_logger.handlers:
-        handler = logging.StreamHandler()
-        if json_output:
-            # JSON format for production
-            handler.setFormatter(_JsonFormatter())
-        else:
-            # Human-readable for development
-            handler.setFormatter(
-                logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-            )
-        care_logger.addHandler(handler)
+    # Add a handler if none exists on the root
+    if not root_logger.handlers:
+        handler = logging.StreamHandler(sys.stderr)
+        handler.setLevel(log_level)
+        root_logger.addHandler(handler)
+        root_logger.setLevel(log_level)
 
-    return care_logger
-
-
-class _JsonFormatter(logging.Formatter):
-    """JSON log formatter for production environments."""
-
-    def format(self, record: logging.LogRecord) -> str:
-        import json
-
-        log_entry = {
-            "timestamp": datetime.now(UTC).isoformat(),
-            "level": record.levelname,
-            "logger": record.name,
-            "message": record.getMessage(),
-            "correlation_id": get_correlation_id(),
-        }
-
-        agent_id = get_agent_id()
-        if agent_id is not None:
-            log_entry["agent_id"] = agent_id
-
-        if record.exc_info and record.exc_info[1] is not None:
-            log_entry["exception"] = str(record.exc_info[1])
-
-        return json.dumps(log_entry, default=str)
+    return structlog.get_logger("care_platform")

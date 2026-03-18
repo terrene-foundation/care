@@ -16,7 +16,6 @@ These tests run against a real PostgreSQL instance when available, and skip
 with a clear reason when it is not. NO MOCKING.
 """
 
-import json
 import os
 import threading
 from datetime import UTC, datetime
@@ -45,7 +44,6 @@ pytestmark = pytest.mark.skipif(not _pg_available, reason=_skip_reason)
 
 from care_platform.persistence.postgresql_store import PostgreSQLTrustStore
 from care_platform.persistence.store import TrustStore
-
 
 # ---------------------------------------------------------------------------
 # Helpers

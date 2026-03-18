@@ -36,7 +36,6 @@ from care_platform.trust.genesis import GenesisManager
 from care_platform.trust.revocation import RevocationManager
 from care_platform.trust.shadow_enforcer import ShadowEnforcer
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------

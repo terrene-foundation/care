@@ -32,6 +32,11 @@ COPY . .
 # Build the Next.js application
 # NEXT_TELEMETRY_DISABLED suppresses telemetry during CI/container builds
 ENV NEXT_TELEMETRY_DISABLED=1
+# API URL baked into the build (Next.js requires this at build time for NEXT_PUBLIC_ vars)
+ENV NEXT_PUBLIC_API_URL=https://api.care.terrene.foundation
+ENV NEXT_PUBLIC_FIREBASE_API_KEY=REDACTED
+ENV NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=terrene-care-43187.firebaseapp.com
+ENV NEXT_PUBLIC_FIREBASE_PROJECT_ID=terrene-care-43187
 
 RUN npm run build
 
@@ -48,7 +53,6 @@ RUN addgroup --system --gid 1001 nodejs \
     && adduser --system --uid 1001 nextjs
 
 # Copy the standalone output produced by next build (requires output: "standalone")
-# Public assets and static files are copied separately
 COPY --from=builder /app/public ./public
 
 # Adjust permissions on the .next directory for the nextjs user
@@ -66,7 +70,7 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD wget -qO- http://localhost:3000/ > /dev/null || exit 1
 
-ENV PORT=3000
+ENV PORT=${PORT:-3000}
 ENV HOSTNAME=0.0.0.0
 
 # Run the standalone Next.js server (no next binary needed in this stage)

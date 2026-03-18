@@ -10,9 +10,6 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Any
-
-from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 # ConfidentialityLevel is defined in care_platform.trust.reasoning but
 # importing it eagerly creates a circular dependency:
@@ -22,6 +19,9 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 # To break the cycle, we duplicate the enum definition here. The canonical
 # source in trust.reasoning re-exports from here via a TYPE_CHECKING guard.
 from enum import Enum as _Enum
+from typing import Any
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class ConfidentialityLevel(str, _Enum):

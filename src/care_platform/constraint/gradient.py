@@ -265,7 +265,7 @@ class GradientEngine:
         except Exception:
             # Proximity scanning is advisory — never block classification
             logger.warning(
-                "ProximityScanner error for action=%s agent=%s. " "Proximity scanning skipped.",
+                "ProximityScanner error for action=%s agent=%s. Proximity scanning skipped.",
                 result.action,
                 result.agent_id,
             )
@@ -296,8 +296,7 @@ def _build_recommendations(result: VerificationResult) -> list[str]:
             dimension = alert.get("dimension", "unknown")
             usage_pct = alert.get("usage_ratio", 0.0) * 100
             recommendations.append(
-                f"{dimension} usage at {usage_pct:.0f}%. "
-                f"Consider reviewing resource consumption."
+                f"{dimension} usage at {usage_pct:.0f}%. Consider reviewing resource consumption."
             )
 
     # Add level-specific recommendations
@@ -305,7 +304,7 @@ def _build_recommendations(result: VerificationResult) -> list[str]:
         dimensions = _blocked_dimensions(result)
         if dimensions:
             recommendations.append(
-                f"Action violates hard constraint on {', '.join(dimensions)}. " f"Cannot proceed."
+                f"Action violates hard constraint on {', '.join(dimensions)}. Cannot proceed."
             )
         else:
             recommendations.append("Action violates a hard constraint. Cannot proceed.")
@@ -313,8 +312,7 @@ def _build_recommendations(result: VerificationResult) -> list[str]:
         dimensions = _near_limit_dimensions(result)
         if dimensions:
             recommendations.append(
-                f"Action exceeds soft limit on {', '.join(dimensions)}. "
-                f"Requires human approval."
+                f"Action exceeds soft limit on {', '.join(dimensions)}. Requires human approval."
             )
         else:
             recommendations.append("Action requires human approval before proceeding.")

@@ -58,9 +58,12 @@ const STATUS_LABELS: Record<ConnectionStatus, string> = {
 // User Menu
 // ---------------------------------------------------------------------------
 
-/** Dropdown menu showing operator name, role badge, and sign-out button. */
+/**
+ * Dropdown menu showing operator name, avatar (from Firebase or initials),
+ * email, role badge, and sign-out button.
+ */
 function UserMenu() {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, signOut } = useAuth();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -95,6 +98,8 @@ function UserMenu() {
     .toUpperCase()
     .slice(0, 2);
 
+  const hasAvatar = !!user.photoURL;
+
   return (
     <div className="relative" ref={menuRef}>
       <button
@@ -104,9 +109,18 @@ function UserMenu() {
         aria-haspopup="true"
         aria-label="User menu"
       >
-        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-care-primary text-xs font-semibold text-white">
-          {initials}
-        </div>
+        {hasAvatar ? (
+          <img
+            src={user.photoURL}
+            alt={user.name}
+            className="h-7 w-7 rounded-full object-cover"
+            referrerPolicy="no-referrer"
+          />
+        ) : (
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-care-primary text-xs font-semibold text-white">
+            {initials}
+          </div>
+        )}
         <span className="hidden sm:inline font-medium">{user.name}</span>
         <svg
           className={`h-4 w-4 text-gray-400 transition-transform ${open ? "rotate-180" : ""}`}
@@ -128,8 +142,31 @@ function UserMenu() {
         <div className="absolute right-0 mt-1 w-56 rounded-lg border border-care-border bg-white py-1 shadow-lg z-50">
           {/* User info */}
           <div className="border-b border-care-border px-4 py-3">
-            <p className="text-sm font-medium text-gray-900">{user.name}</p>
-            <span className="mt-1 inline-flex items-center rounded-full bg-care-primary-light text-care-primary px-2 py-0.5 text-xs font-medium">
+            <div className="flex items-center gap-3">
+              {hasAvatar ? (
+                <img
+                  src={user.photoURL}
+                  alt={user.name}
+                  className="h-9 w-9 rounded-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-care-primary text-sm font-semibold text-white">
+                  {initials}
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-gray-900">
+                  {user.name}
+                </p>
+                {user.email && (
+                  <p className="truncate text-xs text-care-muted">
+                    {user.email}
+                  </p>
+                )}
+              </div>
+            </div>
+            <span className="mt-2 inline-flex items-center rounded-full bg-care-primary-light text-care-primary px-2 py-0.5 text-xs font-medium">
               {ROLE_LABELS[user.role]}
             </span>
           </div>
@@ -139,7 +176,7 @@ function UserMenu() {
             <button
               onClick={() => {
                 setOpen(false);
-                logout();
+                signOut();
               }}
               className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
             >

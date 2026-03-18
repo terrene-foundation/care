@@ -18,7 +18,6 @@ from care_platform.config.schema import TrustPostureLevel, VerificationLevel
 from care_platform.execution.posture_enforcer import PostureEnforcer
 from care_platform.trust.posture import TrustPosture
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------

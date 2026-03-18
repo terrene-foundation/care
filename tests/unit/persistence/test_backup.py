@@ -25,7 +25,6 @@ from care_platform.persistence.backup import (
 from care_platform.persistence.sqlite_store import SQLiteTrustStore
 from care_platform.persistence.store import MemoryStore
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

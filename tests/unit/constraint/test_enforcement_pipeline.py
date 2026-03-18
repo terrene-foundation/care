@@ -19,7 +19,6 @@ from care_platform.constraint.enforcement import (
 from care_platform.constraint.gradient import GradientEngine, VerificationResult
 from care_platform.constraint.verification_level import VerificationThoroughness
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------

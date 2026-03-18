@@ -9,8 +9,6 @@ This ensures documentation stays accurate as the code evolves.
 
 from datetime import UTC, datetime
 
-import pytest
-
 from care_platform.config.schema import (
     AgentConfig,
     CommunicationConstraintConfig,
@@ -29,7 +27,6 @@ from care_platform.config.schema import (
     VerificationLevel,
     WorkspaceConfig,
 )
-
 
 # ---------------------------------------------------------------------------
 # Config layer: all schema classes instantiate and have documented fields

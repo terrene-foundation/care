@@ -34,6 +34,8 @@ from care_platform.config.schema import VerificationLevel as CareVerificationLev
 from care_platform.constraint.envelope import EnvelopeEvaluation
 from care_platform.constraint.gradient import (
     GradientEngine,
+)
+from care_platform.constraint.gradient import (
     VerificationResult as CareVerificationResult,
 )
 from care_platform.constraint.verification_level import VerificationThoroughness
@@ -364,7 +366,7 @@ def create_approval_held_callback(
             return True  # Queued successfully
         except Exception:
             logger.warning(
-                "Failed to submit held action to approval queue: " "agent=%s action=%s",
+                "Failed to submit held action to approval queue: agent=%s action=%s",
                 agent_id,
                 action,
             )

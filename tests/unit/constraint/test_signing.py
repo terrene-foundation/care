@@ -299,9 +299,9 @@ class TestVersionHistory:
 
         stored = history.get_current()
         assert stored is not None
-        assert stored.verify_signature(
-            public_key
-        ), "Re-signed envelope after add_version should have a valid signature"
+        assert stored.verify_signature(public_key), (
+            "Re-signed envelope after add_version should have a valid signature"
+        )
 
     def test_all_versions_have_valid_signatures(self):
         """All versions in history should have valid signatures after re-signing."""
@@ -316,9 +316,9 @@ class TestVersionHistory:
             history.add_version(signed, private_key=private_key, public_key=public_key)
 
         for v in history.versions:
-            assert v.verify_signature(
-                public_key
-            ), f"Version {v.version} should have a valid signature"
+            assert v.verify_signature(public_key), (
+                f"Version {v.version} should have a valid signature"
+            )
 
     def test_add_version_does_not_mutate_original(self):
         """add_version should not modify the original SignedEnvelope object."""

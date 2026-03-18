@@ -115,8 +115,7 @@ class TrustStoreHealthCheck:
                 self._consecutive_failures += 1
                 self._status = StoreHealthStatus.UNREACHABLE
             logger.warning(
-                "Trust store health check failed: UNREACHABLE — %s "
-                "(consecutive_failures=%d)",
+                "Trust store health check failed: UNREACHABLE — %s (consecutive_failures=%d)",
                 exc,
                 self._consecutive_failures,
             )

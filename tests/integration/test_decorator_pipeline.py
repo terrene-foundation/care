@@ -25,7 +25,6 @@ from care_platform.trust.decorators import (
 )
 from care_platform.trust.eatp_bridge import EATPBridge
 
-
 # ---------------------------------------------------------------------------
 # Fixtures — full EATP trust chain setup
 # ---------------------------------------------------------------------------

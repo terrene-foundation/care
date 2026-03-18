@@ -2,8 +2,6 @@
 # Licensed under the Apache License, Version 2.0
 """Tests for environment configuration loading (M21: 2101-2103)."""
 
-import os
-
 import pytest
 
 from care_platform.config.env import EnvConfig, EnvConfigError, load_env_config

@@ -77,7 +77,7 @@ def _diff_dimension(
         old_str = str(old_val) if old_val is not None else "<unset>"
         new_str = str(new_val) if new_val is not None else "<unset>"
         description = (
-            f"{dimension.replace('_', ' ').title()} {key} changed " f"from {old_str} to {new_str}"
+            f"{dimension.replace('_', ' ').title()} {key} changed from {old_str} to {new_str}"
         )
         diffs.append(
             EnvelopeDiff(

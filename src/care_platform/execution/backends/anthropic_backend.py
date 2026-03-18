@@ -31,13 +31,69 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Approximate pricing per token (USD).  These are estimates used for budget
 # enforcement.  Actual billing comes from the provider dashboard.
+# L10: Defaults can be overridden via CARE_LLM_PRICING_JSON env var.
 # ---------------------------------------------------------------------------
-_ANTHROPIC_PRICING: dict[str, tuple[Decimal, Decimal]] = {
+_ANTHROPIC_PRICING_DEFAULTS: dict[str, tuple[Decimal, Decimal]] = {
     # model prefix -> (input $/token, output $/token)
     "claude-opus-4": (Decimal("15") / Decimal("1000000"), Decimal("75") / Decimal("1000000")),
     "claude-sonnet-4": (Decimal("3") / Decimal("1000000"), Decimal("15") / Decimal("1000000")),
     "claude-haiku": (Decimal("0.25") / Decimal("1000000"), Decimal("1.25") / Decimal("1000000")),
 }
+
+
+def _load_anthropic_pricing() -> dict[str, tuple[Decimal, Decimal]]:
+    """Load Anthropic pricing, optionally overriding from CARE_LLM_PRICING_JSON.
+
+    The env var should contain a JSON object with an 'anthropic' key mapping
+    model names to ``{"input": "<price>", "output": "<price>"}`` where prices
+    are per-million-token USD strings.
+
+    Returns:
+        Pricing dict (defaults merged with overrides from env).
+    """
+    import json
+    import os
+
+    pricing = dict(_ANTHROPIC_PRICING_DEFAULTS)
+
+    raw = os.environ.get("CARE_LLM_PRICING_JSON", "")
+    if not raw:
+        return pricing
+
+    try:
+        data = json.loads(raw)
+    except (json.JSONDecodeError, ValueError):
+        logger.warning("Invalid JSON in CARE_LLM_PRICING_JSON — using default Anthropic pricing")
+        return pricing
+
+    anthropic_overrides = data.get("anthropic", {})
+    if not isinstance(anthropic_overrides, dict):
+        logger.warning(
+            "CARE_LLM_PRICING_JSON 'anthropic' key is not a dict — using default pricing"
+        )
+        return pricing
+
+    for model_name, prices in anthropic_overrides.items():
+        if not isinstance(prices, dict) or "input" not in prices or "output" not in prices:
+            logger.warning(
+                "Skipping invalid pricing entry for model '%s' in CARE_LLM_PRICING_JSON",
+                model_name,
+            )
+            continue
+        try:
+            input_price = Decimal(str(prices["input"])) / Decimal("1000000")
+            output_price = Decimal(str(prices["output"])) / Decimal("1000000")
+            pricing[model_name] = (input_price, output_price)
+        except Exception:
+            logger.warning(
+                "Failed to parse pricing for model '%s' in CARE_LLM_PRICING_JSON",
+                model_name,
+            )
+
+    return pricing
+
+
+_ANTHROPIC_PRICING: dict[str, tuple[Decimal, Decimal]] = _load_anthropic_pricing()
 
 # Fallback pricing when the model isn't recognised
 _DEFAULT_INPUT_PRICE = Decimal("3") / Decimal("1000000")

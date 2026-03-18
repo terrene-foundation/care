@@ -11,8 +11,6 @@ Covers RT-03, RT-05, RT-08, RT-09 findings:
 
 from datetime import UTC, datetime, timedelta
 
-import pytest
-
 from care_platform.audit.anchor import AuditChain
 from care_platform.config.schema import (
     CommunicationConstraintConfig,
@@ -31,7 +29,6 @@ from care_platform.constraint.middleware import (
     VerificationMiddleware,
 )
 from care_platform.execution.approval import ApprovalQueue
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -326,7 +323,6 @@ class TestSignedEnvelopeSupport:
 
     def test_signed_envelope_stored_on_instance(self):
         """When signed_envelope is provided, it should be accessible."""
-        from care_platform.constraint.signing import SignedEnvelope
 
         engine = _make_engine(default=VerificationLevel.HELD)
         envelope = _make_envelope()

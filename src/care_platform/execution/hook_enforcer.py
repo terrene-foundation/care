@@ -14,9 +14,9 @@ misconfiguration never silently permits actions.
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from datetime import UTC, datetime
 from enum import Enum
-from collections.abc import Callable
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -155,9 +155,7 @@ class HookEnforcer:
                 missing.append("gradient_engine")
             if self._envelope is None:
                 missing.append("envelope")
-            reason = (
-                f"Fail-safe BLOCK: verification not configured " f"(missing: {', '.join(missing)})"
-            )
+            reason = f"Fail-safe BLOCK: verification not configured (missing: {', '.join(missing)})"
             logger.warning(
                 "Hook enforcer fail-safe triggered: agent_id=%s, action=%s, missing=%s",
                 agent_id,
@@ -208,7 +206,7 @@ class HookEnforcer:
 
         if level == VerificationLevel.FLAGGED:
             logger.info(
-                "Hook enforcer FLAGGED (allowed but logged): " "agent_id=%s, action=%s, reason=%s",
+                "Hook enforcer FLAGGED (allowed but logged): agent_id=%s, action=%s, reason=%s",
                 agent_id,
                 action,
                 reason,

@@ -2,8 +2,6 @@
 # Licensed under the Apache License, Version 2.0
 """Tests for cascade revocation management (Task 207)."""
 
-import pytest
-
 from care_platform.trust.credentials import CredentialManager
 from care_platform.trust.revocation import RevocationManager, RevocationRecord
 

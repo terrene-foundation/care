@@ -289,7 +289,7 @@ class PostureEligibilityChecker:
         if requirements.get("shadow_enforcer_required") and shadow_pass_rate < min_shadow:
             return (
                 EligibilityResult.NOT_YET,
-                f"Need {min_shadow:.0%} ShadowEnforcer pass rate, " f"have {shadow_pass_rate:.0%}",
+                f"Need {min_shadow:.0%} ShadowEnforcer pass rate, have {shadow_pass_rate:.0%}",
             )
 
         return (EligibilityResult.ELIGIBLE, f"Agent is eligible for {target_posture}")

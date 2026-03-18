@@ -15,7 +15,6 @@ details. Access that complies is allowed.
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
 

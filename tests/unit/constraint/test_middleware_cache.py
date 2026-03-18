@@ -13,27 +13,22 @@ from __future__ import annotations
 
 import time
 
-import pytest
-
-from care_platform.audit.anchor import AuditChain
 from care_platform.config.schema import (
     CommunicationConstraintConfig,
     ConstraintEnvelopeConfig,
     FinancialConstraintConfig,
     GradientRuleConfig,
     OperationalConstraintConfig,
-    TrustPostureLevel,
     VerificationGradientConfig,
     VerificationLevel,
 )
-from care_platform.constraint.cache import CachedVerification, VerificationCache
+from care_platform.constraint.cache import VerificationCache
 from care_platform.constraint.envelope import ConstraintEnvelope
 from care_platform.constraint.gradient import GradientEngine
 from care_platform.constraint.middleware import (
     ActionOutcome,
     VerificationMiddleware,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers

@@ -3,8 +3,9 @@
 # Licensed under the Apache License, Version 2.0
 """Demo seed script — populates realistic data for all CARE Platform dashboard pages.
 
-Seeds 4 teams, 12 agents, constraint envelopes, 250+ audit anchors, held actions,
-cross-functional bridges, posture history, and cost tracking data.
+Seeds 4 teams, 14 agents, constraint envelopes, 250+ audit anchors, held actions,
+cross-functional bridges, posture history, cost tracking data, and shadow enforcer
+evaluations.
 
 Usage:
     python scripts/seed_demo.py           # Seed data (idempotent)
@@ -18,9 +19,9 @@ from __future__ import annotations
 import argparse
 import logging
 import random
-import sys
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
+from typing import TYPE_CHECKING
 from uuid import uuid4
 
 # ---------------------------------------------------------------------------
@@ -35,13 +36,14 @@ from care_platform.config.schema import (
     TemporalConstraintConfig,
     TrustPostureLevel,
     VerificationLevel,
+    WorkspaceConfig,
 )
 from care_platform.execution.approval import ApprovalQueue, UrgencyLevel
 from care_platform.execution.registry import AgentRegistry
 from care_platform.persistence.cost_tracking import ApiCostRecord, CostTracker
 from care_platform.persistence.posture_history import (
-    PostureChangeTrigger,
     PostureChangeRecord,
+    PostureChangeTrigger,
     PostureHistoryStore,
 )
 from care_platform.workspace.bridge import BridgeManager, BridgePermission
@@ -51,7 +53,9 @@ from care_platform.workspace.models import (
     WorkspaceRegistry,
     WorkspaceState,
 )
-from care_platform.config.schema import WorkspaceConfig
+
+if TYPE_CHECKING:
+    from care_platform.trust.shadow_enforcer import ShadowEnforcer
 
 logging.basicConfig(
     level=logging.WARNING,
@@ -90,43 +94,80 @@ TEAMS = {
 }
 
 AGENTS = [
-    # dm-team
+    # dm-team (canonical agents from care_platform.verticals.dm_team)
     {
-        "agent_id": "content-writer",
-        "name": "Content Writer",
-        "role": "Drafts blog posts, social media content, and newsletters",
-        "team_id": "dm-team",
-        "posture": TrustPostureLevel.SHARED_PLANNING,
-        "capabilities": [
-            "draft_content",
-            "edit_content",
-            "research_topics",
-            "generate_images",
-        ],
-    },
-    {
-        "agent_id": "scheduler",
-        "name": "Content Scheduler",
-        "role": "Schedules and publishes content across channels",
+        "agent_id": "dm-team-lead",
+        "name": "DM Team Lead",
+        "role": "Team coordination, content review, approval routing",
         "team_id": "dm-team",
         "posture": TrustPostureLevel.SUPERVISED,
         "capabilities": [
-            "schedule_post",
-            "publish_post",
-            "manage_calendar",
+            "review_content",
+            "approve_publication",
+            "coordinate_team",
+            "schedule_content",
+            "analyze_metrics",
+            "draft_strategy",
+            "draft_post",
+            "edit_content",
+            "research_topic",
+            "suggest_hashtags",
+            "read_metrics",
+            "generate_report",
+            "track_engagement",
+            "analyze_trends",
         ],
     },
     {
-        "agent_id": "analyst",
-        "name": "Marketing Analyst",
-        "role": "Analyzes engagement metrics and campaign performance",
+        "agent_id": "dm-content-creator",
+        "name": "Content Creator",
+        "role": "Draft social media posts, blog articles, and marketing copy",
         "team_id": "dm-team",
-        "posture": TrustPostureLevel.CONTINUOUS_INSIGHT,
+        "posture": TrustPostureLevel.SUPERVISED,
         "capabilities": [
-            "analyze_metrics",
+            "draft_post",
+            "edit_content",
+            "research_topic",
+            "suggest_hashtags",
+        ],
+    },
+    {
+        "agent_id": "dm-analytics",
+        "name": "Analytics Agent",
+        "role": "Monitor engagement metrics, generate reports, track KPIs",
+        "team_id": "dm-team",
+        "posture": TrustPostureLevel.SUPERVISED,
+        "capabilities": [
+            "read_metrics",
             "generate_report",
-            "query_analytics",
-            "forecast_trends",
+            "track_engagement",
+            "analyze_trends",
+        ],
+    },
+    {
+        "agent_id": "dm-community-manager",
+        "name": "Community Manager",
+        "role": "Community engagement, response drafting, moderation",
+        "team_id": "dm-team",
+        "posture": TrustPostureLevel.SUPERVISED,
+        "capabilities": [
+            "draft_response",
+            "moderate_content",
+            "track_community",
+            "flag_issues",
+        ],
+    },
+    {
+        "agent_id": "dm-seo-specialist",
+        "name": "SEO Specialist",
+        "role": "SEO optimization, keyword research, content structure",
+        "team_id": "dm-team",
+        "posture": TrustPostureLevel.SUPERVISED,
+        "capabilities": [
+            "analyze_keywords",
+            "suggest_structure",
+            "audit_seo",
+            "research_topics",
         ],
     },
     # governance-team
@@ -253,53 +294,42 @@ AGENTS = [
 def _build_envelopes() -> dict[str, ConstraintEnvelopeConfig]:
     """Build constraint envelopes keyed by agent_id."""
     return {
-        # --- dm-team ---
-        "content-writer": ConstraintEnvelopeConfig(
-            id="env-content-writer",
-            description="Content Writer envelope: moderate spend, content-focused actions",
+        # --- dm-team (canonical envelopes from care_platform.verticals.dm_team) ---
+        "dm-team-lead": ConstraintEnvelopeConfig(
+            id="env-dm-team-lead",
+            description="DM Team Lead: broadest authority within DM, $0 spend, internal-only",
             financial=FinancialConstraintConfig(
-                max_spend_usd=500.0,
+                max_spend_usd=0.0,
                 api_cost_budget_usd=200.0,
-                requires_approval_above_usd=100.0,
+                requires_approval_above_usd=0.0,
             ),
             operational=OperationalConstraintConfig(
                 allowed_actions=[
-                    "draft_content",
+                    "review_content",
+                    "approve_publication",
+                    "coordinate_team",
+                    "schedule_content",
+                    "analyze_metrics",
+                    "draft_strategy",
+                    "draft_post",
                     "edit_content",
+                    "research_topic",
+                    "suggest_hashtags",
+                    "read_metrics",
+                    "generate_report",
+                    "track_engagement",
+                    "analyze_trends",
+                    "draft_response",
+                    "moderate_content",
+                    "track_community",
+                    "flag_issues",
+                    "analyze_keywords",
+                    "suggest_structure",
+                    "audit_seo",
                     "research_topics",
-                    "generate_images",
                 ],
-                blocked_actions=["publish_post", "delete_content", "modify_constraints"],
-                max_actions_per_day=50,
-            ),
-            temporal=TemporalConstraintConfig(
-                active_hours_start="08:00",
-                active_hours_end="20:00",
-                timezone="Asia/Singapore",
-            ),
-            data_access=DataAccessConstraintConfig(
-                read_paths=["content/*", "briefs/*", "analytics/reports/*"],
-                write_paths=["content/drafts/*", "content/images/*"],
-                blocked_data_types=["pii", "financial_records"],
-            ),
-            communication=CommunicationConstraintConfig(
-                internal_only=False,
-                allowed_channels=["slack-dm", "email-marketing", "cms"],
-                external_requires_approval=True,
-            ),
-        ),
-        "scheduler": ConstraintEnvelopeConfig(
-            id="env-scheduler",
-            description="Scheduler envelope: low spend, publishing-focused actions",
-            financial=FinancialConstraintConfig(
-                max_spend_usd=100.0,
-                api_cost_budget_usd=50.0,
-                requires_approval_above_usd=25.0,
-            ),
-            operational=OperationalConstraintConfig(
-                allowed_actions=["schedule_post", "publish_post", "manage_calendar"],
-                blocked_actions=["draft_content", "delete_content", "modify_constraints"],
-                max_actions_per_day=30,
+                blocked_actions=["publish_externally", "modify_brand_guidelines", "engage_legal"],
+                max_actions_per_day=200,
             ),
             temporal=TemporalConstraintConfig(
                 active_hours_start="06:00",
@@ -307,47 +337,177 @@ def _build_envelopes() -> dict[str, ConstraintEnvelopeConfig]:
                 timezone="Asia/Singapore",
             ),
             data_access=DataAccessConstraintConfig(
-                read_paths=["content/approved/*", "content/calendar/*"],
-                write_paths=["content/calendar/*", "content/published/*"],
-                blocked_data_types=["pii"],
-            ),
-            communication=CommunicationConstraintConfig(
-                internal_only=False,
-                allowed_channels=["cms", "social-api"],
-                external_requires_approval=False,
-            ),
-        ),
-        "analyst": ConstraintEnvelopeConfig(
-            id="env-analyst",
-            description="Marketing Analyst envelope: analytics read-heavy, no publish",
-            financial=FinancialConstraintConfig(
-                max_spend_usd=1000.0,
-                api_cost_budget_usd=500.0,
-                requires_approval_above_usd=200.0,
-            ),
-            operational=OperationalConstraintConfig(
-                allowed_actions=[
-                    "analyze_metrics",
-                    "generate_report",
-                    "query_analytics",
-                    "forecast_trends",
-                ],
-                blocked_actions=["publish_post", "send_outreach", "modify_constraints"],
-                max_actions_per_day=100,
-            ),
-            temporal=TemporalConstraintConfig(
-                active_hours_start="00:00",
-                active_hours_end="23:59",
-                timezone="UTC",
-            ),
-            data_access=DataAccessConstraintConfig(
-                read_paths=["analytics/*", "content/published/*", "reports/*"],
-                write_paths=["reports/generated/*"],
-                blocked_data_types=["pii"],
+                read_paths=["workspaces/dm/*", "workspaces/standards/public/*", "analytics/*"],
+                write_paths=["workspaces/dm/*"],
+                blocked_data_types=["pii", "financial_records", "legal_docs", "board_minutes"],
             ),
             communication=CommunicationConstraintConfig(
                 internal_only=True,
-                allowed_channels=["slack-analytics", "dashboard"],
+                allowed_channels=["slack", "internal_review"],
+                external_requires_approval=True,
+            ),
+        ),
+        "dm-content-creator": ConstraintEnvelopeConfig(
+            id="env-dm-content-creator",
+            description="Content Creator: draft-only, no publishing, no external communication",
+            financial=FinancialConstraintConfig(
+                max_spend_usd=0.0,
+                api_cost_budget_usd=100.0,
+                requires_approval_above_usd=0.0,
+            ),
+            operational=OperationalConstraintConfig(
+                allowed_actions=[
+                    "draft_post",
+                    "edit_content",
+                    "research_topic",
+                    "suggest_hashtags",
+                ],
+                blocked_actions=[
+                    "publish_externally",
+                    "modify_brand_guidelines",
+                    "engage_legal",
+                    "schedule_content",
+                    "approve_publication",
+                ],
+                max_actions_per_day=20,
+            ),
+            temporal=TemporalConstraintConfig(
+                active_hours_start="08:00",
+                active_hours_end="20:00",
+                timezone="Asia/Singapore",
+            ),
+            data_access=DataAccessConstraintConfig(
+                read_paths=["workspaces/dm/content/*", "workspaces/standards/public/*"],
+                write_paths=["workspaces/dm/content/drafts/*"],
+                blocked_data_types=[
+                    "pii",
+                    "financial_records",
+                    "legal_docs",
+                    "board_minutes",
+                    "strategy",
+                ],
+            ),
+            communication=CommunicationConstraintConfig(
+                internal_only=True,
+                external_requires_approval=True,
+            ),
+        ),
+        "dm-analytics": ConstraintEnvelopeConfig(
+            id="env-dm-analytics",
+            description="Analytics: read-heavy monitoring, no external communication",
+            financial=FinancialConstraintConfig(
+                max_spend_usd=0.0,
+                api_cost_budget_usd=150.0,
+                requires_approval_above_usd=0.0,
+            ),
+            operational=OperationalConstraintConfig(
+                allowed_actions=[
+                    "read_metrics",
+                    "generate_report",
+                    "track_engagement",
+                    "analyze_trends",
+                ],
+                blocked_actions=[
+                    "publish_externally",
+                    "modify_brand_guidelines",
+                    "engage_legal",
+                    "modify_content",
+                    "access_pii",
+                ],
+                max_actions_per_day=120,
+            ),
+            temporal=TemporalConstraintConfig(
+                active_hours_start="06:00",
+                active_hours_end="22:00",
+                timezone="Asia/Singapore",
+            ),
+            data_access=DataAccessConstraintConfig(
+                read_paths=["workspaces/dm/*", "analytics/*"],
+                write_paths=["workspaces/dm/reports/*"],
+                blocked_data_types=["pii", "financial_records", "legal_docs", "board_minutes"],
+            ),
+            communication=CommunicationConstraintConfig(
+                internal_only=True,
+                external_requires_approval=True,
+            ),
+        ),
+        "dm-community-manager": ConstraintEnvelopeConfig(
+            id="env-dm-community-manager",
+            description="Community Manager: draft responses, moderate, no external sending",
+            financial=FinancialConstraintConfig(
+                max_spend_usd=0.0,
+                api_cost_budget_usd=80.0,
+                requires_approval_above_usd=0.0,
+            ),
+            operational=OperationalConstraintConfig(
+                allowed_actions=[
+                    "draft_response",
+                    "moderate_content",
+                    "track_community",
+                    "flag_issues",
+                ],
+                blocked_actions=[
+                    "publish_externally",
+                    "modify_brand_guidelines",
+                    "engage_legal",
+                    "approve_publication",
+                ],
+                max_actions_per_day=40,
+            ),
+            temporal=TemporalConstraintConfig(
+                active_hours_start="08:00",
+                active_hours_end="20:00",
+                timezone="Asia/Singapore",
+            ),
+            data_access=DataAccessConstraintConfig(
+                read_paths=["workspaces/dm/community/*", "workspaces/standards/public/*"],
+                write_paths=["workspaces/dm/community/drafts/*"],
+                blocked_data_types=["pii", "financial_records", "legal_docs", "board_minutes"],
+            ),
+            communication=CommunicationConstraintConfig(
+                internal_only=True,
+                external_requires_approval=True,
+            ),
+        ),
+        "dm-seo-specialist": ConstraintEnvelopeConfig(
+            id="env-dm-seo-specialist",
+            description="SEO Specialist: analysis and suggestions, no publishing",
+            financial=FinancialConstraintConfig(
+                max_spend_usd=0.0,
+                api_cost_budget_usd=80.0,
+                requires_approval_above_usd=0.0,
+            ),
+            operational=OperationalConstraintConfig(
+                allowed_actions=[
+                    "analyze_keywords",
+                    "suggest_structure",
+                    "audit_seo",
+                    "research_topics",
+                ],
+                blocked_actions=[
+                    "publish_externally",
+                    "modify_brand_guidelines",
+                    "engage_legal",
+                    "approve_publication",
+                ],
+                max_actions_per_day=30,
+            ),
+            temporal=TemporalConstraintConfig(
+                active_hours_start="08:00",
+                active_hours_end="20:00",
+                timezone="Asia/Singapore",
+            ),
+            data_access=DataAccessConstraintConfig(
+                read_paths=[
+                    "workspaces/dm/content/*",
+                    "workspaces/standards/public/*",
+                    "analytics/seo/*",
+                ],
+                write_paths=["workspaces/dm/seo/reports/*"],
+                blocked_data_types=["pii", "financial_records", "legal_docs", "board_minutes"],
+            ),
+            communication=CommunicationConstraintConfig(
+                internal_only=True,
                 external_requires_approval=True,
             ),
         ),
@@ -667,30 +827,45 @@ def _build_envelopes() -> dict[str, ConstraintEnvelopeConfig]:
 
 # Realistic action names per agent for audit data
 _AGENT_ACTIONS: dict[str, list[tuple[str, str]]] = {
-    # (action, resource) tuples
-    "content-writer": [
-        ("draft_content", "blog/ai-trust-governance.md"),
-        ("draft_content", "social/weekly-update.md"),
+    # (action, resource) tuples — dm-team (canonical agents)
+    "dm-team-lead": [
+        ("review_content", "blog/ai-trust-governance.md"),
+        ("approve_publication", "social/weekly-update.md"),
+        ("coordinate_team", "dm-team/sprint-planning"),
+        ("schedule_content", "content-calendar/march"),
+        ("analyze_metrics", "engagement/weekly-report"),
+        ("draft_strategy", "strategy/q2-content-plan"),
+    ],
+    "dm-content-creator": [
+        ("draft_post", "blog/ai-trust-governance.md"),
+        ("draft_post", "social/weekly-update.md"),
         ("edit_content", "newsletter/march-2026.md"),
-        ("research_topics", "trends/agent-orchestration"),
-        ("generate_images", "social/og-image-trust.png"),
-        ("draft_content", "blog/eatp-deep-dive.md"),
+        ("research_topic", "trends/agent-orchestration"),
+        ("suggest_hashtags", "social/eatp-announcement"),
+        ("draft_post", "blog/eatp-deep-dive.md"),
         ("edit_content", "blog/care-philosophy.md"),
     ],
-    "scheduler": [
-        ("schedule_post", "social/twitter/weekly-insight"),
-        ("publish_post", "blog/ai-trust-governance"),
-        ("manage_calendar", "content-calendar/march"),
-        ("schedule_post", "social/linkedin/care-announcement"),
-        ("publish_post", "newsletter/march-2026"),
-    ],
-    "analyst": [
-        ("analyze_metrics", "engagement/weekly-report"),
+    "dm-analytics": [
+        ("read_metrics", "engagement/weekly-report"),
         ("generate_report", "campaign/q1-performance"),
-        ("query_analytics", "social/reach-by-platform"),
-        ("forecast_trends", "growth/q2-projections"),
-        ("analyze_metrics", "content/top-performers"),
+        ("track_engagement", "social/reach-by-platform"),
+        ("analyze_trends", "growth/q2-projections"),
+        ("read_metrics", "content/top-performers"),
         ("generate_report", "audience/demographics-march"),
+    ],
+    "dm-community-manager": [
+        ("draft_response", "community/question-about-eatp"),
+        ("moderate_content", "community/discussion-guidelines"),
+        ("track_community", "community/engagement-march"),
+        ("flag_issues", "community/spam-report-14"),
+        ("draft_response", "community/how-to-contribute"),
+    ],
+    "dm-seo-specialist": [
+        ("analyze_keywords", "seo/eatp-keyword-research"),
+        ("suggest_structure", "blog/care-philosophy-restructure"),
+        ("audit_seo", "site/monthly-seo-audit"),
+        ("research_topics", "trends/trust-governance-search-volume"),
+        ("analyze_keywords", "seo/co-methodology-terms"),
     ],
     "policy-reviewer": [
         ("review_policy", "governance/data-retention-policy"),
@@ -701,15 +876,15 @@ _AGENT_ACTIONS: dict[str, list[tuple[str, str]]] = {
         ("draft_policy", "governance/bridge-approval-policy"),
     ],
     "compliance-checker": [
-        ("check_compliance", "agent/content-writer/actions-log"),
+        ("check_compliance", "agent/dm-content-creator/actions-log"),
         ("audit_trail", "team/dm-team/march-operations"),
-        ("flag_violation", "agent/scheduler/unapproved-publish"),
+        ("flag_violation", "agent/dm-team-lead/unapproved-publish"),
         ("check_compliance", "bridge/standing-dm-community"),
         ("audit_trail", "team/standards-team/spec-changes"),
     ],
     "audit-monitor": [
         ("monitor_logs", "platform/api-access-log"),
-        ("detect_anomaly", "agent/analyst/unusual-query-volume"),
+        ("detect_anomaly", "agent/dm-analytics/unusual-query-volume"),
         ("generate_audit_report", "platform/weekly-audit-summary"),
         ("monitor_logs", "trust/delegation-changes"),
         ("detect_anomaly", "cost/budget-spike-dm-team"),
@@ -805,7 +980,7 @@ _LLM_MODELS = [
 
 
 def seed_agents(registry: AgentRegistry) -> None:
-    """Register all 12 agents across 4 teams."""
+    """Register all 14 agents across 4 teams."""
     for agent_def in AGENTS:
         # Check if already registered (idempotent)
         if registry.get(agent_def["agent_id"]) is not None:
@@ -941,30 +1116,30 @@ def seed_held_actions(approval_queue: ApprovalQueue) -> None:
 
     held_actions = [
         {
-            "agent_id": "scheduler",
-            "action": "publish_post",
-            "reason": "Publishing to external channel exceeds communication constraint",
+            "agent_id": "dm-team-lead",
+            "action": "approve_publication",
+            "reason": "Publication approval has governance implications — requires human review",
             "team_id": "dm-team",
             "resource": "blog/controversial-ai-opinion",
             "urgency": UrgencyLevel.IMMEDIATE,
             "constraint_details": {
-                "dimension": "communication",
-                "rule": "external_requires_approval",
+                "dimension": "operational",
+                "rule": "approval_actions_held",
                 "channel": "blog-public",
             },
         },
         {
-            "agent_id": "content-writer",
-            "action": "generate_images",
-            "reason": "Image generation cost ($120) exceeds financial approval threshold ($100)",
+            "agent_id": "dm-content-creator",
+            "action": "draft_post",
+            "reason": "Draft volume approaching daily action limit (18 of 20 used)",
             "team_id": "dm-team",
-            "resource": "campaign/hero-images-batch",
+            "resource": "campaign/hero-content-batch",
             "urgency": UrgencyLevel.STANDARD,
             "constraint_details": {
-                "dimension": "financial",
-                "rule": "requires_approval_above_usd",
-                "estimated_cost": 120.0,
-                "threshold": 100.0,
+                "dimension": "operational",
+                "rule": "approaching_daily_limit",
+                "current_count": 18,
+                "limit": 20,
             },
         },
         {
@@ -1038,10 +1213,10 @@ def seed_bridges(bridge_manager: BridgeManager) -> None:
             message_types=["content_ready", "feedback", "schedule_update"],
             requires_attribution=True,
         ),
-        created_by="content-writer",
+        created_by="dm-team-lead",
     )
     # Approve both sides to make it ACTIVE
-    bridge_manager.approve_bridge_source(standing.bridge_id, "content-writer")
+    bridge_manager.approve_bridge_source(standing.bridge_id, "dm-team-lead")
     bridge_manager.approve_bridge_target(standing.bridge_id, "outreach-agent")
 
     # 2. Scoped bridge: governance-team <-> standards-team (spec review, 30 days)
@@ -1077,10 +1252,10 @@ def seed_bridges(bridge_manager: BridgeManager) -> None:
                 "Needs compliance review before external publication",
             ],
         },
-        created_by="content-writer",
+        created_by="dm-content-creator",
     )
     # Approve both sides — still pending response
-    bridge_manager.approve_bridge_source(adhoc.bridge_id, "content-writer")
+    bridge_manager.approve_bridge_source(adhoc.bridge_id, "dm-content-creator")
     bridge_manager.approve_bridge_target(adhoc.bridge_id, "compliance-checker")
 
     # 4. Standing bridge: standards-team <-> community-team (spec feedback)
@@ -1104,7 +1279,7 @@ def seed_posture_history(posture_store: PostureHistoryStore) -> None:
     """Create realistic posture history for agents showing progression over time."""
     # Skip if history already exists (idempotent)
     try:
-        posture_store.current_posture("content-writer")
+        posture_store.current_posture("dm-team-lead")
         return  # Already seeded
     except KeyError:
         pass  # Expected — no history yet
@@ -1113,7 +1288,7 @@ def seed_posture_history(posture_store: PostureHistoryStore) -> None:
 
     # Each agent's posture history: list of (from, to, direction, trigger, days_ago, reason)
     histories: dict[str, list[tuple[str, str, str, PostureChangeTrigger, int, str]]] = {
-        "content-writer": [
+        "dm-team-lead": [
             (
                 "pseudo_agent",
                 "supervised",
@@ -1122,16 +1297,8 @@ def seed_posture_history(posture_store: PostureHistoryStore) -> None:
                 180,
                 "Initial activation after onboarding period",
             ),
-            (
-                "supervised",
-                "shared_planning",
-                "upgrade",
-                PostureChangeTrigger.REVIEW,
-                60,
-                "Demonstrated 95% success rate over 100+ operations, zero incidents",
-            ),
         ],
-        "scheduler": [
+        "dm-content-creator": [
             (
                 "pseudo_agent",
                 "supervised",
@@ -1141,30 +1308,34 @@ def seed_posture_history(posture_store: PostureHistoryStore) -> None:
                 "Completed supervised onboarding with zero incidents",
             ),
         ],
-        "analyst": [
+        "dm-analytics": [
             (
                 "pseudo_agent",
                 "supervised",
                 "upgrade",
                 PostureChangeTrigger.SCHEDULED,
-                365,
-                "Initial activation",
-            ),
-            (
-                "supervised",
-                "shared_planning",
-                "upgrade",
-                PostureChangeTrigger.REVIEW,
-                270,
-                "Strong performance in supervised mode: 98% success rate, 150 operations",
-            ),
-            (
-                "shared_planning",
-                "continuous_insight",
-                "upgrade",
-                PostureChangeTrigger.TRUST_SCORE,
                 90,
-                "Exceeded continuous insight thresholds: 99% success, 500+ ops, 95% shadow pass rate",
+                "Initial activation for analytics monitoring",
+            ),
+        ],
+        "dm-community-manager": [
+            (
+                "pseudo_agent",
+                "supervised",
+                "upgrade",
+                PostureChangeTrigger.SCHEDULED,
+                60,
+                "Initial activation for community management",
+            ),
+        ],
+        "dm-seo-specialist": [
+            (
+                "pseudo_agent",
+                "supervised",
+                "upgrade",
+                PostureChangeTrigger.SCHEDULED,
+                45,
+                "Initial activation for SEO analysis",
             ),
         ],
         "policy-reviewer": [
@@ -1377,9 +1548,11 @@ def seed_cost_tracking(cost_tracker: CostTracker) -> None:
 
     # Set per-agent daily budgets
     agent_daily_budgets = {
-        "content-writer": Decimal("50"),
-        "scheduler": Decimal("10"),
-        "analyst": Decimal("100"),
+        "dm-team-lead": Decimal("80"),
+        "dm-content-creator": Decimal("50"),
+        "dm-analytics": Decimal("60"),
+        "dm-community-manager": Decimal("30"),
+        "dm-seo-specialist": Decimal("30"),
         "policy-reviewer": Decimal("80"),
         "compliance-checker": Decimal("40"),
         "audit-monitor": Decimal("20"),
@@ -1463,6 +1636,232 @@ def seed_verification_stats(audit_records: list[dict]) -> dict[str, int]:
 
 
 # ---------------------------------------------------------------------------
+# Shadow enforcer seed data
+# ---------------------------------------------------------------------------
+
+
+def seed_shadow_evaluations() -> ShadowEnforcer:
+    """Create a ShadowEnforcer and populate it with realistic evaluation data.
+
+    Generates 20-50 evaluations per agent with a mix of AUTO_APPROVED, FLAGGED,
+    HELD, and BLOCKED results to create realistic dashboard metrics.
+
+    Returns:
+        A fully populated ShadowEnforcer instance.
+    """
+    from care_platform.constraint.envelope import ConstraintEnvelope
+    from care_platform.constraint.gradient import GradientEngine
+    from care_platform.trust.shadow_enforcer import ShadowEnforcer
+
+    # Build a permissive envelope for seeding — most actions pass cleanly
+    envelope_config = ConstraintEnvelopeConfig(
+        id="shadow-seed-envelope",
+        description="Seed envelope for ShadowEnforcer demo data",
+        financial=FinancialConstraintConfig(
+            max_spend_usd=10000.0,
+            api_cost_budget_usd=5000.0,
+            requires_approval_above_usd=500.0,
+        ),
+        operational=OperationalConstraintConfig(
+            allowed_actions=[],  # empty = no whitelist filtering
+            blocked_actions=["emergency_shutdown", "delete_all_data", "modify_constraints"],
+            max_actions_per_day=1000,
+        ),
+        temporal=TemporalConstraintConfig(
+            active_hours_start="00:00",
+            active_hours_end="23:59",
+            timezone="UTC",
+        ),
+        data_access=DataAccessConstraintConfig(
+            read_paths=["*"],
+            write_paths=["*"],
+            blocked_data_types=["pii_export"],
+        ),
+        communication=CommunicationConstraintConfig(
+            internal_only=False,
+            allowed_channels=["*"],
+            external_requires_approval=False,
+        ),
+    )
+    envelope = ConstraintEnvelope(config=envelope_config)
+
+    # Use a gradient engine that defaults to AUTO_APPROVED (most actions pass)
+    from care_platform.config.schema import GradientRuleConfig, VerificationGradientConfig
+
+    gradient_config = VerificationGradientConfig(
+        rules=[
+            GradientRuleConfig(
+                pattern="emergency_*",
+                level=VerificationLevel.BLOCKED,
+            ),
+            GradientRuleConfig(
+                pattern="delete_*",
+                level=VerificationLevel.BLOCKED,
+            ),
+            GradientRuleConfig(
+                pattern="modify_constraints",
+                level=VerificationLevel.BLOCKED,
+            ),
+            GradientRuleConfig(
+                pattern="publish_*",
+                level=VerificationLevel.HELD,
+            ),
+            GradientRuleConfig(
+                pattern="send_*",
+                level=VerificationLevel.HELD,
+            ),
+            GradientRuleConfig(
+                pattern="approve_*",
+                level=VerificationLevel.HELD,
+            ),
+            GradientRuleConfig(
+                pattern="flag_*",
+                level=VerificationLevel.FLAGGED,
+            ),
+            GradientRuleConfig(
+                pattern="escalate_*",
+                level=VerificationLevel.FLAGGED,
+            ),
+        ],
+        default_level=VerificationLevel.AUTO_APPROVED,
+    )
+    gradient_engine = GradientEngine(config=gradient_config)
+
+    shadow_enforcer = ShadowEnforcer(
+        gradient_engine=gradient_engine,
+        envelope=envelope,
+    )
+
+    # Synthetic actions with varying verification outcomes
+    # These are deliberately chosen to trigger different gradient rules
+    _shadow_actions: dict[str, list[str]] = {
+        "dm-team-lead": [
+            "review_content",
+            "approve_publication",  # triggers HELD (approve_*)
+            "coordinate_team",
+            "schedule_content",
+            "analyze_metrics",
+            "draft_strategy",
+            "flag_quality_issue",  # triggers FLAGGED (flag_*)
+        ],
+        "dm-content-creator": [
+            "draft_post",
+            "edit_content",
+            "research_topic",
+            "suggest_hashtags",
+            "publish_draft",  # triggers HELD (publish_*)
+            "flag_quality_issue",  # triggers FLAGGED (flag_*)
+        ],
+        "dm-analytics": [
+            "read_metrics",
+            "generate_report",
+            "track_engagement",
+            "analyze_trends",
+            "flag_anomaly",  # triggers FLAGGED (flag_*)
+        ],
+        "dm-community-manager": [
+            "draft_response",
+            "moderate_content",
+            "track_community",
+            "flag_issues",  # triggers FLAGGED (flag_*)
+            "send_response",  # triggers HELD (send_*)
+        ],
+        "dm-seo-specialist": [
+            "analyze_keywords",
+            "suggest_structure",
+            "audit_seo",
+            "research_topics",
+            "flag_seo_issue",  # triggers FLAGGED (flag_*)
+        ],
+        "policy-reviewer": [
+            "review_policy",
+            "draft_policy",
+            "cross_reference_clauses",
+            "assess_compliance",
+            "approve_policy",  # triggers HELD (approve_*)
+            "flag_violation",  # triggers FLAGGED (flag_*)
+        ],
+        "compliance-checker": [
+            "check_compliance",
+            "audit_trail",
+            "flag_violation",  # triggers FLAGGED (flag_*)
+            "escalate_issue",  # triggers FLAGGED (escalate_*)
+            "generate_report",
+        ],
+        "audit-monitor": [
+            "monitor_logs",
+            "detect_anomaly",
+            "generate_audit_report",
+            "flag_suspicious_activity",  # triggers FLAGGED (flag_*)
+            "escalate_incident",  # triggers FLAGGED (escalate_*)
+        ],
+        "outreach-agent": [
+            "send_outreach",  # triggers HELD (send_*)
+            "manage_contacts",
+            "draft_proposal",
+            "coordinate_events",
+            "send_invitation",  # triggers HELD (send_*)
+            "publish_announcement",  # triggers HELD (publish_*)
+        ],
+        "engagement-bot": [
+            "respond_to_query",
+            "moderate_discussion",
+            "escalate_issue",  # triggers FLAGGED (escalate_*)
+            "flag_inappropriate",  # triggers FLAGGED (flag_*)
+            "send_welcome",  # triggers HELD (send_*)
+        ],
+        "support-agent": [
+            "handle_ticket",
+            "update_docs",
+            "triage_issue",
+            "send_response",  # triggers HELD (send_*)
+            "escalate_ticket",  # triggers FLAGGED (escalate_*)
+        ],
+        "spec-writer": [
+            "draft_spec",
+            "update_spec",
+            "cross_reference",
+            "validate_consistency",
+            "publish_draft",  # triggers HELD (publish_*)
+            "flag_inconsistency",  # triggers FLAGGED (flag_*)
+        ],
+        "reviewer": [
+            "review_spec",
+            "suggest_changes",
+            "verify_references",
+            "approve_changes",  # triggers HELD (approve_*)
+            "flag_issue",  # triggers FLAGGED (flag_*)
+        ],
+        "validator": [
+            "validate_implementation",
+            "run_conformance_tests",
+            "report_gaps",
+            "flag_nonconformance",  # triggers FLAGGED (flag_*)
+            "escalate_failure",  # triggers FLAGGED (escalate_*)
+        ],
+    }
+
+    for agent_def in AGENTS:
+        agent_id = agent_def["agent_id"]
+        actions = _shadow_actions.get(agent_id, agent_def.get("capabilities", []))
+        if not actions:
+            continue
+
+        # Each agent gets 20-50 evaluations
+        num_evaluations = random.randint(20, 50)
+        for _ in range(num_evaluations):
+            action = random.choice(actions)
+            # Occasionally try a blocked action for variety
+            if random.random() < 0.03:
+                action = random.choice(
+                    ["emergency_shutdown", "delete_all_data", "modify_constraints"]
+                )
+            shadow_enforcer.evaluate(action, agent_id)
+
+    return shadow_enforcer
+
+
+# ---------------------------------------------------------------------------
 # Reset function
 # ---------------------------------------------------------------------------
 
@@ -1517,6 +1916,75 @@ def reset_all(
 
 
 # ---------------------------------------------------------------------------
+# DM Team Runner seed data (Task 5058)
+# ---------------------------------------------------------------------------
+
+_DM_SAMPLE_TASKS = [
+    {
+        "description": "Draft a LinkedIn post about the EATP SDK v0.1 release",
+        "target_agent": "dm-content-creator",
+    },
+    {
+        "description": "Draft a blog article about open governance principles",
+        "target_agent": "dm-content-creator",
+    },
+    {
+        "description": "Draft a tweet about the Foundation's new constitution",
+        "target_agent": "dm-content-creator",
+    },
+    {"description": "Read engagement metrics for the last 30 days", "target_agent": "dm-analytics"},
+    {"description": "Analyze trends in social media engagement", "target_agent": "dm-analytics"},
+    {"description": "Generate a weekly performance report", "target_agent": "dm-analytics"},
+    {
+        "description": "Draft a response to the community question about CARE",
+        "target_agent": "dm-community-manager",
+    },
+    {
+        "description": "Moderate the forum discussion on agent trust",
+        "target_agent": "dm-community-manager",
+    },
+    {
+        "description": "Analyze keywords for our open governance content",
+        "target_agent": "dm-seo-specialist",
+    },
+    {"description": "Audit SEO for the Foundation website", "target_agent": "dm-seo-specialist"},
+    {"description": "Review the content strategy for Q2", "target_agent": "dm-team-lead"},
+    {
+        "description": "Draft a strategy for the upcoming standards release",
+        "target_agent": "dm-team-lead",
+    },
+]
+
+
+def seed_dm_runner_tasks():
+    """Seed sample DM tasks through the DMTeamRunner.
+
+    Creates a DMTeamRunner, runs shadow calibration, and submits
+    sample tasks to demonstrate the full execution pipeline.
+
+    Returns:
+        The DMTeamRunner instance with completed tasks and calibration data.
+    """
+    from care_platform.verticals.dm_runner import DMTeamRunner
+
+    runner = DMTeamRunner()
+
+    # Run shadow calibration first
+    runner.run_shadow_calibration()
+
+    # Submit sample tasks
+    results = []
+    for task in _DM_SAMPLE_TASKS:
+        result = runner.submit_task(
+            description=task["description"],
+            target_agent=task.get("target_agent"),
+        )
+        results.append(result)
+
+    return runner, results
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -1553,27 +2021,27 @@ def main() -> None:
         )
 
     # Seed agents
-    print("\n[1/8] Seeding agents...")
+    print("\n[1/10] Seeding agents...")
     seed_agents(registry)
     teams = sorted({a.team_id for a in registry.active_agents()})
     total_agents = len(registry.active_agents())
     print(f"  {total_agents} agents across {len(teams)} teams: {', '.join(teams)}")
 
     # Seed workspaces
-    print("\n[2/8] Seeding workspaces...")
+    print("\n[2/10] Seeding workspaces...")
     seed_workspaces(workspace_registry)
     ws_count = len(workspace_registry.list_active())
     print(f"  {ws_count} workspaces created and activated")
     for ws in workspace_registry.list_active():
-        print(f"    {ws.id}: state={ws.workspace_state.value}, " f"phase={ws.current_phase.value}")
+        print(f"    {ws.id}: state={ws.workspace_state.value}, phase={ws.current_phase.value}")
 
     # Seed constraint envelopes
-    print("\n[3/8] Seeding constraint envelopes...")
+    print("\n[3/10] Seeding constraint envelopes...")
     envelope_registry = seed_envelopes()
     print(f"  {len(envelope_registry)} constraint envelopes configured")
 
     # Seed audit anchors and verification stats
-    print("\n[4/8] Seeding audit anchors...")
+    print("\n[4/10] Seeding audit anchors...")
     verification_stats_raw, audit_records = seed_audit_anchors()
     verification_stats = seed_verification_stats(audit_records)
     print(f"  {len(audit_records)} audit anchors generated (last 30 days)")
@@ -1581,14 +2049,14 @@ def main() -> None:
         print(f"    {level}: {count}")
 
     # Seed held actions
-    print("\n[5/8] Seeding held actions...")
+    print("\n[5/10] Seeding held actions...")
     seed_held_actions(approval_queue)
     print(f"  {approval_queue.queue_depth} actions pending approval")
     for pa in approval_queue.pending:
         print(f"    [{pa.urgency.value.upper()}] {pa.agent_id}: {pa.action} — {pa.reason[:60]}...")
 
     # Seed bridges
-    print("\n[6/8] Seeding cross-functional bridges...")
+    print("\n[6/10] Seeding cross-functional bridges...")
     seed_bridges(bridge_manager)
     all_bridges = bridge_manager.list_all_bridges()
     print(f"  {len(all_bridges)} bridges created")
@@ -1600,20 +2068,48 @@ def main() -> None:
         )
 
     # Seed posture history
-    print("\n[7/8] Seeding posture history...")
+    print("\n[7/10] Seeding posture history...")
     seed_posture_history(posture_store)
     total_records = sum(len(posture_store.get_history(a["agent_id"])) for a in AGENTS)
     print(f"  {total_records} posture change records across {len(AGENTS)} agents")
 
     # Seed cost tracking
-    print("\n[8/8] Seeding cost tracking data...")
+    print("\n[8/10] Seeding cost tracking data...")
     seed_cost_tracking(cost_tracker)
     report = cost_tracker.spend_report(days=30)
     print(f"  {report.total_calls} API cost records over 30 days")
     print(f"  Total spend: ${report.total_cost:.2f}")
-    print(f"  By model:")
+    print("  By model:")
     for model, cost in sorted(report.by_model.items(), key=lambda x: x[1], reverse=True):
         print(f"    {model}: ${cost:.2f}")
+
+    # Seed shadow enforcer evaluations
+    print("\n[9/10] Seeding shadow enforcer evaluations...")
+    shadow_enforcer = seed_shadow_evaluations()
+    shadow_agents = 0
+    shadow_total = 0
+    for agent_def in AGENTS:
+        try:
+            m = shadow_enforcer.get_metrics(agent_def["agent_id"])
+            shadow_agents += 1
+            shadow_total += m.total_evaluations
+        except KeyError:
+            pass
+    print(f"  {shadow_total} shadow evaluations across {shadow_agents} agents")
+
+    # Seed DM Team Runner tasks (Task 5058)
+    print("\n[10/10] Seeding DM Team Runner tasks...")
+    dm_runner, dm_results = seed_dm_runner_tasks()
+    dm_completed = sum(1 for r in dm_results if r.error is None)
+    dm_held = sum(1 for r in dm_results if r.metadata.get("held"))
+    dm_blocked = sum(1 for r in dm_results if r.error and "BLOCKED" in (r.error or ""))
+    print(
+        f"  {len(dm_results)} DM tasks submitted ({dm_completed} completed, {dm_held} held, {dm_blocked} blocked)"
+    )
+    dm_stats = dm_runner.get_agent_stats()
+    for agent_id, stats in sorted(dm_stats.items()):
+        if stats["tasks_submitted"] > 0:
+            print(f"    {agent_id}: {stats['tasks_submitted']} tasks")
 
     # Summary
     print("\n" + "=" * 50)
@@ -1628,6 +2124,8 @@ def main() -> None:
     print(f"  Posture records:    {total_records}")
     print(f"  Cost records:       {report.total_calls}")
     print(f"  Total API spend:    ${report.total_cost:.2f}")
+    print(f"  Shadow evaluations: {shadow_total}")
+    print(f"  DM tasks:           {len(dm_results)}")
     print("=" * 50)
 
     # Return components for programmatic use
@@ -1641,6 +2139,8 @@ def main() -> None:
         "envelope_registry": envelope_registry,
         "verification_stats": verification_stats,
         "audit_records": audit_records,
+        "shadow_enforcer": shadow_enforcer,
+        "dm_runner": dm_runner,
     }
 
 

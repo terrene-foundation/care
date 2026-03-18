@@ -31,7 +31,6 @@ from care_platform.config.schema import (
 )
 from care_platform.persistence.sqlite_store import SQLiteTrustStore
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -345,7 +344,7 @@ class TestConfigLoading:
     def test_load_valid_yaml(self, tmp_path: Path):
         config_yaml = tmp_path / "platform.yaml"
         config_yaml.write_text(
-            "name: Test\n" "genesis:\n" "  authority: test.org\n" "  authority_name: Test Org\n"
+            "name: Test\ngenesis:\n  authority: test.org\n  authority_name: Test Org\n"
         )
         config = PlatformBootstrap.load_config(config_yaml)
         assert config.name == "Test"

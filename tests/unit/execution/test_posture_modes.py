@@ -12,8 +12,6 @@ Tests cover:
 - Posture read at action time (not cached)
 """
 
-import os
-
 import pytest
 
 from care_platform.audit.anchor import AuditChain
@@ -24,23 +22,14 @@ from care_platform.config.schema import (
 )
 from care_platform.constraint.gradient import GradientEngine
 from care_platform.execution.approval import ApprovalQueue
-from care_platform.execution.kaizen_bridge import KaizenBridge
 from care_platform.execution.llm_backend import (
     BackendRouter,
-    LLMProvider,
     StubBackend,
 )
 from care_platform.execution.posture_enforcer import PostureEnforcer
 from care_platform.execution.registry import AgentRegistry
-from care_platform.execution.runtime import (
-    ExecutionRuntime,
-    Task,
-    TaskResult,
-    TaskStatus,
-)
 from care_platform.persistence.store import MemoryStore
 from care_platform.trust.posture import TrustPosture
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -206,9 +195,9 @@ class TestSharedPlanningMode:
                 action=action,
                 verification_level=VerificationLevel.AUTO_APPROVED,
             )
-            assert (
-                result.level == VerificationLevel.AUTO_APPROVED
-            ), f"Planning action '{action}' should be AUTO_APPROVED, got {result.level}"
+            assert result.level == VerificationLevel.AUTO_APPROVED, (
+                f"Planning action '{action}' should be AUTO_APPROVED, got {result.level}"
+            )
 
     def test_consequential_action_held(self):
         """Consequential actions (write, send, execute, deploy) should be HELD."""
@@ -226,9 +215,9 @@ class TestSharedPlanningMode:
                 action=action,
                 verification_level=VerificationLevel.AUTO_APPROVED,
             )
-            assert (
-                result.level == VerificationLevel.HELD
-            ), f"Consequential action '{action}' should be HELD, got {result.level}"
+            assert result.level == VerificationLevel.HELD, (
+                f"Consequential action '{action}' should be HELD, got {result.level}"
+            )
 
     def test_blocked_stays_blocked(self):
         """BLOCKED actions stay BLOCKED regardless of action type."""

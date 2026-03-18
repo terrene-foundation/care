@@ -16,7 +16,6 @@ from care_platform.constraint.envelope import (
 )
 from care_platform.constraint.gradient import GradientEngine
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------

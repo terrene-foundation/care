@@ -60,7 +60,6 @@ from care_platform.workspace.models import (
     WorkspaceState,
 )
 
-
 # ===========================================================================
 # 1901: Test Harness — Shared Fixtures
 # ===========================================================================
@@ -534,9 +533,9 @@ class TestConstraintCompleteness:
                 current_action_count=0,
             )
             # Every action must produce an audit record
-            assert (
-                result.audit_recorded
-            ), f"Action '{action}' by '{agent_id}' did not produce an audit record"
+            assert result.audit_recorded, (
+                f"Action '{action}' by '{agent_id}' did not produce an audit record"
+            )
 
     @pytest.mark.asyncio
     async def test_envelope_evaluates_all_five_dimensions(self, org_harness: OrgHarness):
@@ -659,9 +658,9 @@ class TestTrustVerifiability:
 
         for agent_id in ["agent-lead", "agent-alpha", "agent-beta"]:
             walk_result = await h.delegation_mgr.walk_chain(agent_id)
-            assert (
-                walk_result.status == ChainStatus.VALID
-            ), f"Agent '{agent_id}' chain is not valid: {walk_result.errors}"
+            assert walk_result.status == ChainStatus.VALID, (
+                f"Agent '{agent_id}' chain is not valid: {walk_result.errors}"
+            )
             assert walk_result.depth > 0, f"Agent '{agent_id}' should have delegation depth > 0"
 
     @pytest.mark.asyncio
@@ -742,9 +741,9 @@ class TestAuditContinuity:
             )
 
         # Verify the audit chain has at least as many anchors as actions
-        assert h.audit_chain.length >= len(
-            actions
-        ), f"Expected at least {len(actions)} audit anchors, got {h.audit_chain.length}"
+        assert h.audit_chain.length >= len(actions), (
+            f"Expected at least {len(actions)} audit anchors, got {h.audit_chain.length}"
+        )
 
         # Verify chain integrity — no gaps, correct sequencing, hash links
         is_valid, errors = h.audit_chain.verify_chain_integrity()
@@ -790,9 +789,9 @@ class TestAuditContinuity:
 
         # Verify sequence numbers are 0, 1, 2, ..., N
         for i, anchor in enumerate(h.audit_chain.anchors):
-            assert (
-                anchor.sequence == i
-            ), f"Expected sequence {i}, got {anchor.sequence} at position {i}"
+            assert anchor.sequence == i, (
+                f"Expected sequence {i}, got {anchor.sequence} at position {i}"
+            )
 
     @pytest.mark.asyncio
     async def test_audit_chain_hash_links_unbroken(self, org_harness: OrgHarness):
@@ -813,9 +812,9 @@ class TestAuditContinuity:
                 assert anchor.previous_hash is None, "Genesis anchor should have no previous_hash"
             else:
                 prev_anchor = h.audit_chain.anchors[i - 1]
-                assert (
-                    anchor.previous_hash == prev_anchor.content_hash
-                ), f"Anchor {i} previous_hash does not match anchor {i - 1} content_hash"
+                assert anchor.previous_hash == prev_anchor.content_hash, (
+                    f"Anchor {i} previous_hash does not match anchor {i - 1} content_hash"
+                )
 
     @pytest.mark.asyncio
     async def test_blocked_actions_also_audited(self, org_harness: OrgHarness):
@@ -1036,9 +1035,9 @@ class TestConstraintsEnforced:
             current_action_count=0,
         )
 
-        assert (
-            result.verification_level == VerificationLevel.BLOCKED
-        ), f"Expected BLOCKED, got {result.verification_level}"
+        assert result.verification_level == VerificationLevel.BLOCKED, (
+            f"Expected BLOCKED, got {result.verification_level}"
+        )
         assert result.outcome == ActionOutcome.REJECTED, f"Expected REJECTED, got {result.outcome}"
 
     @pytest.mark.asyncio
@@ -1131,9 +1130,9 @@ class TestTrustVerifiable:
             action="read_metrics",
             current_action_count=0,
         )
-        assert (
-            result_before.outcome == ActionOutcome.EXECUTED
-        ), f"Agent should succeed before revocation, got {result_before.outcome}"
+        assert result_before.outcome == ActionOutcome.EXECUTED, (
+            f"Agent should succeed before revocation, got {result_before.outcome}"
+        )
 
         # Step 2: Revoke agent-alpha's trust via the bridge
         h.bridge.revoke_agent("agent-alpha")
@@ -1145,9 +1144,9 @@ class TestTrustVerifiable:
             action="read_metrics",
             current_action_count=0,
         )
-        assert (
-            result_after.outcome == ActionOutcome.REJECTED
-        ), f"Revoked agent should be BLOCKED, got {result_after.outcome}"
+        assert result_after.outcome == ActionOutcome.REJECTED, (
+            f"Revoked agent should be BLOCKED, got {result_after.outcome}"
+        )
         assert result_after.verification_level == VerificationLevel.BLOCKED
 
     @pytest.mark.asyncio

@@ -31,6 +31,7 @@ Environment variables recognized by the CARE Platform:
 | APP_ENV                     | No       | development                                  | Environment (development/staging/production) |
 | DEBUG                       | No       | false                                        | Enable debug mode                  |
 | LOG_LEVEL                   | No       | INFO                                         | Logging level                      |
+| CARE_LOG_FORMAT             | No       | console                                      | Log output format (json or console)|
 
 * CARE_API_TOKEN is required unless CARE_DEV_MODE=true.
 """
@@ -167,6 +168,7 @@ class EnvConfig:
     app_env: str = "development"
     debug: bool = False
     log_level: str = "INFO"
+    log_format: str = "console"
 
     @property
     def is_production(self) -> bool:
@@ -235,6 +237,7 @@ def load_env_config(*, load_dotenv: bool = True) -> EnvConfig:
         app_env=os.environ.get("APP_ENV", "development"),
         debug=_bool_env("DEBUG"),
         log_level=os.environ.get("LOG_LEVEL", "INFO"),
+        log_format=os.environ.get("CARE_LOG_FORMAT", "console"),
     )
 
     # Validate: CARE_API_TOKEN required in production mode

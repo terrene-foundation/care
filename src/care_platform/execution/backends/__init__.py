@@ -79,8 +79,7 @@ def create_backend_router(config: EnvConfig) -> BackendRouter:
         )
     else:
         logger.warning(
-            "No LLM backends configured. Set ANTHROPIC_API_KEY or "
-            "OPENAI_API_KEY in your .env file."
+            "No LLM backends configured. Set ANTHROPIC_API_KEY or OPENAI_API_KEY in your .env file."
         )
 
     return router

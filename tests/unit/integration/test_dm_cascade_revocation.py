@@ -18,8 +18,6 @@ DM team hierarchy:
       -> dm-seo-specialist
 """
 
-import pytest
-
 from care_platform.audit.pipeline import AuditPipeline
 from care_platform.config.schema import VerificationLevel
 from care_platform.execution.approval import ApprovalQueue, UrgencyLevel
@@ -78,9 +76,7 @@ class TestDmSurgicalRevocation:
         """Revoke Content Creator surgically: only it is revoked, others active."""
         cred_mgr, rev_mgr = _setup_dm_team()
 
-        record = rev_mgr.surgical_revoke(
-            _CONTENT_CREATOR, "Calibration test: surgical", "founder"
-        )
+        record = rev_mgr.surgical_revoke(_CONTENT_CREATOR, "Calibration test: surgical", "founder")
 
         assert isinstance(record, RevocationRecord)
         assert record.agent_id == _CONTENT_CREATOR
@@ -137,9 +133,7 @@ class TestDmCascadeRevocation:
         """Revoking team lead cascades to all 4 specialists."""
         cred_mgr, rev_mgr = _setup_dm_team()
 
-        record = rev_mgr.cascade_revoke(
-            _TEAM_LEAD, "Team-wide cascade test", "founder"
-        )
+        record = rev_mgr.cascade_revoke(_TEAM_LEAD, "Team-wide cascade test", "founder")
 
         assert record.revocation_type == "cascade"
         # All 4 specialists should be in affected_agents

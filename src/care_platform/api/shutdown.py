@@ -36,10 +36,12 @@ class ShutdownManager:
     Thread-safe for concurrent connection registration/unregistration.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, max_connections: int = 100) -> None:
         self._shutting_down = False
         self._connections: list[Any] = []
         self._lock = threading.Lock()
+        # L2-FIX: Bound connection count to prevent unbounded memory growth.
+        self._max_connections = max_connections
 
     @property
     def is_shutting_down(self) -> bool:
@@ -75,8 +77,16 @@ class ShutdownManager:
         Args:
             websocket: The WebSocket connection to track. Must have an
                 async ``close(code, reason)`` method.
+
+        Raises:
+            RuntimeError: If the maximum number of connections has been reached.
         """
         with self._lock:
+            if len(self._connections) >= self._max_connections:
+                raise RuntimeError(
+                    f"Max connection limit reached ({self._max_connections}). "
+                    f"Cannot accept new connections."
+                )
             self._connections.append(websocket)
 
     def unregister_connection(self, websocket: Any) -> None:

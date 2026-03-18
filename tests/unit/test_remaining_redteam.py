@@ -25,7 +25,6 @@ from care_platform.workspace.bridge import (
     BridgeType,
 )
 
-
 # ---------------------------------------------------------------------------
 # RT-11: No wildcard capabilities in delegated agents
 # ---------------------------------------------------------------------------

@@ -90,7 +90,8 @@ class ClassificationResult(BaseModel):
     level: UncertaintyLevel
     verification_level: VerificationLevel
     score: float = Field(
-        ge=0.0, le=1.0,
+        ge=0.0,
+        le=1.0,
         description="Uncertainty score: 0.0 = fully certain, 1.0 = fundamentally uncertain",
     )
     reason: str
@@ -205,13 +206,9 @@ class UncertaintyClassifier:
         factors = []
 
         if metadata.data_completeness < 0.5:
-            factors.append(
-                f"low data completeness ({metadata.data_completeness:.0%})"
-            )
+            factors.append(f"low data completeness ({metadata.data_completeness:.0%})")
         elif metadata.data_completeness < 0.8:
-            factors.append(
-                f"moderate data completeness ({metadata.data_completeness:.0%})"
-            )
+            factors.append(f"moderate data completeness ({metadata.data_completeness:.0%})")
 
         if not metadata.precedent_available:
             factors.append("no prior precedent available")
@@ -227,7 +224,4 @@ class UncertaintyClassifier:
         if not factors:
             factors.append("all indicators within normal range")
 
-        return (
-            f"Uncertainty level {level.value} (score: {score:.2f}): "
-            f"{'; '.join(factors)}"
-        )
+        return f"Uncertainty level {level.value} (score: {score:.2f}): {'; '.join(factors)}"

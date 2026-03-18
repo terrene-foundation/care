@@ -185,7 +185,7 @@ class AlertManager:
         return self.send_alert(
             severity=AlertSeverity.HIGH,
             title=f"Action BLOCKED: {action}",
-            message=(f"Agent '{agent_id}' action '{action}' was BLOCKED. " f"Reason: {reason}"),
+            message=(f"Agent '{agent_id}' action '{action}' was BLOCKED. Reason: {reason}"),
             source="constraint_middleware",
             metadata={
                 "agent_id": agent_id,

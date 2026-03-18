@@ -17,16 +17,15 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
-from care_platform.trust.jcs import canonical_serialize
-
 # ConfidentialityLevel and _CONFIDENTIALITY_ORDER are canonically defined
 # in config.schema to break a circular import chain. Re-export here so
 # existing callers that import from care_platform.trust.reasoning continue
 # to work. Do NOT redefine — use the canonical single source of truth.
 from care_platform.config.schema import (  # noqa: F401
-    ConfidentialityLevel,
     _CONFIDENTIALITY_ORDER,
+    ConfidentialityLevel,
 )
+from care_platform.trust.jcs import canonical_serialize
 
 
 class ReasoningTrace(BaseModel):

@@ -201,7 +201,7 @@ def _apply_migration(store: object, migration: Migration) -> None:
         logger.info("Applied migration v%d: %s", migration.version, migration.description)
     except Exception as exc:
         raise MigrationError(
-            f"Failed to apply migration v{migration.version} " f"({migration.description}): {exc}"
+            f"Failed to apply migration v{migration.version} ({migration.description}): {exc}"
         ) from exc
 
 

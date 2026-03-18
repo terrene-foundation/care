@@ -10,7 +10,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from care_platform.audit.anchor import AuditAnchor, AuditChain
+from care_platform.audit.anchor import AuditChain
 from care_platform.config.schema import (
     CommunicationConstraintConfig,
     ConstraintEnvelopeConfig,
@@ -19,6 +19,7 @@ from care_platform.config.schema import (
     GradientRuleConfig,
     OperationalConstraintConfig,
     TemporalConstraintConfig,
+    TrustPostureLevel,
     VerificationGradientConfig,
     VerificationLevel,
 )
@@ -37,8 +38,6 @@ from care_platform.trust.posture import (
     PostureEvidence,
     TrustPosture,
 )
-from care_platform.config.schema import TrustPostureLevel
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -789,9 +788,9 @@ class TestPostureEdgeCases:
         """All actions in NEVER_DELEGATED_ACTIONS should be flagged by is_action_always_held."""
         posture = TrustPosture(agent_id="agent-1")
         for action in NEVER_DELEGATED_ACTIONS:
-            assert posture.is_action_always_held(
-                action
-            ), f"Action '{action}' should be never-delegated but was not detected"
+            assert posture.is_action_always_held(action), (
+                f"Action '{action}' should be never-delegated but was not detected"
+            )
 
     def test_posture_history_accumulates(self):
         """Multiple upgrades and downgrades accumulate in history."""

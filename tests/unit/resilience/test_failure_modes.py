@@ -5,15 +5,11 @@
 import pytest
 
 from care_platform.resilience.failure_modes import (
-    DetectionResult,
     FailureDetector,
     FailureMode,
     FailureSeverity,
-    MitigationAction,
-    RecoveryPlan,
     SystemHealth,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -175,9 +171,7 @@ class TestCommunicationIsolationDetection:
             bridges_active=False,
         )
         results = detector.detect(health)
-        comm_results = [
-            r for r in results if r.failure_mode == FailureMode.COMMUNICATION_ISOLATION
-        ]
+        comm_results = [r for r in results if r.failure_mode == FailureMode.COMMUNICATION_ISOLATION]
         assert len(comm_results) > 0
         assert comm_results[0].severity == FailureSeverity.MEDIUM
 
@@ -245,9 +239,7 @@ class TestPostureRegressionDetection:
             bridges_active=True,
         )
         results = detector.detect(health)
-        posture_results = [
-            r for r in results if r.failure_mode == FailureMode.POSTURE_REGRESSION
-        ]
+        posture_results = [r for r in results if r.failure_mode == FailureMode.POSTURE_REGRESSION]
         assert len(posture_results) > 0
         assert posture_results[0].severity == FailureSeverity.MEDIUM
 

@@ -308,6 +308,83 @@ export interface AgentDetail {
 }
 
 // ---------------------------------------------------------------------------
+// ShadowEnforcer
+// ---------------------------------------------------------------------------
+
+/** Mirrors care_platform.trust.shadow_enforcer.ShadowMetrics. */
+export interface ShadowMetrics {
+  agent_id: string;
+  total_evaluations: number;
+  auto_approved_count: number;
+  flagged_count: number;
+  held_count: number;
+  blocked_count: number;
+  dimension_trigger_counts: Record<string, number>;
+  window_start: string;
+  window_end: string;
+  previous_pass_rate: number;
+}
+
+/** Mirrors care_platform.trust.shadow_enforcer.ShadowReport. */
+export interface ShadowReport {
+  agent_id: string;
+  evaluation_period_days: number;
+  total_evaluations: number;
+  pass_rate: number;
+  block_rate: number;
+  hold_rate: number;
+  flag_rate: number;
+  dimension_breakdown: Record<string, number>;
+  upgrade_eligible: boolean;
+  upgrade_blockers: string[];
+  recommendation: string;
+}
+
+// ---------------------------------------------------------------------------
+// DM (Decision-Making) Team
+// ---------------------------------------------------------------------------
+
+/** DM task lifecycle status. */
+export type DmTaskStatus =
+  | "pending"
+  | "routing"
+  | "executing"
+  | "complete"
+  | "held"
+  | "failed";
+
+/** DM agent summary within the team dashboard. */
+export interface DmAgentSummary {
+  agent_id: string;
+  name: string;
+  role: string;
+  posture: TrustPosture;
+  status: AgentStatus;
+  tasks_submitted: number;
+  tasks_completed: number;
+  tasks_held: number;
+  tasks_blocked: number;
+}
+
+/** DM team status overview (from GET /api/v1/dm/status). */
+export interface DmStatus {
+  team_id: string;
+  agents: DmAgentSummary[];
+  total_agents: number;
+}
+
+/** DM task submission response (from POST /api/v1/dm/tasks). */
+export interface DmTask {
+  task_id: string;
+  description: string;
+  target_agent: string | null;
+  status: DmTaskStatus;
+  result: string | null;
+  created_at: string;
+  completed_at: string | null;
+}
+
+// ---------------------------------------------------------------------------
 // Real-time Events (WebSocket)
 // ---------------------------------------------------------------------------
 

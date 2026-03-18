@@ -15,6 +15,12 @@ Covers:
 
 import pytest
 
+from care_platform.audit.bridge_audit import (
+    BridgeAuditAnchor,
+    _compute_anchor_hash,
+    _compute_counterpart_hash,
+    create_bridge_audit_pair,
+)
 from care_platform.config.schema import (
     AgentConfig,
     CommunicationConstraintConfig,
@@ -35,14 +41,6 @@ from care_platform.trust.bridge_trust import (
 )
 from care_platform.trust.eatp_bridge import EATPBridge
 from care_platform.workspace.bridge import BridgeType
-
-from care_platform.audit.bridge_audit import (
-    BridgeAuditAnchor,
-    create_bridge_audit_pair,
-    _compute_anchor_hash,
-    _compute_counterpart_hash,
-)
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -98,7 +96,6 @@ class TestBridgeDelegation:
     @pytest.mark.asyncio
     async def test_bridge_delegation_creation(self, established_bridge):
         """BridgeDelegation can be created with all required fields."""
-        from eatp.chain import DelegationRecord
 
         # Create a delegation through the bridge to get a real DelegationRecord
         agent_config = AgentConfig(

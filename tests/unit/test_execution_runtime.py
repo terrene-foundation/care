@@ -31,7 +31,6 @@ from care_platform.execution.runtime import (
 from care_platform.persistence.store import MemoryStore
 from care_platform.trust.revocation import RevocationManager
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------

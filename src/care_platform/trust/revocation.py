@@ -26,18 +26,16 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
-from pydantic import BaseModel, Field
-
 from eatp.revocation.broadcaster import (
     InMemoryRevocationBroadcaster,
     RevocationBroadcaster,
     RevocationEvent,
     RevocationType,
 )
-
-from care_platform.trust.credentials import CredentialManager
+from pydantic import BaseModel, Field
 
 from care_platform.persistence.store import TrustStore
+from care_platform.trust.credentials import CredentialManager
 
 if TYPE_CHECKING:
     from care_platform.constraint.cache import VerificationCache
@@ -98,6 +96,7 @@ class RevocationManager:
         trust_store: TrustStore | None = None,
         revocation_broadcaster: RevocationBroadcaster | None = None,
         bridge_trust_manager: BridgeTrustManager | None = None,
+        max_log_entries: int = 10000,
     ) -> None:
         # EATP-GAP: R3 — Credential integration
         # The EATP SDK's RevocationBroadcaster does not integrate with
@@ -123,6 +122,8 @@ class RevocationManager:
         )
 
         self._revocation_log: list[RevocationRecord] = []
+        # L2-FIX: Bound revocation log to prevent unbounded memory growth.
+        self._max_log_entries = max_log_entries
         # EATP-GAP: R5 — Local delegation tree as fallback when bridge unavailable
         self._delegation_tree: dict[str, list[str]] = {}  # parent -> [children]
         # RT6-07: Secondary index for O(1) is_revoked() lookups instead of
@@ -134,6 +135,20 @@ class RevocationManager:
         self._hydrate_from_store()
         # RT6-04: Hydrate delegation tree from store on startup
         self._hydrate_delegation_tree()
+
+    def _trim_revocation_log(self) -> None:
+        """L2-FIX: Trim the revocation log to _max_log_entries, removing oldest first.
+
+        Must be called while self._lock is held, or during init (single-threaded).
+        """
+        if len(self._revocation_log) > self._max_log_entries:
+            overflow = len(self._revocation_log) - self._max_log_entries
+            del self._revocation_log[:overflow]
+            logger.info(
+                "RevocationManager: trimmed %d oldest log entries (max=%d)",
+                overflow,
+                self._max_log_entries,
+            )
 
     def _broadcast_revocation_event(  # EATP-GAP: R6
         self,
@@ -210,6 +225,9 @@ class RevocationManager:
                     exc,
                     data,
                 )
+
+        # L2-FIX: Trim after bulk hydration
+        self._trim_revocation_log()
 
         if persisted:
             logger.info(
@@ -347,6 +365,7 @@ class RevocationManager:
         # RT7-01: Thread-safe mutations to shared state
         with self._lock:
             self._revocation_log.append(record)
+            self._trim_revocation_log()
             self._revoked_ids.add(agent_id)
             # EATP-GAP: R1 — Reparent the agent's children to the agent's parent
             # instead of orphaning them. This preserves cascade discoverability —
@@ -442,6 +461,7 @@ class RevocationManager:
         # RT7-01: Thread-safe mutations to shared state
         with self._lock:
             self._revocation_log.append(record)
+            self._trim_revocation_log()
             self._revoked_ids.add(agent_id)
             self._revoked_ids.update(downstream)
 
@@ -496,7 +516,7 @@ class RevocationManager:
         """
         if self._bridge_trust_manager is None:
             logger.warning(
-                "M33-3302: Cannot revoke bridge delegations — " "no BridgeTrustManager configured"
+                "M33-3302: Cannot revoke bridge delegations — no BridgeTrustManager configured"
             )
             return []
 
@@ -515,6 +535,7 @@ class RevocationManager:
             )
             with self._lock:
                 self._revocation_log.append(record)
+                self._trim_revocation_log()
 
             self._persist_to_store(record)
             self._broadcast_revocation_event(record, RevocationType.AGENT_REVOKED)

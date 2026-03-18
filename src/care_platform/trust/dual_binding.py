@@ -27,9 +27,7 @@ class DualBinding(BaseModel):
     the trace to be considered valid within the chain.
     """
 
-    parent_binding: str = Field(
-        description="SHA-256 hash binding trace to its parent record"
-    )
+    parent_binding: str = Field(description="SHA-256 hash binding trace to its parent record")
     genesis_binding: str = Field(
         description="SHA-256 hash binding trace to the trust chain genesis"
     )
@@ -60,9 +58,7 @@ class DualBinding(BaseModel):
             genesis_binding=genesis_binding,
         )
 
-    def verify_parent_binding(
-        self, trace_hash: str, parent_record_hash: str
-    ) -> bool:
+    def verify_parent_binding(self, trace_hash: str, parent_record_hash: str) -> bool:
         """Verify that the trace is correctly bound to the parent record.
 
         Args:
@@ -75,9 +71,7 @@ class DualBinding(BaseModel):
         expected = _compute_binding(trace_hash, parent_record_hash)
         return hmac.compare_digest(self.parent_binding, expected)
 
-    def verify_genesis_binding(
-        self, trace_hash: str, genesis_hash: str
-    ) -> bool:
+    def verify_genesis_binding(self, trace_hash: str, genesis_hash: str) -> bool:
         """Verify that the trace is correctly bound to the genesis record.
 
         Args:

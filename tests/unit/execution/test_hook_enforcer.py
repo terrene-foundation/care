@@ -2,8 +2,6 @@
 # Licensed under the Apache License, Version 2.0
 """Tests for COC hook enforcer (Task 404)."""
 
-import pytest
-
 from care_platform.config.schema import (
     ConstraintEnvelopeConfig,
     GradientRuleConfig,

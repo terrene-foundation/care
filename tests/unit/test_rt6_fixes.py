@@ -16,9 +16,7 @@ Tests for:
 from __future__ import annotations
 
 import threading
-import time
 from datetime import UTC, datetime
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -27,14 +25,11 @@ from care_platform.config.schema import (
     ConstraintEnvelopeConfig,
     FinancialConstraintConfig,
     OperationalConstraintConfig,
-    TrustPostureLevel,
     VerificationGradientConfig,
     VerificationLevel,
 )
 from care_platform.constraint.envelope import (
     ConstraintEnvelope,
-    EnvelopeEvaluation,
-    EvaluationResult,
 )
 from care_platform.constraint.gradient import GradientEngine
 from care_platform.execution.approval import ApprovalQueue
@@ -47,21 +42,19 @@ from care_platform.execution.registry import AgentRegistry
 from care_platform.execution.runtime import (
     ExecutionRuntime,
     Task,
-    TaskResult,
     TaskStatus,
 )
 from care_platform.persistence.store import MemoryStore
 from care_platform.trust.posture import TrustPosture
 from care_platform.trust.revocation import RevocationManager
 from care_platform.workspace.bridge import (
+    _TERMINAL_STATES,
     Bridge,
     BridgeManager,
     BridgePermission,
     BridgeStatus,
     BridgeType,
-    _TERMINAL_STATES,
 )
-
 
 # ---------------------------------------------------------------------------
 # Shared helpers (mirrors test_execution_runtime_rt5.py conventions)
@@ -171,9 +164,9 @@ class TestRT6_01_ResumeHeldTOCTOU:
 
         # Exactly one should get a non-None result
         non_none = [r for r in results if r is not None]
-        assert (
-            len(non_none) == 1
-        ), f"Expected exactly one successful resume, got {len(non_none)}: {results}"
+        assert len(non_none) == 1, (
+            f"Expected exactly one successful resume, got {len(non_none)}: {results}"
+        )
         # The successful one should be COMPLETED
         assert non_none[0].status == TaskStatus.COMPLETED
 
@@ -902,12 +895,15 @@ class TestRT6_05_BridgeTerminalStateGuards:
 
     def test_terminal_states_frozen_set(self):
         """_TERMINAL_STATES contains exactly EXPIRED, CLOSED, REVOKED."""
-        assert _TERMINAL_STATES == frozenset(
-            {
-                BridgeStatus.EXPIRED,
-                BridgeStatus.CLOSED,
-                BridgeStatus.REVOKED,
-            }
+        assert (
+            frozenset(
+                {
+                    BridgeStatus.EXPIRED,
+                    BridgeStatus.CLOSED,
+                    BridgeStatus.REVOKED,
+                }
+            )
+            == _TERMINAL_STATES
         )
 
     def test_expire_bridges_only_affects_active_or_suspended(self):

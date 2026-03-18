@@ -236,9 +236,9 @@ class TestDmShadowEnforcerCalibration:
             "dm-community-manager",
             "dm-seo-specialist",
         }
-        assert (
-            agent_ids == expected_agents
-        ), f"Missing agent roles in dataset: {expected_agents - agent_ids}"
+        assert agent_ids == expected_agents, (
+            f"Missing agent roles in dataset: {expected_agents - agent_ids}"
+        )
 
     def test_dataset_has_50_actions(self):
         """Simulated dataset has exactly 50 actions."""
@@ -258,9 +258,9 @@ class TestDmShadowEnforcerCalibration:
         actions = _build_simulated_actions()
         results = _evaluate_all(enforcers, actions)
         auto_approved = sum(1 for r in results if r.would_be_auto_approved)
-        assert (
-            auto_approved >= 25
-        ), f"Expected majority auto-approved (>= 25/50), got {auto_approved}"
+        assert auto_approved >= 25, (
+            f"Expected majority auto-approved (>= 25/50), got {auto_approved}"
+        )
 
     def test_distribution_some_flagged(self):
         """Some actions are FLAGGED (default level for unmatched patterns)."""
@@ -365,9 +365,9 @@ class TestDmShadowEnforcerCalibration:
 
         for agent_id, enforcer in enforcers.items():
             report = enforcer.generate_report(agent_id)
-            assert isinstance(
-                report, ShadowReport
-            ), f"Expected ShadowReport for {agent_id}, got {type(report)}"
+            assert isinstance(report, ShadowReport), (
+                f"Expected ShadowReport for {agent_id}, got {type(report)}"
+            )
             assert report.agent_id == agent_id
             assert report.total_evaluations > 0, f"Agent {agent_id} has 0 evaluations in report"
 
@@ -408,12 +408,12 @@ class TestDmShadowEnforcerCalibration:
 
         # dm-team-lead has at least 1 blocked action (modify_constraints)
         report = enforcers["dm-team-lead"].generate_report("dm-team-lead")
-        assert (
-            report.upgrade_eligible is False
-        ), "Agent with blocked actions should not be upgrade eligible"
-        assert (
-            len(report.upgrade_blockers) > 0
-        ), "Agent with blocked actions should have upgrade blockers"
+        assert report.upgrade_eligible is False, (
+            "Agent with blocked actions should not be upgrade eligible"
+        )
+        assert len(report.upgrade_blockers) > 0, (
+            "Agent with blocked actions should have upgrade blockers"
+        )
 
     def test_per_agent_metrics_independent(self):
         """Each agent's metrics are tracked independently across enforcers."""
@@ -426,9 +426,9 @@ class TestDmShadowEnforcerCalibration:
             metrics = enforcer.get_metrics(agent_id)
             total += metrics.total_evaluations
 
-        assert (
-            total == 50
-        ), f"Sum of per-agent evaluations ({total}) does not equal total actions (50)"
+        assert total == 50, (
+            f"Sum of per-agent evaluations ({total}) does not equal total actions (50)"
+        )
 
     def test_blocked_actions_classified_as_blocked_for_all_agents(self):
         """Delete and modify_constraints are classified as BLOCKED for every agent."""

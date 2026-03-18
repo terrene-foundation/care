@@ -10,18 +10,14 @@ M17-1701: Trust chain records need hash chaining for tamper detection.
 
 from __future__ import annotations
 
-import hashlib
-import json
-
 import pytest
 
 from care_platform.trust.integrity import (
-    TrustChainIntegrity,
-    TrustRecordHash,
     IntegrityCheckResult,
     IntegrityViolation,
+    TrustChainIntegrity,
+    TrustRecordHash,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers

@@ -62,3 +62,18 @@ secrets/
 # Local settings (user-specific)
 .claude/settings.local.json
 apps/web/node_modules/
+
+# Next.js build output
+apps/web/.next/
+
+# Playwright logs
+.playwright-mcp/
+
+# Flutter build artifacts
+apps/mobile/build/
+apps/mobile/.dart_tool/
+
+# Python build
+dist/
+build/
+*.egg-info/

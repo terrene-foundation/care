@@ -24,7 +24,6 @@ from care_platform.constraint.envelope import _is_time_window_tighter
 from care_platform.trust.delegation import DelegationManager
 from care_platform.trust.eatp_bridge import EATPBridge
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------

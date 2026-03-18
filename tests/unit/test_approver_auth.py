@@ -18,6 +18,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
+from care_platform.execution.approval import ApprovalQueue
 from care_platform.execution.approver_auth import (
     ApproverRegistry,
     AuthenticatedApprovalQueue,
@@ -25,8 +26,6 @@ from care_platform.execution.approver_auth import (
     sign_decision,
     verify_decision,
 )
-from care_platform.execution.approval import ApprovalQueue, UrgencyLevel
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -494,8 +493,9 @@ class TestReplayProtection:
         # also update the signature to match.
         # Actually, we need a properly signed but old decision.
         # The simplest approach: create one with the correct fields.
-        from care_platform.execution.approver_auth import _serialize_decision_for_signing
         from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey as _PK
+
+        from care_platform.execution.approver_auth import _serialize_decision_for_signing
 
         old_time = datetime.now(UTC) - timedelta(seconds=120)
         nonce = signed.nonce

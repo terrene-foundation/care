@@ -19,7 +19,6 @@ from fastapi.testclient import TestClient
 from care_platform.api.server import create_app
 from care_platform.config.env import EnvConfig
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------

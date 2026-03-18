@@ -11,7 +11,6 @@ message-level transformation is needed — messages pass through directly.
 
 from __future__ import annotations
 
-import json
 import logging
 from decimal import Decimal
 
@@ -30,8 +29,9 @@ logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Approximate pricing per token (USD).
+# L10: Defaults can be overridden via CARE_LLM_PRICING_JSON env var.
 # ---------------------------------------------------------------------------
-_OPENAI_PRICING: dict[str, tuple[Decimal, Decimal]] = {
+_OPENAI_PRICING_DEFAULTS: dict[str, tuple[Decimal, Decimal]] = {
     # model prefix -> (input $/token, output $/token)
     "gpt-4o-mini": (Decimal("0.15") / Decimal("1000000"), Decimal("0.60") / Decimal("1000000")),
     "gpt-4o": (Decimal("2.5") / Decimal("1000000"), Decimal("10") / Decimal("1000000")),
@@ -41,6 +41,59 @@ _OPENAI_PRICING: dict[str, tuple[Decimal, Decimal]] = {
     "o1": (Decimal("15") / Decimal("1000000"), Decimal("60") / Decimal("1000000")),
     "o1-mini": (Decimal("3") / Decimal("1000000"), Decimal("12") / Decimal("1000000")),
 }
+
+
+def _load_openai_pricing() -> dict[str, tuple[Decimal, Decimal]]:
+    """Load OpenAI pricing, optionally overriding from CARE_LLM_PRICING_JSON.
+
+    The env var should contain a JSON object with an 'openai' key mapping
+    model names to ``{"input": "<price>", "output": "<price>"}`` where prices
+    are per-million-token USD strings.
+
+    Returns:
+        Pricing dict (defaults merged with overrides from env).
+    """
+    import json
+    import os
+
+    pricing = dict(_OPENAI_PRICING_DEFAULTS)
+
+    raw = os.environ.get("CARE_LLM_PRICING_JSON", "")
+    if not raw:
+        return pricing
+
+    try:
+        data = json.loads(raw)
+    except (json.JSONDecodeError, ValueError):
+        logger.warning("Invalid JSON in CARE_LLM_PRICING_JSON — using default OpenAI pricing")
+        return pricing
+
+    openai_overrides = data.get("openai", {})
+    if not isinstance(openai_overrides, dict):
+        logger.warning("CARE_LLM_PRICING_JSON 'openai' key is not a dict — using default pricing")
+        return pricing
+
+    for model_name, prices in openai_overrides.items():
+        if not isinstance(prices, dict) or "input" not in prices or "output" not in prices:
+            logger.warning(
+                "Skipping invalid pricing entry for model '%s' in CARE_LLM_PRICING_JSON",
+                model_name,
+            )
+            continue
+        try:
+            input_price = Decimal(str(prices["input"])) / Decimal("1000000")
+            output_price = Decimal(str(prices["output"])) / Decimal("1000000")
+            pricing[model_name] = (input_price, output_price)
+        except Exception:
+            logger.warning(
+                "Failed to parse pricing for model '%s' in CARE_LLM_PRICING_JSON",
+                model_name,
+            )
+
+    return pricing
+
+
+_OPENAI_PRICING: dict[str, tuple[Decimal, Decimal]] = _load_openai_pricing()
 
 _DEFAULT_INPUT_PRICE = Decimal("2.5") / Decimal("1000000")
 _DEFAULT_OUTPUT_PRICE = Decimal("10") / Decimal("1000000")

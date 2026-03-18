@@ -12,7 +12,6 @@ Endpoint schemas define the REST API surface:
     GET  /api/v1/agents/{agent_id}/status            - Agent status and posture
     POST /api/v1/agents/{agent_id}/approve/{action_id} - Approve held action
     POST /api/v1/agents/{agent_id}/reject/{action_id}  - Reject held action
-    GET  /api/v1/audit/team/{team_id}               - Team audit report
     GET  /api/v1/held-actions                       - List pending approvals
     GET  /api/v1/cost/report                        - API cost report
 
@@ -32,6 +31,10 @@ M36 Bridge management endpoints:
     POST /api/v1/bridges/{bridge_id}/close          - Close a bridge
     GET  /api/v1/bridges/team/{team_id}             - List bridges for a team
     GET  /api/v1/bridges/{bridge_id}/audit          - Bridge audit trail
+
+M13 ShadowEnforcer endpoints:
+    GET  /api/v1/shadow/{agent_id}/metrics          - Shadow enforcement metrics
+    GET  /api/v1/shadow/{agent_id}/report           - Shadow posture upgrade report
 """
 
 from __future__ import annotations
@@ -46,8 +49,11 @@ from care_platform.execution.registry import AgentRegistry
 from care_platform.persistence.cost_tracking import CostTracker
 
 if TYPE_CHECKING:
+    from care_platform.audit.anchor import AuditChain
     from care_platform.config.schema import VerificationLevel
     from care_platform.constraint.envelope import ConstraintEnvelope
+    from care_platform.persistence.posture_history import PostureHistoryStore
+    from care_platform.trust.shadow_enforcer import ShadowEnforcer
     from care_platform.workspace.bridge import BridgeManager
     from care_platform.workspace.models import WorkspaceRegistry
 
@@ -103,11 +109,6 @@ _ENDPOINT_DEFINITIONS: list[EndpointDefinition] = [
         method="POST",
         path="/api/v1/agents/{agent_id}/reject/{action_id}",
         description="Reject a held action",
-    ),
-    EndpointDefinition(
-        method="GET",
-        path="/api/v1/audit/team/{team_id}",
-        description="Get team audit report",
     ),
     EndpointDefinition(
         method="GET",
@@ -186,6 +187,17 @@ _ENDPOINT_DEFINITIONS: list[EndpointDefinition] = [
         path="/api/v1/bridges/{bridge_id}/audit",
         description="Get bridge audit trail",
     ),
+    # M13 ShadowEnforcer endpoints
+    EndpointDefinition(
+        method="GET",
+        path="/api/v1/shadow/{agent_id}/metrics",
+        description="Get shadow enforcement metrics for an agent",
+    ),
+    EndpointDefinition(
+        method="GET",
+        path="/api/v1/shadow/{agent_id}/report",
+        description="Get shadow enforcement posture upgrade report for an agent",
+    ),
 ]
 
 
@@ -208,6 +220,8 @@ class PlatformAPI:
         bridge_manager: Optional BridgeManager for bridge queries (M18).
         envelope_registry: Optional dict mapping envelope IDs to ConstraintEnvelope (M18).
         verification_stats: Optional dict mapping VerificationLevel to counts (M18).
+        posture_store: Optional PostureHistoryStore for posture history queries (M18).
+        shadow_enforcer: Optional ShadowEnforcer for shadow evaluation metrics (M13).
 
     Raises:
         ValueError: If any required component is None.
@@ -223,6 +237,9 @@ class PlatformAPI:
         bridge_manager: BridgeManager | None = None,
         envelope_registry: dict[str, ConstraintEnvelope] | None = None,
         verification_stats: dict[VerificationLevel, int] | None = None,
+        posture_store: PostureHistoryStore | None = None,
+        shadow_enforcer: ShadowEnforcer | None = None,
+        audit_chain: AuditChain | None = None,
     ) -> None:
         if registry is None:
             raise ValueError(
@@ -248,6 +265,10 @@ class PlatformAPI:
         self._bridge_manager = bridge_manager
         self._envelope_registry = envelope_registry
         self._verification_stats = verification_stats
+        self._posture_store = posture_store
+        self._shadow_enforcer = shadow_enforcer
+        # L9: Audit chain for trends computation
+        self._audit_chain = audit_chain
 
     @property
     def endpoints(self) -> list[EndpointDefinition]:
@@ -726,6 +747,98 @@ class PlatformAPI:
             },
         )
 
+    def dashboard_trends(self) -> ApiResponse:
+        """Compute 7-day daily verification counts from audit anchor timestamps.
+
+        Groups audit records by date and verification level for the last 7 days.
+        Returns arrays suitable for sparkline rendering in the dashboard.
+
+        Returns:
+            ApiResponse with dates and per-level count arrays.
+        """
+        from datetime import UTC, datetime, timedelta
+
+        from care_platform.config.schema import VerificationLevel
+
+        now = datetime.now(UTC)
+        # Build the 7-day date range (oldest first)
+        dates: list[str] = []
+        for i in range(6, -1, -1):
+            day = now - timedelta(days=i)
+            dates.append(day.strftime("%Y-%m-%d"))
+
+        # Initialize counts per date per level
+        counts: dict[str, dict[str, int]] = {
+            d: {"auto_approved": 0, "flagged": 0, "held": 0, "blocked": 0} for d in dates
+        }
+
+        level_key_map = {
+            VerificationLevel.AUTO_APPROVED: "auto_approved",
+            VerificationLevel.FLAGGED: "flagged",
+            VerificationLevel.HELD: "held",
+            VerificationLevel.BLOCKED: "blocked",
+        }
+
+        if self._audit_chain is not None:
+            for anchor in self._audit_chain.anchors:
+                day_str = anchor.timestamp.strftime("%Y-%m-%d")
+                if day_str in counts:
+                    key = level_key_map.get(anchor.verification_level)
+                    if key:
+                        counts[day_str][key] += 1
+
+        return ApiResponse(
+            status="ok",
+            data={
+                "dates": dates,
+                "auto_approved": [counts[d]["auto_approved"] for d in dates],
+                "flagged": [counts[d]["flagged"] for d in dates],
+                "held": [counts[d]["held"] for d in dates],
+                "blocked": [counts[d]["blocked"] for d in dates],
+            },
+        )
+
+    def posture_history(self, agent_id: str) -> ApiResponse:
+        """Get posture change history for an agent.
+
+        Args:
+            agent_id: The agent whose posture history to retrieve.
+
+        Returns:
+            ApiResponse with posture change records, or error if posture_store
+            is not configured.
+        """
+        if self._posture_store is None:
+            return ApiResponse(
+                status="error",
+                error="Posture history unavailable: posture_store not provided to PlatformAPI.",
+            )
+
+        records = self._posture_store.get_history(agent_id)
+        return ApiResponse(
+            status="ok",
+            data={
+                "agent_id": agent_id,
+                "records": [
+                    {
+                        "record_id": r.record_id,
+                        "agent_id": r.agent_id,
+                        "from_posture": r.from_posture,
+                        "to_posture": r.to_posture,
+                        "direction": r.direction,
+                        "trigger": (
+                            r.trigger.value if hasattr(r.trigger, "value") else str(r.trigger)
+                        ),
+                        "changed_by": r.changed_by,
+                        "changed_at": r.changed_at.isoformat(),
+                        "reason": r.reason,
+                    }
+                    for r in records
+                ],
+                "count": len(records),
+            },
+        )
+
     # ------------------------------------------------------------------
     # M36 Bridge Management Handlers
     # ------------------------------------------------------------------
@@ -785,7 +898,7 @@ class PlatformAPI:
             return ApiResponse(
                 status="error",
                 error=(
-                    "Bridge management unavailable: bridge_manager not " "provided to PlatformAPI."
+                    "Bridge management unavailable: bridge_manager not provided to PlatformAPI."
                 ),
             )
 
@@ -921,7 +1034,7 @@ class PlatformAPI:
             return ApiResponse(
                 status="error",
                 error=(
-                    "Bridge management unavailable: bridge_manager not " "provided to PlatformAPI."
+                    "Bridge management unavailable: bridge_manager not provided to PlatformAPI."
                 ),
             )
 
@@ -960,23 +1073,28 @@ class PlatformAPI:
 
         # RT12-012 / RT13-C1: Verify approver belongs to the correct team.
         # Reject unauthorized approvers to enforce bilateral trust requirement.
+        # L1-FIX: Use proper registry lookup instead of substring check.
         bridge_obj = self._bridge_manager.get_bridge(bridge_id)
         if bridge_obj is None:
             return ApiResponse(status="error", error=f"Bridge '{bridge_id}' not found")
         expected_team = bridge_obj.source_team_id if side == "source" else bridge_obj.target_team_id
-        if expected_team and approver_id and expected_team not in approver_id:
-            logger.warning(
-                "RT13-C1: approve_bridge REJECTED — approver_id '%s' does not belong to "
-                "%s team '%s'. Bilateral trust requires team-verified approvers.",
-                approver_id,
-                side,
-                expected_team,
-            )
-            return ApiResponse(
-                status="error",
-                error=f"Approver '{approver_id}' is not authorized to approve the {side} "
-                f"side of this bridge. Only members of team '{expected_team}' may approve.",
-            )
+        if expected_team and approver_id:
+            # Look up the approver in the agent registry and verify team membership
+            team_members = self._registry.get_team(expected_team)
+            team_member_ids = {r.agent_id for r in team_members}
+            if approver_id not in team_member_ids:
+                logger.warning(
+                    "RT13-C1: approve_bridge REJECTED — approver_id '%s' is not a registered "
+                    "member of %s team '%s'. Bilateral trust requires team-verified approvers.",
+                    approver_id,
+                    side,
+                    expected_team,
+                )
+                return ApiResponse(
+                    status="error",
+                    error=f"Approver '{approver_id}' is not authorized to approve the {side} "
+                    f"side of this bridge. Only members of team '{expected_team}' may approve.",
+                )
 
         try:
             if side == "source":
@@ -1188,5 +1306,110 @@ class PlatformAPI:
                 "total": total,
                 "limit": limit,
                 "offset": offset,
+            },
+        )
+
+    # ------------------------------------------------------------------
+    # M13 ShadowEnforcer Handlers
+    # ------------------------------------------------------------------
+
+    def shadow_metrics(self, agent_id: str) -> ApiResponse:
+        """Get shadow enforcement metrics for an agent.
+
+        Returns rolling metrics from the ShadowEnforcer including pass rate,
+        block rate, and per-dimension breakdowns.
+
+        Args:
+            agent_id: The agent to get shadow metrics for.
+
+        Returns:
+            ApiResponse with shadow metrics data, or error if shadow_enforcer
+            is not configured or no evaluations exist for the agent.
+        """
+        if self._shadow_enforcer is None:
+            logger.warning("shadow_metrics: shadow_enforcer not configured on PlatformAPI")
+            return ApiResponse(
+                status="error",
+                error=(
+                    "Shadow metrics unavailable: shadow_enforcer not provided "
+                    "to PlatformAPI. Pass shadow_enforcer to enable this endpoint."
+                ),
+            )
+
+        try:
+            metrics = self._shadow_enforcer.get_metrics(agent_id)
+        except KeyError as exc:
+            logger.warning(
+                "shadow_metrics: no evaluations for agent '%s': %s",
+                agent_id,
+                exc,
+            )
+            return ApiResponse(status="error", error=str(exc))
+
+        return ApiResponse(
+            status="ok",
+            data={
+                "agent_id": metrics.agent_id,
+                "total_evaluations": metrics.total_evaluations,
+                "auto_approved_count": metrics.auto_approved_count,
+                "flagged_count": metrics.flagged_count,
+                "held_count": metrics.held_count,
+                "blocked_count": metrics.blocked_count,
+                "pass_rate": metrics.pass_rate,
+                "block_rate": metrics.block_rate,
+                "change_rate": metrics.change_rate,
+                "dimension_trigger_counts": dict(metrics.dimension_trigger_counts),
+                "window_start": metrics.window_start.isoformat(),
+                "window_end": metrics.window_end.isoformat(),
+            },
+        )
+
+    def shadow_report(self, agent_id: str) -> ApiResponse:
+        """Get shadow enforcement posture upgrade report for an agent.
+
+        Generates a report with statistics and upgrade eligibility
+        recommendation based on shadow evaluation history.
+
+        Args:
+            agent_id: The agent to generate the report for.
+
+        Returns:
+            ApiResponse with shadow report data, or error if shadow_enforcer
+            is not configured or no evaluations exist for the agent.
+        """
+        if self._shadow_enforcer is None:
+            logger.warning("shadow_report: shadow_enforcer not configured on PlatformAPI")
+            return ApiResponse(
+                status="error",
+                error=(
+                    "Shadow report unavailable: shadow_enforcer not provided "
+                    "to PlatformAPI. Pass shadow_enforcer to enable this endpoint."
+                ),
+            )
+
+        try:
+            report = self._shadow_enforcer.generate_report(agent_id)
+        except KeyError as exc:
+            logger.warning(
+                "shadow_report: no evaluations for agent '%s': %s",
+                agent_id,
+                exc,
+            )
+            return ApiResponse(status="error", error=str(exc))
+
+        return ApiResponse(
+            status="ok",
+            data={
+                "agent_id": report.agent_id,
+                "evaluation_period_days": report.evaluation_period_days,
+                "total_evaluations": report.total_evaluations,
+                "pass_rate": report.pass_rate,
+                "block_rate": report.block_rate,
+                "hold_rate": report.hold_rate,
+                "flag_rate": report.flag_rate,
+                "dimension_breakdown": dict(report.dimension_breakdown),
+                "upgrade_eligible": report.upgrade_eligible,
+                "upgrade_blockers": list(report.upgrade_blockers),
+                "recommendation": report.recommendation,
             },
         )

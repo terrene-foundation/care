@@ -12,13 +12,12 @@ from __future__ import annotations
 
 import pytest
 
+from care_platform.persistence.sqlite_store import SQLiteTrustStore
 from care_platform.store_isolation import (
-    ManagementPlaneStore,
     DataPlaneStore,
+    ManagementPlaneStore,
     PlaneViolationError,
 )
-from care_platform.persistence.sqlite_store import SQLiteTrustStore
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -88,18 +87,16 @@ class TestManagementPlaneStore:
     def test_cannot_write_audit_anchors(self, management_store: ManagementPlaneStore):
         """Management plane should not write audit anchors — that is the data plane's job."""
         with pytest.raises(PlaneViolationError, match="management plane"):
-            management_store.store_audit_anchor(
-                "anchor-1", {"agent_id": "a1", "action": "test"}
-            )
+            management_store.store_audit_anchor("anchor-1", {"agent_id": "a1", "action": "test"})
 
     def test_cannot_write_posture_changes(self, management_store: ManagementPlaneStore):
         """Posture changes are operational data, not management data."""
         with pytest.raises(PlaneViolationError, match="management plane"):
-            management_store.store_posture_change(
-                "agent-1", {"new_posture": "supervised"}
-            )
+            management_store.store_posture_change("agent-1", {"new_posture": "supervised"})
 
-    def test_can_read_audit_anchors(self, management_store: ManagementPlaneStore, base_store: SQLiteTrustStore):
+    def test_can_read_audit_anchors(
+        self, management_store: ManagementPlaneStore, base_store: SQLiteTrustStore
+    ):
         """Management plane can read audit anchors for oversight."""
         base_store.store_audit_anchor(
             "anchor-1",
@@ -176,11 +173,14 @@ class TestDataPlaneStore:
 
     def test_can_read_delegations(self, data_store: DataPlaneStore, base_store: SQLiteTrustStore):
         """Data plane can read delegation records for chain walking."""
-        base_store.store_delegation("d1", {
-            "delegation_id": "d1",
-            "delegator_id": "root",
-            "delegatee_id": "a1",
-        })
+        base_store.store_delegation(
+            "d1",
+            {
+                "delegation_id": "d1",
+                "delegator_id": "root",
+                "delegatee_id": "a1",
+            },
+        )
         result = data_store.get_delegation("d1")
         assert result is not None
 

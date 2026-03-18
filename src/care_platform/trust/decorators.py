@@ -47,7 +47,8 @@ import hashlib
 import inspect
 import logging
 import re
-from typing import TYPE_CHECKING, Any, Callable, TypeVar
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from eatp.chain import VerificationLevel
 from eatp.enforce import ShadowEnforcer as EATPShadowEnforcer

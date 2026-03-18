@@ -4,12 +4,12 @@
 
 import time
 
+from care_platform.config.schema import TrustPostureLevel
 from care_platform.constraint.cache import (
     CachedVerification,
     CacheStats,
     VerificationCache,
 )
-from care_platform.config.schema import TrustPostureLevel
 
 
 def _make_cached_verification(

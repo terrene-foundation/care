@@ -164,8 +164,7 @@ class TrustChainIntegrity:
         """
         if index < 0 or index >= len(self._records):
             raise IndexError(
-                f"Record index {index} is out of range "
-                f"(chain length is {len(self._records)})"
+                f"Record index {index} is out of range (chain length is {len(self._records)})"
             )
         return self._records[index].record_hash
 
@@ -242,9 +241,7 @@ class TrustChainIntegrity:
                 )
 
             # Recompute the hash from current data
-            recomputed = TrustRecordHash.compute(
-                record.data, previous_hash=expected_previous
-            )
+            recomputed = TrustRecordHash.compute(record.data, previous_hash=expected_previous)
 
             if recomputed != record.record_hash:
                 violations.append(

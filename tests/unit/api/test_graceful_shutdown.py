@@ -11,14 +11,11 @@ Validates that:
 
 from __future__ import annotations
 
-import asyncio
-
 import pytest
 
 from care_platform.api.server import create_app
 from care_platform.api.shutdown import ShutdownManager
 from care_platform.config.env import EnvConfig
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

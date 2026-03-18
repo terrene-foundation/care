@@ -7,10 +7,6 @@ Tests audit chain EATP completeness — ensuring all required fields are present
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
-
-import pytest
-
 from care_platform.audit.anchor import AuditAnchor, AuditChain
 from care_platform.config.schema import VerificationLevel
 

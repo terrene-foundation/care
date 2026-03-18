@@ -17,7 +17,6 @@ from fastapi.testclient import TestClient
 from care_platform.api.server import SecurityHeadersMiddleware, create_app
 from care_platform.config.env import EnvConfig
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------

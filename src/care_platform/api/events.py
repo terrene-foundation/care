@@ -87,18 +87,28 @@ class EventBus:
     Thread-safe for publishing (uses asyncio.Queue per subscriber).
     """
 
-    def __init__(self) -> None:
+    def __init__(self, max_subscribers: int = 100) -> None:
         self._subscribers: list[asyncio.Queue[PlatformEvent]] = []
         self._lock = asyncio.Lock()
+        # L2-FIX: Bound subscriber count to prevent unbounded memory growth.
+        self._max_subscribers = max_subscribers
 
     async def subscribe(self) -> asyncio.Queue[PlatformEvent]:
         """Register a new subscriber and return their event queue.
 
         Returns:
             An asyncio.Queue that will receive PlatformEvent objects.
+
+        Raises:
+            RuntimeError: If the maximum number of subscribers has been reached.
         """
         queue: asyncio.Queue[PlatformEvent] = asyncio.Queue(maxsize=1000)
         async with self._lock:
+            if len(self._subscribers) >= self._max_subscribers:
+                raise RuntimeError(
+                    f"Max subscriber limit reached ({self._max_subscribers}). "
+                    f"Cannot accept new subscriptions."
+                )
             self._subscribers.append(queue)
         logger.info("EventBus: new subscriber added (total: %d)", len(self._subscribers))
         return queue

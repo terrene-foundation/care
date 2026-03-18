@@ -10,7 +10,6 @@ from care_platform.workspace.bridge_lifecycle import (
     InvalidBridgeTransitionError,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------

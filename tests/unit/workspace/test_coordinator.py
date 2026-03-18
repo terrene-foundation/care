@@ -13,14 +13,12 @@ from care_platform.workspace.bridge import (
     BridgeManager,
     BridgePermission,
     BridgeStatus,
-    BridgeType,
 )
 from care_platform.workspace.coordinator import (
     CoordinatorAgent,
     CoordinatorEnvelope,
     RoutingResult,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

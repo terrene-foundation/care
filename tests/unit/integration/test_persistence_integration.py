@@ -15,7 +15,6 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
-from uuid import uuid4
 
 import pytest
 
@@ -32,7 +31,6 @@ from care_platform.persistence.posture_history import (
 )
 from care_platform.persistence.store import MemoryStore
 from care_platform.persistence.versioning import VersionTracker
-
 
 # ===========================================================================
 # 1. Trust Object Round-Trip Through Store

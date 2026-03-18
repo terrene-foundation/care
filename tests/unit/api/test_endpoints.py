@@ -17,7 +17,6 @@ from care_platform.execution.approval import ApprovalQueue, UrgencyLevel
 from care_platform.execution.registry import AgentRegistry
 from care_platform.persistence.cost_tracking import CostTracker
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -127,7 +126,6 @@ class TestEndpointDefinitions:
         assert "/api/v1/agents/{agent_id}/status" in paths
         assert "/api/v1/agents/{agent_id}/approve/{action_id}" in paths
         assert "/api/v1/agents/{agent_id}/reject/{action_id}" in paths
-        assert "/api/v1/audit/team/{team_id}" in paths
         assert "/api/v1/held-actions" in paths
         assert "/api/v1/cost/report" in paths
 

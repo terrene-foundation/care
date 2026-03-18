@@ -19,8 +19,6 @@ from __future__ import annotations
 import threading
 import time
 
-import pytest
-
 from care_platform.audit.anchor import AuditChain
 from care_platform.config.schema import (
     ConstraintEnvelopeConfig,
@@ -37,14 +35,11 @@ from care_platform.execution.registry import AgentRegistry, AgentStatus
 from care_platform.execution.runtime import (
     ExecutionRuntime,
     Task,
-    TaskExecutor,
-    TaskResult,
     TaskStatus,
 )
 from care_platform.persistence.store import MemoryStore
 from care_platform.trust.posture import NEVER_DELEGATED_ACTIONS, TrustPosture
 from care_platform.trust.revocation import RevocationManager
-
 
 # ---------------------------------------------------------------------------
 # Shared helpers
@@ -326,7 +321,7 @@ class TestRT5_06_NeverDelegatedActions:
             "modify_governance",
             "external_publication",
         }
-        assert NEVER_DELEGATED_ACTIONS == expected
+        assert expected == NEVER_DELEGATED_ACTIONS
 
 
 # ---------------------------------------------------------------------------

@@ -265,8 +265,7 @@ def compute_bridge_envelope(
     return ConstraintEnvelopeConfig(
         id=f"bridge-{source_envelope.id}-{target_envelope.id}",
         description=(
-            f"Bridge envelope: intersection of '{source_envelope.id}' and "
-            f"'{target_envelope.id}'"
+            f"Bridge envelope: intersection of '{source_envelope.id}' and '{target_envelope.id}'"
         ),
         financial=financial,
         operational=operational,
@@ -630,8 +629,7 @@ def _check_tightening_against(
     missing_types = parent_blocked_types - bridge_blocked_types
     if missing_types:
         violations.append(
-            f"Data Access: bridge is missing {label} blocked data types: "
-            f"{sorted(missing_types)}"
+            f"Data Access: bridge is missing {label} blocked data types: {sorted(missing_types)}"
         )
 
     # --- Communication ---

@@ -61,9 +61,7 @@ from care_platform.trust.revocation import RevocationManager
 from care_platform.workspace.models import (
     Workspace,
     WorkspacePhase,
-    WorkspaceState,
 )
-
 
 # ===========================================================================
 # Configuration
@@ -396,9 +394,9 @@ class TestPlatformIsConstrainedOrganization:
             parent_envelope=_root_envelope(),
             child_envelope=_worker_envelope(),
         )
-        assert (
-            p5_valid_3
-        ), f"P5 FAILED: Worker not tighter than root (transitive): {p5_violations_3}"
+        assert p5_valid_3, (
+            f"P5 FAILED: Worker not tighter than root (transitive): {p5_violations_3}"
+        )
 
         # ConstraintEnvelope.is_tighter_than agrees
         assert ConstraintEnvelope(config=_manager_envelope()).is_tighter_than(
@@ -419,9 +417,9 @@ class TestPlatformIsConstrainedOrganization:
 
         # Chain from worker to genesis is valid
         p2_walk_worker = await delegation_mgr.walk_chain("co-worker")
-        assert (
-            p2_walk_worker.status == ChainStatus.VALID
-        ), f"P2 FAILED: Worker chain invalid: {p2_walk_worker.errors}"
+        assert p2_walk_worker.status == ChainStatus.VALID, (
+            f"P2 FAILED: Worker chain invalid: {p2_walk_worker.errors}"
+        )
         assert p2_walk_worker.depth == 2
 
         # Chain from manager to genesis is valid
@@ -444,9 +442,9 @@ class TestPlatformIsConstrainedOrganization:
             {"type": "delegation", "from": "co-manager", "to": "co-worker"}
         )
         p2_integrity = integrity_chain.verify()
-        assert (
-            p2_integrity.is_valid
-        ), f"P2 FAILED: Hash chain integrity violated: {p2_integrity.violations}"
+        assert p2_integrity.is_valid, (
+            f"P2 FAILED: Hash chain integrity violated: {p2_integrity.violations}"
+        )
 
         # EATP verification succeeds for valid agents
         p2_verify = await bridge.verify_action(
@@ -474,9 +472,9 @@ class TestPlatformIsConstrainedOrganization:
                 action=p1_action,
                 current_action_count=0,
             )
-            assert (
-                p1_result.audit_recorded
-            ), f"P1 FAILED: Action '{p1_action}' by '{p1_agent}' not audited"
+            assert p1_result.audit_recorded, (
+                f"P1 FAILED: Action '{p1_action}' by '{p1_agent}' not audited"
+            )
 
         # Direct envelope evaluation covers all 5 dimensions
         work_time = datetime(2026, 3, 13, 14, 0, tzinfo=UTC)
@@ -533,9 +531,9 @@ class TestPlatformIsConstrainedOrganization:
             action="delete_data",
             current_action_count=0,
         )
-        assert (
-            b1_blocked.verification_level == VerificationLevel.BLOCKED
-        ), f"B1 FAILED: delete_data should be BLOCKED, got {b1_blocked.verification_level}"
+        assert b1_blocked.verification_level == VerificationLevel.BLOCKED, (
+            f"B1 FAILED: delete_data should be BLOCKED, got {b1_blocked.verification_level}"
+        )
         assert b1_blocked.outcome == ActionOutcome.REJECTED
 
         # Financial limit violation
@@ -568,9 +566,9 @@ class TestPlatformIsConstrainedOrganization:
 
         # Audit chain records all rejections
         blocked_anchors = audit_chain.filter_by_level(VerificationLevel.BLOCKED)
-        assert (
-            len(blocked_anchors) >= 4
-        ), f"B1 FAILED: Expected at least 4 BLOCKED audit anchors, got {len(blocked_anchors)}"
+        assert len(blocked_anchors) >= 4, (
+            f"B1 FAILED: Expected at least 4 BLOCKED audit anchors, got {len(blocked_anchors)}"
+        )
 
         # =================================================================
         # B2: TRUST VERIFIABLE (NOT ASSUMED)
@@ -583,9 +581,9 @@ class TestPlatformIsConstrainedOrganization:
             action="read_metrics",
             current_action_count=0,
         )
-        assert (
-            b2_before.outcome == ActionOutcome.EXECUTED
-        ), f"B2 FAILED: Worker should succeed before revocation, got {b2_before.outcome}"
+        assert b2_before.outcome == ActionOutcome.EXECUTED, (
+            f"B2 FAILED: Worker should succeed before revocation, got {b2_before.outcome}"
+        )
 
         # Revoke the worker via EATP bridge
         bridge.revoke_agent("co-worker")
@@ -596,9 +594,9 @@ class TestPlatformIsConstrainedOrganization:
             action="read_metrics",
             current_action_count=0,
         )
-        assert (
-            b2_after.outcome == ActionOutcome.REJECTED
-        ), f"B2 FAILED: Revoked worker should be BLOCKED, got {b2_after.outcome}"
+        assert b2_after.outcome == ActionOutcome.REJECTED, (
+            f"B2 FAILED: Revoked worker should be BLOCKED, got {b2_after.outcome}"
+        )
         assert b2_after.verification_level == VerificationLevel.BLOCKED
 
         # EATP verification also fails for revoked agent
@@ -641,14 +639,14 @@ class TestPlatformIsConstrainedOrganization:
 
         # Prior cycle context is accessible
         cycle_1_reasons = [t.reason for t in ws.phase_history[:4]]
-        assert (
-            "Cycle 1: codifying learnings" in cycle_1_reasons
-        ), "P4 FAILED: Prior cycle codification not accessible"
+        assert "Cycle 1: codifying learnings" in cycle_1_reasons, (
+            "P4 FAILED: Prior cycle codification not accessible"
+        )
 
         cycle_2_reasons = [t.reason for t in ws.phase_history[4:]]
-        assert any(
-            "codified knowledge" in r or "Cycle 1 insights" in r for r in cycle_2_reasons
-        ), "P4 FAILED: Cycle 2 does not reference Cycle 1 knowledge"
+        assert any("codified knowledge" in r or "Cycle 1 insights" in r for r in cycle_2_reasons), (
+            "P4 FAILED: Cycle 2 does not reference Cycle 1 knowledge"
+        )
 
         # =================================================================
         # B3: KNOWLEDGE COMPOUNDS STRUCTURALLY

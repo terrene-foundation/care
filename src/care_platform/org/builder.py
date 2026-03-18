@@ -9,6 +9,7 @@ OrgTemplate provides predefined templates for common org structures.
 
 from __future__ import annotations
 
+import enum
 import logging
 from typing import TYPE_CHECKING, Any
 
@@ -26,6 +27,31 @@ if TYPE_CHECKING:
     pass
 
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Validation result model (Task 5035)
+# ---------------------------------------------------------------------------
+
+
+class ValidationSeverity(enum.Enum):
+    """Severity level for org validation results."""
+
+    ERROR = "error"
+    WARNING = "warning"
+
+
+class ValidationResult(BaseModel):
+    """A single validation finding with severity, message, and error code."""
+
+    severity: ValidationSeverity
+    message: str
+    code: str
+
+    @property
+    def is_error(self) -> bool:
+        """Whether this result is a blocking error."""
+        return self.severity == ValidationSeverity.ERROR
 
 
 class OrgDefinition(BaseModel):
@@ -138,6 +164,383 @@ class OrgDefinition(BaseModel):
                 )
 
         return (len(errors) == 0, errors)
+
+    def validate_org_detailed(self) -> list[ValidationResult]:
+        """Validate org definition with detailed results including severity levels.
+
+        Returns a list of ValidationResult objects with ERROR or WARNING severity.
+        ERRORs are structural issues that prevent building (duplicate IDs, dangling refs).
+        WARNINGs are coverage gaps that allow building with notification.
+
+        Returns:
+            List of ValidationResult findings (empty means fully valid).
+        """
+        results: list[ValidationResult] = []
+
+        # --- Structural checks (ERROR severity) ---
+
+        # Duplicate agent IDs
+        seen_agents: set[str] = set()
+        for a in self.agents:
+            if a.id in seen_agents:
+                results.append(
+                    ValidationResult(
+                        severity=ValidationSeverity.ERROR,
+                        message=f"Duplicate agent ID: '{a.id}'",
+                        code="ERR_DUPLICATE_AGENT",
+                    )
+                )
+            seen_agents.add(a.id)
+
+        # Duplicate team IDs
+        seen_teams: set[str] = set()
+        for t in self.teams:
+            if t.id in seen_teams:
+                results.append(
+                    ValidationResult(
+                        severity=ValidationSeverity.ERROR,
+                        message=f"Duplicate team ID: '{t.id}'",
+                        code="ERR_DUPLICATE_TEAM",
+                    )
+                )
+            seen_teams.add(t.id)
+
+        # Duplicate envelope IDs
+        seen_envelopes: set[str] = set()
+        for e in self.envelopes:
+            if e.id in seen_envelopes:
+                results.append(
+                    ValidationResult(
+                        severity=ValidationSeverity.ERROR,
+                        message=f"Duplicate envelope ID: '{e.id}'",
+                        code="ERR_DUPLICATE_ENVELOPE",
+                    )
+                )
+            seen_envelopes.add(e.id)
+
+        # Duplicate workspace IDs
+        seen_workspaces: set[str] = set()
+        for w in self.workspaces:
+            if w.id in seen_workspaces:
+                results.append(
+                    ValidationResult(
+                        severity=ValidationSeverity.ERROR,
+                        message=f"Duplicate workspace ID: '{w.id}'",
+                        code="ERR_DUPLICATE_WORKSPACE",
+                    )
+                )
+            seen_workspaces.add(w.id)
+
+        # Envelope references
+        envelope_ids = {e.id for e in self.envelopes}
+        for agent in self.agents:
+            if agent.constraint_envelope not in envelope_ids:
+                results.append(
+                    ValidationResult(
+                        severity=ValidationSeverity.ERROR,
+                        message=(
+                            f"Agent '{agent.id}' references envelope "
+                            f"'{agent.constraint_envelope}' which does not exist"
+                        ),
+                        code="ERR_DANGLING_ENVELOPE_REF",
+                    )
+                )
+
+        # Workspace references
+        workspace_ids = {w.id for w in self.workspaces}
+        for team in self.teams:
+            if team.workspace not in workspace_ids:
+                results.append(
+                    ValidationResult(
+                        severity=ValidationSeverity.ERROR,
+                        message=(
+                            f"Team '{team.id}' references workspace "
+                            f"'{team.workspace}' which does not exist"
+                        ),
+                        code="ERR_DANGLING_WORKSPACE_REF",
+                    )
+                )
+
+        # --- Capability-envelope alignment (5029) ---
+        envelope_index = {e.id: e for e in self.envelopes}
+        for agent in self.agents:
+            env = envelope_index.get(agent.constraint_envelope)
+            if env and env.operational and env.operational.allowed_actions:
+                allowed = set(env.operational.allowed_actions)
+                for cap in getattr(agent, "capabilities", []) or []:
+                    if cap not in allowed:
+                        results.append(
+                            ValidationResult(
+                                severity=ValidationSeverity.ERROR,
+                                message=(
+                                    f"Agent '{agent.id}' has capability '{cap}' "
+                                    f"not in envelope '{env.id}' allowed_actions"
+                                ),
+                                code="CAP_NOT_IN_ENVELOPE",
+                            )
+                        )
+
+        # --- Team lead superset check (5031) ---
+        for team in self.teams:
+            team_agents = [a for a in self.agents if a.id in team.agents]
+            leads = [
+                a for a in team_agents if "lead" in a.id.lower() or "lead" in (a.role or "").lower()
+            ]
+            non_leads = [a for a in team_agents if a not in leads]
+            for lead in leads:
+                lead_caps = set(getattr(lead, "capabilities", []) or [])
+                for member in non_leads:
+                    member_caps = set(getattr(member, "capabilities", []) or [])
+                    missing = member_caps - lead_caps
+                    if missing:
+                        results.append(
+                            ValidationResult(
+                                severity=ValidationSeverity.ERROR,
+                                message=(
+                                    f"Team lead '{lead.id}' missing capabilities "
+                                    f"held by '{member.id}': {sorted(missing)}"
+                                ),
+                                code="LEAD_MISSING_CAPABILITY",
+                            )
+                        )
+
+        # --- Gradient coverage (5032) ---
+        # Build team gradient lookup for fallback
+        agent_to_team: dict[str, TeamConfig] = {}
+        for team in self.teams:
+            for aid in team.agents:
+                agent_to_team[aid] = team
+
+        for agent in self.agents:
+            gradient = getattr(agent, "verification_gradient", None)
+            # Fall back to team gradient if agent has none
+            if not gradient or not gradient.rules:
+                team = agent_to_team.get(agent.id)
+                if team:
+                    gradient = getattr(team, "verification_gradient", None)
+            if gradient and gradient.rules:
+                rule_patterns = [r.pattern for r in gradient.rules]
+                for cap in getattr(agent, "capabilities", []) or []:
+                    covered = any(
+                        cap == pattern
+                        or pattern == "*"
+                        or (pattern.endswith("*") and cap.startswith(pattern[:-1]))
+                        for pattern in rule_patterns
+                    )
+                    if not covered:
+                        results.append(
+                            ValidationResult(
+                                severity=ValidationSeverity.WARNING,
+                                message=(
+                                    f"Agent '{agent.id}' capability '{cap}' "
+                                    f"has no matching gradient rule"
+                                ),
+                                code="GRADIENT_UNCOVERED_CAPABILITY",
+                            )
+                        )
+
+        # --- Helper: glob-aware path containment ---
+        def _path_covered_by(child: str, parent_paths: set[str]) -> bool:
+            for p in parent_paths:
+                if child == p:
+                    return True
+                if p.endswith("*") and child.startswith(p[:-1]):
+                    return True
+            return False
+
+        # --- Monotonic constraint tightening (5030) ---
+        agent_index = {a.id: a for a in self.agents}
+        for team in self.teams:
+            lead_id = team.team_lead
+            if not lead_id or lead_id not in agent_index:
+                continue
+            lead_agent = agent_index[lead_id]
+            lead_env = envelope_index.get(lead_agent.constraint_envelope)
+            if not lead_env:
+                continue
+
+            for member_id in team.agents:
+                if member_id == lead_id or member_id not in agent_index:
+                    continue
+                member_agent = agent_index[member_id]
+                sub_env = envelope_index.get(member_agent.constraint_envelope)
+                if not sub_env:
+                    continue
+
+                # Financial tightening
+                if (
+                    lead_env.financial
+                    and sub_env.financial
+                    and lead_env.financial.max_spend_usd is not None
+                    and sub_env.financial.max_spend_usd is not None
+                    and sub_env.financial.max_spend_usd > lead_env.financial.max_spend_usd
+                ):
+                    results.append(
+                        ValidationResult(
+                            severity=ValidationSeverity.ERROR,
+                            message=(
+                                f"Agent '{member_id}' financial limit "
+                                f"(${sub_env.financial.max_spend_usd}) exceeds "
+                                f"lead '{lead_id}' (${lead_env.financial.max_spend_usd})"
+                            ),
+                            code="FINANCIAL_TIGHTENING",
+                        )
+                    )
+
+                # Operational tightening — allowed actions
+                if lead_env.operational and sub_env.operational:
+                    lead_actions = set(lead_env.operational.allowed_actions or [])
+                    sub_actions = set(sub_env.operational.allowed_actions or [])
+                    if lead_actions and sub_actions:
+                        extra = sub_actions - lead_actions
+                        if extra:
+                            results.append(
+                                ValidationResult(
+                                    severity=ValidationSeverity.ERROR,
+                                    message=(
+                                        f"Agent '{member_id}' has actions {sorted(extra)} "
+                                        f"not in lead '{lead_id}' envelope"
+                                    ),
+                                    code="OPERATIONAL_TIGHTENING",
+                                )
+                            )
+
+                    # Operational tightening — rate limit
+                    lead_rate = lead_env.operational.max_actions_per_day
+                    sub_rate = sub_env.operational.max_actions_per_day
+                    if lead_rate and sub_rate and sub_rate > lead_rate:
+                        results.append(
+                            ValidationResult(
+                                severity=ValidationSeverity.ERROR,
+                                message=(
+                                    f"Agent '{member_id}' rate limit ({sub_rate}/day) "
+                                    f"exceeds lead '{lead_id}' ({lead_rate}/day)"
+                                ),
+                                code="OPERATIONAL_TIGHTENING",
+                            )
+                        )
+
+                # Communication tightening
+                if lead_env.communication and sub_env.communication:
+                    if (
+                        lead_env.communication.internal_only
+                        and not sub_env.communication.internal_only
+                    ):
+                        results.append(
+                            ValidationResult(
+                                severity=ValidationSeverity.ERROR,
+                                message=(
+                                    f"Agent '{member_id}' allows external communication "
+                                    f"but lead '{lead_id}' is internal-only"
+                                ),
+                                code="COMMUNICATION_TIGHTENING",
+                            )
+                        )
+
+                # Temporal tightening (5033)
+                if lead_env.temporal and sub_env.temporal:
+                    if (
+                        lead_env.temporal.active_hours_start
+                        and sub_env.temporal.active_hours_start
+                        and sub_env.temporal.active_hours_start
+                        < lead_env.temporal.active_hours_start
+                    ):
+                        results.append(
+                            ValidationResult(
+                                severity=ValidationSeverity.ERROR,
+                                message=(
+                                    f"Agent '{member_id}' starts at {sub_env.temporal.active_hours_start} "
+                                    f"before lead '{lead_id}' ({lead_env.temporal.active_hours_start})"
+                                ),
+                                code="TEMPORAL_TIGHTENING",
+                            )
+                        )
+                    if (
+                        lead_env.temporal.active_hours_end
+                        and sub_env.temporal.active_hours_end
+                        and sub_env.temporal.active_hours_end > lead_env.temporal.active_hours_end
+                    ):
+                        results.append(
+                            ValidationResult(
+                                severity=ValidationSeverity.ERROR,
+                                message=(
+                                    f"Agent '{member_id}' ends at {sub_env.temporal.active_hours_end} "
+                                    f"after lead '{lead_id}' ({lead_env.temporal.active_hours_end})"
+                                ),
+                                code="TEMPORAL_TIGHTENING",
+                            )
+                        )
+
+                # Data access tightening (5033) — glob-aware path containment
+                if lead_env.data_access and sub_env.data_access:
+                    lead_read = set(lead_env.data_access.read_paths or [])
+                    sub_read = set(sub_env.data_access.read_paths or [])
+                    if lead_read and sub_read:
+                        uncovered = [p for p in sub_read if not _path_covered_by(p, lead_read)]
+                        if uncovered:
+                            results.append(
+                                ValidationResult(
+                                    severity=ValidationSeverity.ERROR,
+                                    message=(
+                                        f"Agent '{member_id}' has read paths {sorted(uncovered)} "
+                                        f"outside lead '{lead_id}' scope"
+                                    ),
+                                    code="DATA_ACCESS_TIGHTENING",
+                                )
+                            )
+
+                    lead_write = set(lead_env.data_access.write_paths or [])
+                    sub_write = set(sub_env.data_access.write_paths or [])
+                    if lead_write and sub_write:
+                        uncovered = [p for p in sub_write if not _path_covered_by(p, lead_write)]
+                        if uncovered:
+                            results.append(
+                                ValidationResult(
+                                    severity=ValidationSeverity.ERROR,
+                                    message=(
+                                        f"Agent '{member_id}' has write paths {sorted(uncovered)} "
+                                        f"outside lead '{lead_id}' scope"
+                                    ),
+                                    code="DATA_ACCESS_TIGHTENING",
+                                )
+                            )
+
+        # --- Multi-team validation (5034) ---
+        agent_team_map: dict[str, list[str]] = {}
+        for team in self.teams:
+            for agent_id in team.agents:
+                agent_team_map.setdefault(agent_id, []).append(team.id)
+
+        for agent_id, team_list in agent_team_map.items():
+            if len(team_list) > 1:
+                results.append(
+                    ValidationResult(
+                        severity=ValidationSeverity.ERROR,
+                        message=(
+                            f"Agent '{agent_id}' appears in multiple teams: {sorted(team_list)}"
+                        ),
+                        code="AGENT_IN_MULTIPLE_TEAMS",
+                    )
+                )
+
+        # Workspace path conflicts
+        ws_paths: dict[str, list[str]] = {}
+        for ws in self.workspaces:
+            ws_paths.setdefault(ws.path, []).append(ws.id)
+
+        for path, ws_ids in ws_paths.items():
+            if len(ws_ids) > 1:
+                results.append(
+                    ValidationResult(
+                        severity=ValidationSeverity.ERROR,
+                        message=(
+                            f"Workspace path '{path}' used by multiple workspaces: {sorted(ws_ids)}"
+                        ),
+                        code="CONFLICTING_WORKSPACE_PATHS",
+                    )
+                )
+
+        return results
 
 
 class OrgBuilder:
@@ -257,6 +660,142 @@ class OrgBuilder:
             envelopes=list(config.constraint_envelopes),
             workspaces=list(config.workspaces),
         )
+
+    @staticmethod
+    def compose_from_templates(
+        template_names: list[str],
+        *,
+        org_id: str,
+        org_name: str,
+        registry: object,
+    ) -> OrgDefinition:
+        """Compose an OrgDefinition from multiple team templates (M20/5039).
+
+        Retrieves each template from the registry, combines all agents, teams,
+        envelopes, and workspaces into a single OrgDefinition. Handles namespace
+        conflicts by prefixing IDs with a counter-based suffix when a template
+        name appears more than once.
+
+        Args:
+            template_names: List of template names to compose. Must not be empty.
+            org_id: Organization ID for the resulting OrgDefinition.
+            org_name: Organization name for the resulting OrgDefinition.
+            registry: A TemplateRegistry instance providing get().
+
+        Returns:
+            An OrgDefinition containing all resources from all templates.
+
+        Raises:
+            ValueError: If template_names is empty, or if a template name
+                        is not found in the registry.
+        """
+        if not template_names:
+            raise ValueError(
+                "compose_from_templates() requires at least one template name. "
+                "Received an empty list."
+            )
+
+        from care_platform.templates.registry import TeamTemplate
+
+        all_agents: list[AgentConfig] = []
+        all_teams: list[TeamConfig] = []
+        all_envelopes: list[ConstraintEnvelopeConfig] = []
+        all_workspaces: list[WorkspaceConfig] = []
+
+        # Track how many times each template name has been used (for dedup)
+        name_counts: dict[str, int] = {}
+
+        for tpl_name in template_names:
+            # get() raises ValueError if not found — propagate as-is
+            tpl: TeamTemplate = registry.get(tpl_name)  # type: ignore[union-attr]
+
+            count = name_counts.get(tpl_name, 0)
+            name_counts[tpl_name] = count + 1
+
+            if count > 0:
+                # Namespace collision — prefix all IDs with "{name}-{count}-"
+                prefix = f"{tpl_name}-{count}"
+                tpl = _prefix_template(tpl, prefix)
+
+            # Add workspace for this template's team
+            ws = WorkspaceConfig(
+                id=tpl.team.workspace,
+                path=f"workspaces/{tpl.team.workspace.replace('ws-', '')}/",
+                description=f"Workspace for {tpl.team.name}",
+            )
+
+            all_agents.extend(tpl.agents)
+            all_envelopes.extend(tpl.envelopes)
+            all_teams.append(tpl.team)
+            all_workspaces.append(ws)
+
+        return OrgDefinition(
+            org_id=org_id,
+            name=org_name,
+            teams=all_teams,
+            agents=all_agents,
+            envelopes=all_envelopes,
+            workspaces=all_workspaces,
+        )
+
+
+def _prefix_template(tpl: object, prefix: str) -> object:
+    """Create a copy of a TeamTemplate with all IDs prefixed to avoid collisions.
+
+    Args:
+        tpl: The TeamTemplate to prefix.
+        prefix: The prefix string (e.g., "governance-1").
+
+    Returns:
+        A new TeamTemplate with prefixed IDs.
+    """
+    from care_platform.templates.registry import TeamTemplate
+
+    # Build mapping from old IDs to new IDs
+    agent_map: dict[str, str] = {}
+    for a in tpl.agents:  # type: ignore[union-attr]
+        new_id = f"{prefix}-{a.id}"
+        agent_map[a.id] = new_id
+
+    envelope_map: dict[str, str] = {}
+    for e in tpl.envelopes:  # type: ignore[union-attr]
+        new_id = f"{prefix}-{e.id}"
+        envelope_map[e.id] = new_id
+
+    new_team_id = f"{prefix}-{tpl.team.id}"  # type: ignore[union-attr]
+    new_workspace = f"{prefix}-{tpl.team.workspace}"  # type: ignore[union-attr]
+
+    # Rebuild envelopes with new IDs
+    new_envelopes = []
+    for e in tpl.envelopes:  # type: ignore[union-attr]
+        data = e.model_dump()
+        data["id"] = envelope_map[e.id]
+        new_envelopes.append(ConstraintEnvelopeConfig(**data))
+
+    # Rebuild agents with new IDs and updated envelope references
+    new_agents = []
+    for a in tpl.agents:  # type: ignore[union-attr]
+        data = a.model_dump()
+        data["id"] = agent_map[a.id]
+        data["constraint_envelope"] = envelope_map.get(a.constraint_envelope, a.constraint_envelope)
+        new_agents.append(AgentConfig(**data))
+
+    # Rebuild team with new IDs
+    team_data = tpl.team.model_dump()  # type: ignore[union-attr]
+    team_data["id"] = new_team_id
+    team_data["workspace"] = new_workspace
+    team_data["agents"] = [agent_map.get(aid, aid) for aid in team_data["agents"]]
+    if team_data.get("team_lead"):
+        team_data["team_lead"] = agent_map.get(team_data["team_lead"], team_data["team_lead"])
+    new_team = TeamConfig(**team_data)
+
+    return TeamTemplate(
+        name=f"{prefix}-{tpl.name}",  # type: ignore[union-attr]
+        description=tpl.description,  # type: ignore[union-attr]
+        agents=new_agents,
+        envelopes=new_envelopes,
+        team=new_team,
+    )
 
 
 class OrgTemplate:

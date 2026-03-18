@@ -25,7 +25,6 @@ from care_platform.constraint.verification_level import (
     VerificationThoroughness,
     select_verification_level,
 )
-from care_platform.trust.credentials import CredentialManager
 from care_platform.trust.posture import (
     UPGRADE_REQUIREMENTS,
     PostureEvidence,
@@ -33,7 +32,6 @@ from care_platform.trust.posture import (
 )
 from care_platform.trust.revocation import RevocationManager
 from care_platform.trust.shadow_enforcer import ShadowEnforcer
-
 
 # ---------------------------------------------------------------------------
 # RT-14: Wire cascade revocation into EATP bridge

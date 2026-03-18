@@ -13,10 +13,8 @@ Covers:
 
 from __future__ import annotations
 
-import hashlib
 import json
 
-import pytest
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from care_platform.config.schema import (
@@ -359,9 +357,7 @@ class TestReasoningRequired:
         """Each dimension config should have an optional reasoning_required field."""
         config = ConstraintEnvelopeConfig(
             id="env-rr",
-            financial=FinancialConstraintConfig(
-                max_spend_usd=100.0, reasoning_required=True
-            ),
+            financial=FinancialConstraintConfig(max_spend_usd=100.0, reasoning_required=True),
         )
         assert config.financial.reasoning_required is True
 
@@ -374,9 +370,7 @@ class TestReasoningRequired:
         """Action touching a dimension with REASONING_REQUIRED and no trace should be HELD."""
         config = ConstraintEnvelopeConfig(
             id="env-rr-held",
-            financial=FinancialConstraintConfig(
-                max_spend_usd=100.0, reasoning_required=True
-            ),
+            financial=FinancialConstraintConfig(max_spend_usd=100.0, reasoning_required=True),
         )
         envelope = ConstraintEnvelope(config=config)
 
@@ -395,9 +389,7 @@ class TestReasoningRequired:
         """Action with a reasoning trace when REASONING_REQUIRED should pass normally."""
         config = ConstraintEnvelopeConfig(
             id="env-rr-pass",
-            financial=FinancialConstraintConfig(
-                max_spend_usd=100.0, reasoning_required=True
-            ),
+            financial=FinancialConstraintConfig(max_spend_usd=100.0, reasoning_required=True),
         )
         envelope = ConstraintEnvelope(config=config)
 
@@ -416,9 +408,7 @@ class TestReasoningRequired:
         """REASONING_REQUIRED on multiple dimensions should all be checked."""
         config = ConstraintEnvelopeConfig(
             id="env-multi-rr",
-            financial=FinancialConstraintConfig(
-                max_spend_usd=100.0, reasoning_required=True
-            ),
+            financial=FinancialConstraintConfig(max_spend_usd=100.0, reasoning_required=True),
             operational=OperationalConstraintConfig(
                 allowed_actions=["deploy"], reasoning_required=True
             ),
@@ -456,18 +446,14 @@ class TestReasoningRequired:
         """Child envelope should inherit REASONING_REQUIRED from parent via tightening."""
         parent_config = ConstraintEnvelopeConfig(
             id="parent",
-            financial=FinancialConstraintConfig(
-                max_spend_usd=100.0, reasoning_required=True
-            ),
+            financial=FinancialConstraintConfig(max_spend_usd=100.0, reasoning_required=True),
         )
         parent = ConstraintEnvelope(config=parent_config)
 
         # Child tries to remove reasoning_required (less restrictive)
         child_config = ConstraintEnvelopeConfig(
             id="child",
-            financial=FinancialConstraintConfig(
-                max_spend_usd=50.0, reasoning_required=False
-            ),
+            financial=FinancialConstraintConfig(max_spend_usd=50.0, reasoning_required=False),
         )
         child = ConstraintEnvelope(config=child_config)
 
@@ -478,17 +464,13 @@ class TestReasoningRequired:
         """Child envelope can add REASONING_REQUIRED (tighter than parent)."""
         parent_config = ConstraintEnvelopeConfig(
             id="parent",
-            financial=FinancialConstraintConfig(
-                max_spend_usd=100.0, reasoning_required=False
-            ),
+            financial=FinancialConstraintConfig(max_spend_usd=100.0, reasoning_required=False),
         )
         parent = ConstraintEnvelope(config=parent_config)
 
         child_config = ConstraintEnvelopeConfig(
             id="child",
-            financial=FinancialConstraintConfig(
-                max_spend_usd=50.0, reasoning_required=True
-            ),
+            financial=FinancialConstraintConfig(max_spend_usd=50.0, reasoning_required=True),
         )
         child = ConstraintEnvelope(config=child_config)
 
@@ -786,9 +768,7 @@ class TestM15Integration:
         config = ConstraintEnvelopeConfig(
             id="full-m15",
             confidentiality_clearance=ConfidentialityLevel.CONFIDENTIAL,
-            financial=FinancialConstraintConfig(
-                max_spend_usd=100.0, reasoning_required=True
-            ),
+            financial=FinancialConstraintConfig(max_spend_usd=100.0, reasoning_required=True),
             operational=OperationalConstraintConfig(allowed_actions=["read", "write"]),
         )
         envelope = ConstraintEnvelope(config=config)

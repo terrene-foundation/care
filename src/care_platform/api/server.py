@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import hmac
 import logging
+import os
 from typing import Any
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
@@ -28,6 +29,7 @@ from slowapi.util import get_remote_address
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 
+import care_platform
 from care_platform.api.endpoints import ApiResponse, PlatformAPI
 from care_platform.api.events import event_bus
 from care_platform.api.shutdown import ShutdownManager
@@ -39,6 +41,54 @@ from care_platform.workspace.bridge import BridgeManager
 from care_platform.workspace.models import WorkspaceRegistry
 
 logger = logging.getLogger(__name__)
+
+
+class BodySizeLimitMiddleware(BaseHTTPMiddleware):
+    """Reject requests whose Content-Length exceeds a configurable maximum.
+
+    Returns 413 Payload Too Large with an informative JSON body when the
+    declared Content-Length exceeds the limit. The limit defaults to 1MB
+    (1048576 bytes) and can be overridden via the ``CARE_MAX_BODY_SIZE``
+    environment variable.
+    """
+
+    def __init__(self, app, max_body_size: int = 1_048_576) -> None:  # noqa: ANN001
+        super().__init__(app)
+        self._max_body_size = max_body_size
+
+    async def dispatch(self, request: Request, call_next):  # noqa: ANN001
+        """Check Content-Length and reject oversized requests."""
+        content_length = request.headers.get("content-length")
+        if content_length is not None:
+            try:
+                length = int(content_length)
+            except ValueError:
+                return JSONResponse(
+                    status_code=400,
+                    content={
+                        "error": "Invalid Content-Length header",
+                        "detail": f"Content-Length must be a valid integer, got: {content_length!r}",
+                    },
+                )
+            if length > self._max_body_size:
+                logger.warning(
+                    "Request body too large: Content-Length=%d exceeds limit=%d for %s %s",
+                    length,
+                    self._max_body_size,
+                    request.method,
+                    request.url.path,
+                )
+                return JSONResponse(
+                    status_code=413,
+                    content={
+                        "error": "Payload Too Large",
+                        "detail": (
+                            f"Request body size ({length} bytes) exceeds the maximum "
+                            f"allowed size ({self._max_body_size} bytes)"
+                        ),
+                    },
+                )
+        return await call_next(request)
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
@@ -118,6 +168,7 @@ def create_app(
     platform_api: PlatformAPI | None = None,
     env_config: EnvConfig | None = None,
     trust_store: Any | None = None,
+    dm_runner: Any | None = None,
 ) -> FastAPI:
     """Create and configure the FastAPI application.
 
@@ -127,6 +178,9 @@ def create_app(
         env_config: Optional EnvConfig. When None, loaded from environment.
         trust_store: Optional trust store for readiness probe. When
             provided, the ``/ready`` endpoint checks store health.
+        dm_runner: Optional DMTeamRunner instance for DM team endpoints.
+            When provided, mounts POST/GET /api/v1/dm/tasks and
+            GET /api/v1/dm/status endpoints.
 
     Returns:
         Configured FastAPI application with all routes mounted.
@@ -174,37 +228,110 @@ def create_app(
     # Security response headers middleware (M35-3504)
     app.add_middleware(SecurityHeadersMiddleware)
 
+    # L6: Request body size limit middleware — rejects oversized payloads with 413
+    _max_body_size_str = os.environ.get("CARE_MAX_BODY_SIZE", "")
+    _max_body_size = 1_048_576  # Default: 1MB
+    if _max_body_size_str:
+        try:
+            _max_body_size = int(_max_body_size_str)
+        except ValueError:
+            logger.warning(
+                "Invalid CARE_MAX_BODY_SIZE='%s', using default %d bytes",
+                _max_body_size_str,
+                _max_body_size,
+            )
+    app.add_middleware(BodySizeLimitMiddleware, max_body_size=_max_body_size)
+
     # Store shutdown manager on app state for access and testing
     app.state.shutdown_manager = shutdown_manager
+
+    # L5: CORS origin validation — in production, require HTTPS and reject wildcard
+    cors_origins = list(cfg.care_cors_origins)
+    if cfg.is_production:
+        validated_origins: list[str] = []
+        rejected_origins: list[str] = []
+        for origin in cors_origins:
+            if origin == "*" or not origin.startswith("https://"):
+                rejected_origins.append(origin)
+            else:
+                validated_origins.append(origin)
+        if rejected_origins:
+            logger.warning(
+                "CORS origins rejected in production mode (must use HTTPS, no wildcard): %s. "
+                "Falling back to validated origins only: %s",
+                rejected_origins,
+                validated_origins if validated_origins else "(empty list)",
+            )
+        cors_origins = validated_origins
 
     # CORS middleware — restricted methods and headers (H4)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=cfg.care_cors_origins,
+        allow_origins=cors_origins,
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT"],
         allow_headers=["Content-Type", "Authorization"],
     )
 
-    # Authentication: bearer token from CARE_API_TOKEN env var (C2/C3)
+    # Authentication: Firebase ID token (primary) + static CARE_API_TOKEN (fallback)
     _api_token = cfg.care_api_token
     _bearer_scheme = HTTPBearer(auto_error=False)
+
+    # Lazy-import Firebase verification to avoid hard dependency
+    _firebase_verify = None
+
+    def _get_firebase_verify():  # noqa: ANN202
+        nonlocal _firebase_verify
+        if _firebase_verify is None:
+            try:
+                from care_platform.auth.firebase_admin import verify_firebase_id_token
+                _firebase_verify = verify_firebase_id_token
+            except ImportError:
+                _firebase_verify = lambda _token: None  # noqa: E731
+        return _firebase_verify
 
     async def verify_token(
         credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
     ) -> str:
         """Verify bearer token and return the authenticated identity.
 
-        When CARE_API_TOKEN is not set (empty), auth is disabled for
-        local development. In production, set CARE_API_TOKEN to require
-        authentication on all mutating endpoints.
+        Authentication is checked in this order:
+        1. Firebase ID token -- verified via Firebase Admin SDK. Returns
+           the user's UID as identity. Used by the web dashboard SSO.
+        2. Static CARE_API_TOKEN -- compared via constant-time comparison.
+           Used by CLI, scripts, and API-only access.
+        3. Dev mode bypass -- when CARE_API_TOKEN is not set (empty),
+           auth is disabled for local development.
+
+        Returns the authenticated identity string (Firebase UID, "authenticated",
+        or "anonymous" in dev mode).
         """
-        if not _api_token:
-            # No token configured — dev mode, no auth required
+        if not _api_token and not credentials:
+            # No token configured and no credentials provided — dev mode
             return "anonymous"
-        if credentials is None or not hmac.compare_digest(credentials.credentials, _api_token):
+
+        if credentials is None:
+            if not _api_token:
+                return "anonymous"
             raise HTTPException(status_code=401, detail="Invalid or missing API token")
-        return "authenticated"
+
+        bearer_token = credentials.credentials
+
+        # Method 1: Try Firebase ID token verification
+        firebase_verify = _get_firebase_verify()
+        firebase_user = firebase_verify(bearer_token)
+        if firebase_user is not None:
+            return f"firebase:{firebase_user['uid']}"
+
+        # Method 2: Try static token comparison
+        if _api_token and hmac.compare_digest(bearer_token, _api_token):
+            return "authenticated"
+
+        # Method 3: Dev mode bypass (no token configured)
+        if not _api_token:
+            return "anonymous"
+
+        raise HTTPException(status_code=401, detail="Invalid or missing API token")
 
     # Rate limit values from config
     _rate_get = cfg.care_rate_limit_get
@@ -216,9 +343,21 @@ def create_app(
 
     @app.get("/health")
     @limiter.limit(_rate_get)
-    async def health(request: Request) -> dict[str, str]:
-        """Health check endpoint for load balancers and monitoring."""
-        return {"status": "healthy", "service": "care-platform"}
+    async def health(request: Request) -> dict[str, Any]:
+        """Health check endpoint for load balancers and monitoring.
+
+        Returns service status, version, and component-level health.
+        """
+        return {
+            "status": "healthy",
+            "service": "care-platform",
+            "version": care_platform.__version__,
+            "components": {
+                "api": "ok",
+                "trust_store": "ok",
+                "database": "ok",
+            },
+        }
 
     # ------------------------------------------------------------------
     # Readiness probe (I2)
@@ -376,6 +515,22 @@ def create_app(
         """Get verification gradient counts by level. Requires authentication."""
         return api.verification_stats_report()
 
+    @app.get("/api/v1/dashboard/trends")
+    @limiter.limit(_rate_get)
+    async def dashboard_trends(
+        request: Request, _token: str = Depends(verify_token)
+    ) -> ApiResponse:
+        """Get 7-day verification gradient trends for sparklines. Requires authentication."""
+        return api.dashboard_trends()
+
+    @app.get("/api/v1/agents/{agent_id}/posture-history")
+    @limiter.limit(_rate_get)
+    async def posture_history(
+        request: Request, agent_id: str, _token: str = Depends(verify_token)
+    ) -> ApiResponse:
+        """Get posture change history for an agent. Requires authentication."""
+        return api.posture_history(agent_id)
+
     # ------------------------------------------------------------------
     # M36 Bridge management endpoints
     # ------------------------------------------------------------------
@@ -465,6 +620,26 @@ def create_app(
         return api.close_bridge_action(bridge_id, reason)
 
     # ------------------------------------------------------------------
+    # M13 ShadowEnforcer endpoints
+    # ------------------------------------------------------------------
+
+    @app.get("/api/v1/shadow/{agent_id}/metrics")
+    @limiter.limit(_rate_get)
+    async def shadow_metrics(
+        request: Request, agent_id: str, _token: str = Depends(verify_token)
+    ) -> ApiResponse:
+        """Get shadow enforcement metrics for an agent. Requires authentication."""
+        return api.shadow_metrics(agent_id)
+
+    @app.get("/api/v1/shadow/{agent_id}/report")
+    @limiter.limit(_rate_get)
+    async def shadow_report(
+        request: Request, agent_id: str, _token: str = Depends(verify_token)
+    ) -> ApiResponse:
+        """Get shadow enforcement posture upgrade report. Requires authentication."""
+        return api.shadow_report(agent_id)
+
+    # ------------------------------------------------------------------
     # WebSocket for real-time updates
     # ------------------------------------------------------------------
 
@@ -536,6 +711,175 @@ def create_app(
         finally:
             shutdown_manager.unregister_connection(websocket)
             await event_bus.unsubscribe(queue)
+
+    # ------------------------------------------------------------------
+    # M23 DM Team endpoints (Task 5052)
+    # ------------------------------------------------------------------
+
+    if dm_runner is not None:
+
+        @app.post("/api/v1/dm/tasks")
+        @limiter.limit(_rate_post)
+        async def dm_submit_task(
+            request: Request,
+            _token: str = Depends(verify_token),
+        ) -> ApiResponse:
+            """Submit a DM team task. Auto-routes by keyword matching."""
+            body: dict[str, Any] = await request.json()
+            description = body.get("description", "")
+            target_agent = body.get("target_agent")
+
+            if not description:
+                return ApiResponse(
+                    status="error",
+                    error="Missing required field 'description' in request body",
+                )
+
+            # L3-FIX: Reject oversized task descriptions to prevent memory exhaustion.
+            if len(description) > 10000:
+                return ApiResponse(
+                    status="error",
+                    error="Task description exceeds maximum length of 10,000 characters",
+                )
+
+            # Validate target agent if specified
+            if target_agent and target_agent not in dm_runner.registered_agents:
+                return ApiResponse(
+                    status="error",
+                    error=(
+                        f"Agent '{target_agent}' is not a valid DM team agent. "
+                        f"Available: {dm_runner.registered_agents}"
+                    ),
+                )
+
+            result = dm_runner.submit_task(
+                description=description,
+                target_agent=target_agent,
+            )
+
+            task_id = result.metadata.get("task_id", "")
+            routed_to = result.metadata.get("routed_to", "")
+
+            if result.error and not result.metadata.get("held"):
+                return ApiResponse(
+                    status="ok",
+                    data={
+                        "task_id": task_id,
+                        "routed_to": routed_to,
+                        "status": "blocked" if "BLOCKED" in (result.error or "") else "error",
+                        "error": result.error,
+                        "verification_level": result.metadata.get("verification_level"),
+                    },
+                )
+
+            return ApiResponse(
+                status="ok",
+                data={
+                    "task_id": task_id,
+                    "routed_to": routed_to,
+                    "status": "held" if result.metadata.get("held") else "completed",
+                    "output": result.output,
+                    "verification_level": result.metadata.get("verification_level"),
+                },
+            )
+
+        @app.get("/api/v1/dm/tasks/{task_id}")
+        @limiter.limit(_rate_get)
+        async def dm_get_task(
+            request: Request,
+            task_id: str,
+            _token: str = Depends(verify_token),
+        ) -> ApiResponse:
+            """Get DM task result and lifecycle by task_id."""
+            result = dm_runner.get_task_result(task_id)
+            if result is None:
+                return ApiResponse(
+                    status="error",
+                    error=f"Task '{task_id}' not found",
+                )
+
+            return ApiResponse(
+                status="ok",
+                data={
+                    "task_id": task_id,
+                    "output": result.output,
+                    "error": result.error,
+                    "verification_level": result.metadata.get("verification_level"),
+                    "routed_to": result.metadata.get("routed_to"),
+                    "lifecycle": result.metadata.get("lifecycle"),
+                },
+            )
+
+        @app.get("/api/v1/dm/status")
+        @limiter.limit(_rate_get)
+        async def dm_status(
+            request: Request,
+            _token: str = Depends(verify_token),
+        ) -> ApiResponse:
+            """Get all 5 DM agents' postures and task stats."""
+            stats = dm_runner.get_agent_stats()
+            agents_data = []
+            for agent_id in dm_runner.registered_agents:
+                record = dm_runner.get_agent_record(agent_id)
+                agent_stats = stats.get(agent_id, {})
+                agents_data.append(
+                    {
+                        "agent_id": agent_id,
+                        "name": record.name if record else agent_id,
+                        "role": record.role if record else "",
+                        "posture": record.current_posture if record else "unknown",
+                        "status": record.status.value if record else "unknown",
+                        "tasks_submitted": agent_stats.get("tasks_submitted", 0),
+                        "tasks_completed": agent_stats.get("tasks_completed", 0),
+                        "tasks_held": agent_stats.get("tasks_held", 0),
+                        "tasks_blocked": agent_stats.get("tasks_blocked", 0),
+                    }
+                )
+
+            return ApiResponse(
+                status="ok",
+                data={
+                    "team_id": "dm-team",
+                    "agents": agents_data,
+                    "total_agents": len(agents_data),
+                },
+            )
+
+        @app.get("/api/v1/shadow/{agent_id}/upgrade-recommendation")
+        @limiter.limit(_rate_get)
+        async def shadow_upgrade_recommendation(
+            request: Request,
+            agent_id: str,
+            _token: str = Depends(verify_token),
+        ) -> ApiResponse:
+            """Get posture upgrade recommendation for an agent."""
+            try:
+                rec = dm_runner.get_upgrade_recommendation(agent_id)
+                return ApiResponse(status="ok", data=rec)
+            except KeyError as exc:
+                return ApiResponse(status="error", error=str(exc))
+
+    # ------------------------------------------------------------------
+    # Prometheus metrics endpoint (Task 5025)
+    # ------------------------------------------------------------------
+
+    @app.get("/metrics", include_in_schema=False)
+    async def metrics_endpoint(request: Request) -> Response:
+        """Prometheus metrics endpoint — standard scraping target.
+
+        Returns all registered metrics in Prometheus text exposition format.
+        This endpoint does NOT require authentication, which is standard
+        practice for Prometheus scraping.
+        """
+        from care_platform.observability.metrics import (
+            get_metrics_content_type,
+            get_metrics_endpoint_response,
+        )
+
+        return Response(
+            content=get_metrics_endpoint_response(),
+            media_type=get_metrics_content_type(),
+        )
 
     # ------------------------------------------------------------------
     # Shutdown handler (I8)

@@ -60,6 +60,16 @@ DM_TEAM_LEAD = AgentConfig(
         "generate_report",
         "track_engagement",
         "analyze_trends",
+        # Community manager capabilities
+        "draft_response",
+        "moderate_content",
+        "track_community",
+        "flag_issues",
+        # SEO specialist capabilities
+        "analyze_keywords",
+        "suggest_structure",
+        "audit_seo",
+        "research_topics",
     ],
 )
 

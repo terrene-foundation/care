@@ -11,13 +11,9 @@ Tests that:
 5. Nonce cache is bounded and evicts old entries
 """
 
-import time
 from collections import OrderedDict
 from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
-from uuid import uuid4
-
-import pytest
 
 from care_platform.trust.messaging import (
     AgentMessage,

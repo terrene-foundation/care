@@ -15,9 +15,7 @@ import pytest
 from care_platform.execution.approval import (
     ApprovalQueue,
     QueueOverflowError,
-    UrgencyLevel,
 )
-
 
 # ===========================================================================
 # RT-10a: Lazy expiry — _check_expiry() called at entry points

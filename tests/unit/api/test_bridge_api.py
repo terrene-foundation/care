@@ -18,7 +18,6 @@ from care_platform.execution.registry import AgentRegistry
 from care_platform.persistence.cost_tracking import CostTracker
 from care_platform.workspace.bridge import BridgeManager
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -26,7 +25,7 @@ from care_platform.workspace.bridge import BridgeManager
 
 @pytest.fixture()
 def registry():
-    """Registry with agents in two teams."""
+    """Registry with agents in two teams, including lead approvers."""
     reg = AgentRegistry()
     reg.register(
         agent_id="agent-1",
@@ -36,9 +35,27 @@ def registry():
         capabilities=["read", "write"],
         posture="supervised",
     )
+    # L1-FIX: Register approver agents so registry-based team membership
+    # validation can verify them (replaces old substring-based check).
+    reg.register(
+        agent_id="team-alpha-lead-1",
+        name="Alpha Lead",
+        role="Lead",
+        team_id="team-alpha",
+        capabilities=["approve"],
+        posture="delegated",
+    )
     reg.register(
         agent_id="agent-3",
         name="Agent Three",
+        role="Lead",
+        team_id="team-beta",
+        capabilities=["approve"],
+        posture="delegated",
+    )
+    reg.register(
+        agent_id="team-beta-lead-1",
+        name="Beta Lead",
         role="Lead",
         team_id="team-beta",
         capabilities=["approve"],

@@ -1347,8 +1347,7 @@ class ExecutionRuntime:
             except Exception as exc:
                 self._audit_persist_failures += 1
                 logger.warning(
-                    "Failed to persist audit anchor '%s' to trust store "
-                    "(total failures: %d): %s",
+                    "Failed to persist audit anchor '%s' to trust store (total failures: %d): %s",
                     anchor.anchor_id,
                     self._audit_persist_failures,
                     exc,

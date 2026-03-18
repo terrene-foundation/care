@@ -8,13 +8,9 @@ RT7-09: is_tighter_than must validate temporal and data_access dimensions.
 
 from datetime import UTC, datetime, timedelta
 
-import pytest
-
 from care_platform.config.schema import (
     ConstraintEnvelopeConfig,
     DataAccessConstraintConfig,
-    FinancialConstraintConfig,
-    OperationalConstraintConfig,
     TemporalConstraintConfig,
 )
 from care_platform.constraint.envelope import (

@@ -13,9 +13,6 @@ Validates that:
 - Migrations fail safely on bad SQL
 """
 
-import os
-from datetime import UTC, datetime
-
 import pytest
 
 from care_platform.persistence.migrations import (
@@ -26,7 +23,6 @@ from care_platform.persistence.migrations import (
     migrate,
 )
 from care_platform.persistence.sqlite_store import SQLiteTrustStore
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -154,7 +150,7 @@ class TestMigrate:
             "SELECT version, description FROM _migrations ORDER BY version"
         ).fetchall()
         assert len(rows) == len(applied)
-        for row, migration in zip(rows, applied):
+        for row, migration in zip(rows, applied, strict=True):
             assert row[0] == migration.version
             assert row[1] == migration.description
 

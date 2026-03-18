@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.lint_fail_closed import Violation, scan_file
+from scripts.lint_fail_closed import scan_file
 
 
 @pytest.fixture()

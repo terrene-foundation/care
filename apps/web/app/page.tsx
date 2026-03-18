@@ -414,17 +414,31 @@ export default function OverviewPage() {
     refetch: costRefetch,
   } = useApi((client) => client.costReport({ days: 1 }), []);
 
+  const {
+    data: trendsData,
+    loading: trendsLoading,
+    error: trendsError,
+    refetch: trendsRefetch,
+  } = useApi((client) => client.dashboardTrends(), []);
+
   const { connectionState } = useWebSocket();
 
   // --- Derived state ---
-  const loading = statsLoading || heldLoading || chainsLoading || costLoading;
-  const error = statsError ?? heldError ?? chainsError ?? costError;
+  const loading =
+    statsLoading ||
+    heldLoading ||
+    chainsLoading ||
+    costLoading ||
+    trendsLoading;
+  const error =
+    statsError ?? heldError ?? chainsError ?? costError ?? trendsError;
 
   const handleRefetch = () => {
     statsRefetch();
     heldRefetch();
     chainsRefetch();
     costRefetch();
+    trendsRefetch();
   };
 
   const pendingCount = heldData?.actions.length ?? 0;
@@ -451,16 +465,11 @@ export default function OverviewPage() {
     return Math.round((statsData.AUTO_APPROVED / statsData.total) * 100);
   }, [statsData]);
 
-  // Synthetic trend data derived from current stats (7-day simulated from counts)
-  // In a real system these would come from a time-series API endpoint
-  const buildTrend = (current: number): number[] => {
-    const base = Math.max(Math.floor(current * 0.7), 0);
-    return Array.from({ length: 7 }, (_, i) => {
-      const variance = Math.floor(Math.random() * Math.max(current * 0.3, 1));
-      const dayValue = base + variance;
-      // Make last day match current proportionally
-      return i === 6 ? current : dayValue;
-    });
+  // L9: Trend data from the /api/v1/dashboard/trends endpoint (7-day daily
+  // counts computed from audit anchor timestamps). Falls back to flat lines
+  // at the current value when trends data is unavailable.
+  const buildFallbackTrend = (current: number): number[] => {
+    return Array.from({ length: 7 }, () => current);
   };
 
   const gradientLevels = useMemo(() => {
@@ -474,7 +483,9 @@ export default function OverviewPage() {
         color: "bg-gradient-auto",
         bgLight: "bg-gradient-auto-light",
         textColor: "text-gradient-auto-dark",
-        trend: buildTrend(statsData.AUTO_APPROVED),
+        trend:
+          trendsData?.auto_approved ??
+          buildFallbackTrend(statsData.AUTO_APPROVED),
       },
       {
         level: "Flagged",
@@ -483,7 +494,7 @@ export default function OverviewPage() {
         color: "bg-gradient-flagged",
         bgLight: "bg-gradient-flagged-light",
         textColor: "text-gradient-flagged-dark",
-        trend: buildTrend(statsData.FLAGGED),
+        trend: trendsData?.flagged ?? buildFallbackTrend(statsData.FLAGGED),
       },
       {
         level: "Held",
@@ -492,7 +503,7 @@ export default function OverviewPage() {
         color: "bg-gradient-held",
         bgLight: "bg-gradient-held-light",
         textColor: "text-gradient-held-dark",
-        trend: buildTrend(statsData.HELD),
+        trend: trendsData?.held ?? buildFallbackTrend(statsData.HELD),
       },
       {
         level: "Blocked",
@@ -501,11 +512,10 @@ export default function OverviewPage() {
         color: "bg-gradient-blocked",
         bgLight: "bg-gradient-blocked-light",
         textColor: "text-gradient-blocked-dark",
-        trend: buildTrend(statsData.BLOCKED),
+        trend: trendsData?.blocked ?? buildFallbackTrend(statsData.BLOCKED),
       },
     ];
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statsData]);
+  }, [statsData, trendsData]);
 
   return (
     <DashboardShell

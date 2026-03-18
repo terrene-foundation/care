@@ -85,9 +85,9 @@ class TestCacheLookupPerformance:
 
         # Hits should not be significantly slower than misses
         # (allow 20x overhead to account for system load variance and LRU bookkeeping)
-        assert (
-            hit_time < miss_time * 20
-        ), f"Cache hits ({hit_time:.6f}s) much slower than misses ({miss_time:.6f}s)"
+        assert hit_time < miss_time * 20, (
+            f"Cache hits ({hit_time:.6f}s) much slower than misses ({miss_time:.6f}s)"
+        )
 
 
 class TestVerificationLevelSelection:

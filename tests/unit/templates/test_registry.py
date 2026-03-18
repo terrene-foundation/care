@@ -13,7 +13,6 @@ from care_platform.templates.registry import (
     TemplateRegistry,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -134,9 +133,9 @@ class TestTeamTemplateStructure:
             tpl = registry.get(name)
             team_agent_ids = set(tpl.team.agents)
             for agent in tpl.agents:
-                assert (
-                    agent.id in team_agent_ids
-                ), f"Template '{name}': agent '{agent.id}' not in team agent list"
+                assert agent.id in team_agent_ids, (
+                    f"Template '{name}': agent '{agent.id}' not in team agent list"
+                )
 
 
 # ---------------------------------------------------------------------------
@@ -187,14 +186,14 @@ class TestTemplateConstraints:
         """All media template envelopes enforce internal-only communication."""
         tpl = registry.get("media")
         for env in tpl.envelopes:
-            assert (
-                env.communication.internal_only is True
-            ), f"Media envelope '{env.id}' should be internal_only"
+            assert env.communication.internal_only is True, (
+                f"Media envelope '{env.id}' should be internal_only"
+            )
 
     def test_partnerships_grant_writer_stricter_financial(self, registry):
         """Partnerships template grant-writer has $0 financial (strict controls)."""
         tpl = registry.get("partnerships")
         for env in tpl.envelopes:
-            assert (
-                env.financial.max_spend_usd == 0.0
-            ), f"Partnerships envelope '{env.id}' should have $0 spend"
+            assert env.financial.max_spend_usd == 0.0, (
+                f"Partnerships envelope '{env.id}' should have $0 spend"
+            )

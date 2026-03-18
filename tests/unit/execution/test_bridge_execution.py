@@ -18,7 +18,6 @@ import pytest
 
 from care_platform.audit.anchor import AuditChain
 from care_platform.config.schema import (
-    TrustPostureLevel,
     VerificationGradientConfig,
     VerificationLevel,
 )
@@ -30,7 +29,6 @@ from care_platform.execution.registry import AgentRegistry
 from care_platform.execution.runtime import (
     ExecutionRuntime,
     Task,
-    TaskResult,
     TaskStatus,
 )
 from care_platform.persistence.store import MemoryStore
@@ -38,16 +36,13 @@ from care_platform.trust.bridge_trust import (
     BridgeDelegation,
     BridgeTrustManager,
 )
-from care_platform.trust.credentials import CredentialManager
 from care_platform.trust.revocation import RevocationManager
 from care_platform.workspace.bridge import (
-    Bridge,
     BridgeManager,
     BridgePermission,
     BridgeStatus,
     BridgeType,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

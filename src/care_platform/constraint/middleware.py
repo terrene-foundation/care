@@ -37,13 +37,12 @@ from pydantic import BaseModel
 
 from care_platform.audit.anchor import AuditChain
 from care_platform.config.schema import TrustPostureLevel, VerificationLevel
+from care_platform.constraint.cache import CachedVerification, VerificationCache
 from care_platform.constraint.circuit_breaker import CircuitBreaker, CircuitBreakerOpen
 from care_platform.constraint.envelope import ConstraintEnvelope
 from care_platform.constraint.gradient import GradientEngine, VerificationResult
 from care_platform.execution.approval import ApprovalQueue
 from care_platform.trust.posture import TrustPosture
-
-from care_platform.constraint.cache import CachedVerification, VerificationCache
 
 if TYPE_CHECKING:
     from care_platform.constraint.signing import SignedEnvelope

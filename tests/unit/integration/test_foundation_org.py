@@ -11,8 +11,7 @@ import pytest
 
 from care_platform.config.schema import ConstraintEnvelopeConfig
 from care_platform.constraint.envelope import ConstraintEnvelope
-from care_platform.org.builder import OrgDefinition, OrgTemplate
-
+from care_platform.org.builder import OrgTemplate
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -89,9 +88,9 @@ class TestDMAgentsHaveEnvelopes:
         """All DM agents start at SUPERVISED trust posture."""
         dm_agents = foundation_org.get_team_agents("dm-team")
         for agent in dm_agents:
-            assert (
-                agent.initial_posture == "supervised"
-            ), f"Agent '{agent.id}' starts at '{agent.initial_posture}', expected 'supervised'"
+            assert agent.initial_posture == "supervised", (
+                f"Agent '{agent.id}' starts at '{agent.initial_posture}', expected 'supervised'"
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -123,9 +122,9 @@ class TestMonotonicTightening:
             sub_config = envelope_map.get(env_id)
             assert sub_config is not None, f"Envelope '{env_id}' not found"
             sub_envelope = ConstraintEnvelope(config=sub_config)
-            assert sub_envelope.is_tighter_than(
-                lead_envelope
-            ), f"Envelope '{env_id}' is NOT a monotonic tightening of 'dm-lead-envelope'"
+            assert sub_envelope.is_tighter_than(lead_envelope), (
+                f"Envelope '{env_id}' is NOT a monotonic tightening of 'dm-lead-envelope'"
+            )
 
     def test_all_dm_envelopes_zero_spend(self, foundation_org):
         """All DM envelopes have $0 financial spend."""
@@ -146,9 +145,9 @@ class TestMonotonicTightening:
         for agent in dm_agents:
             env = envelope_map.get(agent.constraint_envelope)
             assert env is not None
-            assert (
-                env.communication.internal_only is True
-            ), f"Agent '{agent.id}' envelope '{env.id}' allows external communication"
+            assert env.communication.internal_only is True, (
+                f"Agent '{agent.id}' envelope '{env.id}' allows external communication"
+            )
 
 
 # ---------------------------------------------------------------------------

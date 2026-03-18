@@ -19,9 +19,8 @@ import asyncio
 import logging
 import threading
 from datetime import UTC, datetime
-from uuid import uuid4
-
 from typing import Any, cast
+from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
@@ -317,12 +316,12 @@ async def _create_bridge_delegation_record(
     """
     from care_platform.config.schema import (
         AgentConfig,
+        CommunicationConstraintConfig,
         ConstraintEnvelopeConfig,
+        DataAccessConstraintConfig,
         FinancialConstraintConfig,
         OperationalConstraintConfig,
         TemporalConstraintConfig,
-        DataAccessConstraintConfig,
-        CommunicationConstraintConfig,
     )
     from care_platform.trust.eatp_bridge import EATPBridge
 

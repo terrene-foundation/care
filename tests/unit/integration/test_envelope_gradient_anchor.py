@@ -133,9 +133,9 @@ class TestEnvelopeToGradientToAnchor:
             thoroughness=VerificationThoroughness.STANDARD,
             envelope_evaluation=eval_result,
         )
-        assert (
-            gradient_result.is_auto_approved
-        ), f"Expected auto_approved but got {gradient_result.level}"
+        assert gradient_result.is_auto_approved, (
+            f"Expected auto_approved but got {gradient_result.level}"
+        )
         assert gradient_result.matched_rule == "read_*"
 
         # Step 3: Record in audit chain
@@ -213,9 +213,9 @@ class TestEnvelopeToGradientToAnchor:
             current_action_count=5,
             current_time=work_time,
         )
-        assert (
-            eval_result.is_near_boundary
-        ), f"Expected near_boundary but got {eval_result.overall_result}"
+        assert eval_result.is_near_boundary, (
+            f"Expected near_boundary but got {eval_result.overall_result}"
+        )
 
         # Confirm financial dimension is the near-boundary trigger
         fin_dim = next(d for d in eval_result.dimensions if d.dimension == "financial")
@@ -285,9 +285,9 @@ class TestEnvelopeToGradientToAnchor:
 
         # Each anchor should link to the previous
         for i in range(1, chain.length):
-            assert (
-                chain.anchors[i].previous_hash == chain.anchors[i - 1].content_hash
-            ), f"Anchor {i} does not link to anchor {i - 1}"
+            assert chain.anchors[i].previous_hash == chain.anchors[i - 1].content_hash, (
+                f"Anchor {i} does not link to anchor {i - 1}"
+            )
 
         # Genesis anchor has no previous hash
         assert chain.anchors[0].previous_hash is None

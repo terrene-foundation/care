@@ -19,7 +19,6 @@ from care_platform.workspace.knowledge_policy import (
     PolicyViolation,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -40,7 +39,8 @@ def _make_policy(
         allowed_read_classifications=allowed_read_classifications or ["public", "internal"],
         blocked_read_classifications=blocked_read_classifications or ["top_secret"],
         allowed_write_classifications=allowed_write_classifications or ["internal"],
-        blocked_write_classifications=blocked_write_classifications or ["top_secret", "confidential"],
+        blocked_write_classifications=blocked_write_classifications
+        or ["top_secret", "confidential"],
         max_data_sensitivity=max_data_sensitivity,
         allowed_data_types=allowed_data_types or [],
         blocked_data_types=blocked_data_types or ["credentials", "pii"],

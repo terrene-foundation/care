@@ -32,7 +32,16 @@ _COC_INDICATORS = {"briefs", "todos", "01-analysis", "02-plans"}
 _COC_MIN_INDICATORS = 2
 
 # Directories to always skip during discovery
-_SKIP_DIRS = {".git", ".claude", ".obsidian", ".idea", ".jbeval", "__pycache__", "node_modules", ".venv"}
+_SKIP_DIRS = {
+    ".git",
+    ".claude",
+    ".obsidian",
+    ".idea",
+    ".jbeval",
+    "__pycache__",
+    "node_modules",
+    ".venv",
+}
 
 
 class DiscoveredWorkspace(BaseModel):

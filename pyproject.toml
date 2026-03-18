@@ -23,15 +23,10 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
 dependencies = [
-    # Kailash SDK (includes: fastapi, uvicorn, pydantic, sqlalchemy, pandas, numpy, requests, pyyaml)
-    "kailash>=0.12.5",
-    "kailash-nexus>=1.4.2",
-    "kailash-dataflow>=0.12.4",
-    "kailash-kaizen>=1.2.5",
-    # EATP SDK (trust protocol implementation)
-    "eatp>=0.1.0",
-    # Trust Plane (EATP reference implementation)
-    "trust-plane>=0.2.0",
+    # Core dependencies (always required)
+    "pydantic>=2.0",
+    "fastapi>=0.104.0",
+    "uvicorn>=0.24.0",
     # CLI Framework
     "click>=8.0",
     "rich>=13.0.0",
@@ -43,20 +38,48 @@ dependencies = [
     "jcs>=0.2.1",
     # Rate limiting
     "slowapi>=0.1.9",
+    # Monitoring
+    "prometheus-client>=0.20.0",
     # Utilities
     "python-dotenv>=1.0.0",
     "structlog>=23.1.0",
+    "pyyaml>=6.0",
+    # EATP SDK (trust protocol — core to CARE Platform, always required)
+    "eatp>=0.1.0",
+    # Trust Plane (EATP reference implementation)
+    "trust-plane>=0.2.0",
 ]
 
 [project.optional-dependencies]
+# Kailash SDK frameworks — not imported in source yet, install when needed
+# (install with: pip install care-platform[kailash])
+kailash = [
+    "kailash>=0.12.5",
+    "kailash-nexus>=1.4.2",
+    "kailash-dataflow>=0.12.4",
+    "kailash-kaizen>=1.2.5",
+]
+# Firebase Admin SDK for SSO token verification
+# (install with: pip install care-platform[firebase])
+firebase = [
+    "firebase-admin>=6.0",
+]
+# PostgreSQL support (install with: pip install care-platform[postgres])
+postgres = [
+    "psycopg2-binary>=2.9.0",
+]
+# All optional dependencies
+all = [
+    "care-platform[kailash,eatp,firebase,postgres]",
+]
 dev = [
     # Testing (pytest>=7.2.0 removes vulnerable py dependency)
     "pytest>=7.2.0",
     "pytest-cov>=4.0",
     "pytest-asyncio>=0.21.0",
+    # HTTP client for integration tests
+    "httpx>=0.25.0",
     # Linting & Formatting
-    "black>=23.0",
-    "isort>=5.12.0",
     "ruff>=0.1.0",
     "mypy>=1.0",
     # Security & Pre-commit
@@ -98,7 +121,21 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
-ignore = ["E501"]
+ignore = [
+    "E501",    # line too long (handled by formatter)
+    "F841",    # local variable assigned but never used (pre-existing, tracked for cleanup)
+    "B007",    # loop variable not used (pre-existing)
+    "B008",    # function call in default arg (FastAPI Depends pattern)
+    "B017",    # assertRaises(Exception) too broad (test patterns, low risk)
+    "B904",    # raise from within except (pre-existing, tracked for cleanup)
+    "E402",    # module-level import not at top (conditional imports)
+    "SIM102",  # collapsible if (style preference, pre-existing)
+    "SIM108",  # ternary operator (style preference, pre-existing)
+    "SIM109",  # or-membership (style preference, pre-existing)
+    "SIM110",  # any/all loop (style preference, pre-existing)
+    "SIM105",  # contextlib.suppress (try/except ImportError guard pattern is clearer)
+    "SIM117",  # nested with statements (style preference, pre-existing)
+]
 
 [tool.mypy]
 python_version = "3.11"

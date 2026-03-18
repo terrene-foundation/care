@@ -4,7 +4,6 @@
 
 from datetime import UTC, datetime, timedelta
 
-import pytest
 from freezegun import freeze_time
 
 from care_platform.trust.credentials import CredentialManager, VerificationToken

@@ -9,13 +9,9 @@ Tests structured logging and alerting.
 
 from __future__ import annotations
 
-import json
-import time
-from datetime import UTC, datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
-
 
 # ---------------------------------------------------------------------------
 # 2308: Structured Logging with Correlation IDs (I1)
@@ -211,7 +207,7 @@ class TestAlertManager:
 
     def test_alert_on_blocked_action(self):
         """Should alert when constraint middleware returns BLOCKED."""
-        from care_platform.observability.alerting import AlertManager, AlertSeverity
+        from care_platform.observability.alerting import AlertManager
 
         mgr = AlertManager(webhook_urls=["https://hooks.example.com/alert"])
 
@@ -231,7 +227,7 @@ class TestAlertManager:
 
     def test_alert_on_trust_store_health_failure(self):
         """Should alert when trust store health check fails."""
-        from care_platform.observability.alerting import AlertManager, AlertSeverity
+        from care_platform.observability.alerting import AlertManager
 
         mgr = AlertManager(webhook_urls=["https://hooks.example.com/alert"])
 

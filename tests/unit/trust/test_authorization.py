@@ -15,10 +15,10 @@ Validates that:
 
 import pytest
 
-from care_platform.trust.authorization import AuthorizationCheck, AuthorizationResult
-from care_platform.trust.attestation import CapabilityAttestation
-from care_platform.constraint.envelope import ConstraintEnvelope
 from care_platform.config.schema import ConstraintEnvelopeConfig, OperationalConstraintConfig
+from care_platform.constraint.envelope import ConstraintEnvelope
+from care_platform.trust.attestation import CapabilityAttestation
+from care_platform.trust.authorization import AuthorizationCheck, AuthorizationResult
 
 
 def _make_envelope(
@@ -120,7 +120,10 @@ class TestAuthorizationCheckCapableButNotAuthorized:
         attestation = _make_attestation(capabilities=["deploy"])
         check = AuthorizationCheck(envelope=envelope, attestation=attestation)
         result = check.evaluate(action="deploy", agent_id="agent-1")
-        assert "not authorized" in result.denial_reason.lower() or "authorization" in result.denial_reason.lower()
+        assert (
+            "not authorized" in result.denial_reason.lower()
+            or "authorization" in result.denial_reason.lower()
+        )
 
 
 class TestAuthorizationCheckAuthorizedButNotCapable:
@@ -142,7 +145,10 @@ class TestAuthorizationCheckAuthorizedButNotCapable:
         attestation = _make_attestation(capabilities=["read_data"])
         check = AuthorizationCheck(envelope=envelope, attestation=attestation)
         result = check.evaluate(action="write_data", agent_id="agent-1")
-        assert "not capable" in result.denial_reason.lower() or "capability" in result.denial_reason.lower()
+        assert (
+            "not capable" in result.denial_reason.lower()
+            or "capability" in result.denial_reason.lower()
+        )
 
 
 class TestAuthorizationCheckNeitherPass:
@@ -187,21 +193,15 @@ class TestAuthorizationResult:
 
     def test_permitted_requires_both(self):
         """permitted is True only when both authorized and capable are True."""
-        result = AuthorizationResult(
-            authorized=True, capable=True, denial_reason=""
-        )
+        result = AuthorizationResult(authorized=True, capable=True, denial_reason="")
         assert result.permitted is True
 
     def test_not_permitted_when_not_authorized(self):
-        result = AuthorizationResult(
-            authorized=False, capable=True, denial_reason="not authorized"
-        )
+        result = AuthorizationResult(authorized=False, capable=True, denial_reason="not authorized")
         assert result.permitted is False
 
     def test_not_permitted_when_not_capable(self):
-        result = AuthorizationResult(
-            authorized=True, capable=False, denial_reason="not capable"
-        )
+        result = AuthorizationResult(authorized=True, capable=False, denial_reason="not capable")
         assert result.permitted is False
 
 

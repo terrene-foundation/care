@@ -31,12 +31,11 @@ from care_platform.config.schema import (
     VerificationLevel,
 )
 from care_platform.constraint.cache import CachedVerification, VerificationCache
-from care_platform.constraint.circuit_breaker import CircuitBreaker, CircuitBreakerOpen
+from care_platform.constraint.circuit_breaker import CircuitBreaker
 from care_platform.constraint.envelope import ConstraintEnvelope, EvaluationResult
 from care_platform.constraint.gradient import GradientEngine
 from care_platform.constraint.middleware import (
     ActionOutcome,
-    ApprovalRequest,
     VerificationMiddleware,
 )
 from care_platform.execution.approval import ApprovalQueue, PendingAction
@@ -53,7 +52,6 @@ from care_platform.workspace.bridge import (
     BridgeStatus,
     BridgeType,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helper factories

@@ -17,7 +17,6 @@ from care_platform.constraint.envelope import (
 )
 from care_platform.constraint.gradient import GradientEngine
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -207,7 +206,6 @@ class TestBackwardCompatibility:
 
     def test_result_without_proximity_fields(self):
         """VerificationResult can be created without proximity fields."""
-        from care_platform.constraint.verification_level import VerificationThoroughness
 
         result = GradientEngine(
             VerificationGradientConfig(

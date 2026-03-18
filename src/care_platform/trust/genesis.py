@@ -177,8 +177,7 @@ class GenesisManager:
                 )
 
         return True, (
-            f"Genesis record for agent '{agent_id}' is valid "
-            f"(authority: {genesis.authority_id})"
+            f"Genesis record for agent '{agent_id}' is valid (authority: {genesis.authority_id})"
         )
 
     async def renew_genesis(
@@ -227,7 +226,7 @@ class GenesisManager:
             authority.signing_key_id = renewed_key_id
             await self.bridge.authority_registry.update_authority(authority)
         except KeyError:
-            msg = f"Authority '{authority_id}' not found in registry. " f"Cannot renew genesis."
+            msg = f"Authority '{authority_id}' not found in registry. Cannot renew genesis."
             raise ValueError(msg) from None
 
         # Update key tracking

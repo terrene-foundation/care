@@ -768,7 +768,9 @@ class TestSharingModes:
 class TestBridgeTighteningValidation:
     """Verify that bridge envelope is no wider than either team's envelope."""
 
-    def _make_valid_bridge(self) -> tuple[
+    def _make_valid_bridge(
+        self,
+    ) -> tuple[
         ConstraintEnvelopeConfig,
         ConstraintEnvelopeConfig,
         ConstraintEnvelopeConfig,

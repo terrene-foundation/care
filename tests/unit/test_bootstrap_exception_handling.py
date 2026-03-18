@@ -11,11 +11,11 @@ Validates that:
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
-from care_platform.bootstrap import BootstrapResult, PlatformBootstrap
+from care_platform.bootstrap import PlatformBootstrap
 from care_platform.config.schema import (
     AgentConfig,
     ConstraintEnvelopeConfig,
@@ -28,7 +28,6 @@ from care_platform.config.schema import (
     WorkspaceConfig,
 )
 from care_platform.persistence.store import MemoryStore
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

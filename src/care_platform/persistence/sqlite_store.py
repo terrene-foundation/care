@@ -405,21 +405,20 @@ class SQLiteTrustStore:
         action = data.get("action", "")
         verification_level = data.get("verification_level", "")
         timestamp = data.get("timestamp", datetime.now(UTC).isoformat())
-        with self._write_lock:
-            with conn:
-                conn.execute(
-                    """INSERT OR IGNORE INTO audit_anchors
+        with self._write_lock, conn:
+            conn.execute(
+                """INSERT OR IGNORE INTO audit_anchors
                        (anchor_id, agent_id, action, verification_level, timestamp, data)
                        VALUES (?, ?, ?, ?, ?, ?)""",
-                    (
-                        anchor_id,
-                        agent_id,
-                        action,
-                        verification_level,
-                        timestamp,
-                        json.dumps(data, default=str),
-                    ),
-                )
+                (
+                    anchor_id,
+                    agent_id,
+                    action,
+                    verification_level,
+                    timestamp,
+                    json.dumps(data, default=str),
+                ),
+            )
 
     def get_audit_anchor(self, anchor_id: str) -> dict | None:
         """Get an audit anchor by ID."""
@@ -475,12 +474,11 @@ class SQLiteTrustStore:
     def store_posture_change(self, agent_id: str, data: dict) -> None:
         """Store a posture change record (append-only)."""
         conn = self._get_connection()
-        with self._write_lock:
-            with conn:
-                conn.execute(
-                    "INSERT INTO posture_changes (agent_id, data) VALUES (?, ?)",
-                    (agent_id, json.dumps(data, default=str)),
-                )
+        with self._write_lock, conn:
+            conn.execute(
+                "INSERT INTO posture_changes (agent_id, data) VALUES (?, ?)",
+                (agent_id, json.dumps(data, default=str)),
+            )
 
     def get_posture_history(self, agent_id: str) -> list[dict]:
         """Get posture change history for an agent."""
@@ -565,14 +563,13 @@ class SQLiteTrustStore:
         conn = self._get_connection()
         delegator_id = data.get("delegator_id", "")
         delegatee_id = data.get("delegatee_id", "")
-        with self._write_lock:
-            with conn:
-                conn.execute(
-                    """INSERT OR REPLACE INTO delegations
+        with self._write_lock, conn:
+            conn.execute(
+                """INSERT OR REPLACE INTO delegations
                        (delegation_id, delegator_id, delegatee_id, data)
                        VALUES (?, ?, ?, ?)""",
-                    (delegation_id, delegator_id, delegatee_id, json.dumps(data, default=str)),
-                )
+                (delegation_id, delegator_id, delegatee_id, json.dumps(data, default=str)),
+            )
 
     def get_delegation(self, delegation_id: str) -> dict | None:
         """Get a delegation record by ID."""
@@ -634,12 +631,11 @@ class SQLiteTrustStore:
     def store_org_definition(self, org_id: str, data: dict) -> None:
         """Store an organization definition (upsert)."""
         conn = self._get_connection()
-        with self._write_lock:
-            with conn:
-                conn.execute(
-                    "INSERT OR REPLACE INTO org_definitions (org_id, data) VALUES (?, ?)",
-                    (org_id, json.dumps(data, default=str)),
-                )
+        with self._write_lock, conn:
+            conn.execute(
+                "INSERT OR REPLACE INTO org_definitions (org_id, data) VALUES (?, ?)",
+                (org_id, json.dumps(data, default=str)),
+            )
 
     def get_org_definition(self, org_id: str) -> dict | None:
         """Get an organization definition by ID."""

@@ -268,7 +268,7 @@ class PostureEnforcer:
         # HELD stays HELD
         return PostureCheckResult(
             level=VerificationLevel.HELD,
-            reason=(f"CONTINUOUS_INSIGHT posture: action '{action}' was HELD " f"by constraints"),
+            reason=(f"CONTINUOUS_INSIGHT posture: action '{action}' was HELD by constraints"),
         )
 
     def _enforce_delegated(

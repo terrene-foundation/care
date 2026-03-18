@@ -261,9 +261,9 @@ class TestDMTeamConfig:
     def test_all_envelopes_are_constraint_envelope_config(self):
         config = get_dm_team_config()
         for envelope in config["envelopes"]:
-            assert isinstance(
-                envelope, ConstraintEnvelopeConfig
-            ), f"{envelope} is not ConstraintEnvelopeConfig"
+            assert isinstance(envelope, ConstraintEnvelopeConfig), (
+                f"{envelope} is not ConstraintEnvelopeConfig"
+            )
 
 
 # --- Helpers ---
