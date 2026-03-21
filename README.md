@@ -4,313 +4,194 @@
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 [![Status](https://img.shields.io/badge/status-active%20development-orange.svg)]()
 
-**Governed operational model for running organizations with AI agents under EATP trust governance, CO methodology, and CARE philosophy.**
+**Governance framework for running organizations with AI agents under constrained trust.**
 
-The PACT is the Terrene Foundation's reference implementation of the CARE specification -- an open-source framework for organizations that want to deploy AI agents with cryptographic trust enforcement, constraint governance, and tamper-evident audit trails.
+PACT is the Terrene Foundation's reference implementation of Principled Architecture for Constrained Trust -- an open-source framework for organizations that want AI agents operating within defined boundaries: who can do what, how much they can spend, and what information they can access.
 
-> **What it is NOT**: A generic agent orchestrator competing with LangChain or CrewAI. The PACT is _governed orchestration_ -- an opinionated framework where every agent action passes through a trust verification pipeline before execution.
-
----
-
-## The Trinity
-
-The PACT implements three open specifications published by the Terrene Foundation:
-
-| Standard | Full Name                                      | Type        | License   |
-| -------- | ---------------------------------------------- | ----------- | --------- |
-| **CARE** | Collaborative Autonomous Reflective Enterprise | Philosophy  | CC BY 4.0 |
-| **EATP** | Enterprise Agent Trust Protocol                | Protocol    | CC BY 4.0 |
-| **CO**   | Cognitive Orchestration                        | Methodology | CC BY 4.0 |
-
-- **CARE** defines the governance philosophy -- the Dual Plane Model (Trust Plane + Execution Plane) and the Mirror Thesis (organizational trust structures mirror human trust patterns).
-- **EATP** defines the trust protocol -- how trust is established, delegated, verified, and audited through cryptographic chains.
-- **CO** defines the methodology -- how agents are orchestrated within constraint boundaries using seven principles across five layers.
+> **What it is NOT**: A generic agent orchestrator. PACT is _governed orchestration_ -- every agent action passes through a governance pipeline that checks permissions, budgets, and information access before execution.
 
 ---
 
-## Key Concepts
+## 5-Line Quickstart
 
-### Constraint Envelopes
+```python
+from pact.governance.yaml_loader import load_org_yaml
+from pact.governance.engine import GovernanceEngine
 
-Every agent operates within a **constraint envelope** that governs five dimensions:
+loaded = load_org_yaml("my-org.yaml")
+engine = GovernanceEngine(loaded.org_definition)
+verdict = engine.verify_action("D1-R1-T1-R1", "write", {"cost": 500})
+print(f"{verdict.level}: {verdict.reason}")
+```
 
-| Dimension         | What It Controls                        | Example                             |
-| ----------------- | --------------------------------------- | ----------------------------------- |
-| **Financial**     | Spending limits, approval thresholds    | Max $500/day, approval above $100   |
-| **Operational**   | Allowed/blocked actions, rate limits    | May read and draft; may not publish |
-| **Temporal**      | Active hours, blackout periods          | 09:00-18:00 UTC, no weekends        |
-| **Data Access**   | Read/write paths, blocked data types    | Read briefs/; no PII access         |
-| **Communication** | Internal/external, channel restrictions | Internal only; Slack and email      |
+---
 
-Constraint envelopes enforce **monotonic tightening** -- a child agent's constraints can only be equal to or stricter than its parent's. Constraints can never be loosened through delegation.
+## What PACT Provides
+
+### D/T/R Organizational Grammar
+
+Define organizations as Departments, Teams, and Roles with positional addresses:
+
+```
+D1-R1                    President
+D1-R1-D1-R1              Provost
+D1-R1-D1-R1-D1-R1        Dean of Engineering
+D1-R1-D1-R1-D1-R1-T1-R1  CS Chair
+```
+
+Every D or T has exactly one R (head) -- guaranteeing single accountability at every level.
+
+### Five-Dimension Operating Envelopes
+
+Every role operates within a constraint envelope:
+
+| Dimension     | What It Controls                     | Example                        |
+| ------------- | ------------------------------------ | ------------------------------ |
+| Financial     | Spending limits, approval thresholds | max_spend_usd: 10000           |
+| Operational   | Allowed/blocked actions              | allowed_actions: [read, write] |
+| Temporal      | Active hours, blackout periods       | 09:00-17:00 UTC                |
+| Data Access   | Read/write paths                     | read_paths: [/data/public]     |
+| Communication | Channel restrictions                 | internal_only: true            |
+
+Envelopes compose through **monotonic tightening** -- a child role's envelope can only be equal to or more restrictive than its parent's.
+
+### Knowledge Clearance Independent of Authority
+
+Clearance is orthogonal to seniority. A junior IRB Director can hold SECRET clearance with the "human-subjects" compartment while the Dean of Engineering holds only CONFIDENTIAL:
+
+```yaml
+clearances:
+  - role: r-irb-director
+    level: secret
+    compartments: [human-subjects]
+  - role: r-dean-eng
+    level: confidential
+```
 
 ### Verification Gradient
 
-Every agent action is classified through the verification gradient before execution:
+Every action gets classified:
 
-- **AUTO_APPROVED** -- execute and log (low-risk routine actions)
-- **FLAGGED** -- execute but highlight for human review (near constraint boundaries)
-- **HELD** -- queue for human approval before execution (high-impact actions)
-- **BLOCKED** -- reject outright (constraint violations or forbidden actions)
+- **AUTO_APPROVED** -- within all constraints, proceed
+- **FLAGGED** -- near a boundary, proceed with warning
+- **HELD** -- exceeds soft limit, queued for human approval
+- **BLOCKED** -- violates hard constraint, denied
 
-### Trust Postures
+### Cross-Functional Bridges and Knowledge Share Policies
 
-Agents evolve through trust posture levels based on demonstrated performance:
+Controlled exceptions to information barriers:
 
-1. **Pseudo-Agent** -- no autonomous action
-2. **Supervised** -- every action requires human approval (default starting level)
-3. **Shared Planning** -- agent proposes, human approves plans (requires 90 days, 95% success rate)
-4. **Continuous Insight** -- agent executes with human oversight (requires 180 days, 98% success rate)
-5. **Delegated** -- agent operates autonomously within constraints (requires 365 days, 99% success rate)
-
-Upgrades are gradual and evidence-based. Downgrades are instant on any negative incident.
-
-### Trust Lineage Chain (EATP Five Elements)
-
-Every agent's authority traces back to a cryptographically signed root of trust:
-
-1. **Genesis Record** -- the root authority record (Ed25519 signed)
-2. **Delegation Record** -- signed transfer of capabilities with constraints
-3. **Constraint Envelope** -- the five-dimension governance boundary
-4. **Capability Attestation** -- signed declaration of what an agent may do
-5. **Audit Anchor** -- tamper-evident record of every action taken
+- **Bridges** connect two roles across boundaries (Standing, Scoped, Ad-Hoc)
+- **KSPs** grant one-way unit-level data access
 
 ---
 
-## Architecture
-
-The PACT operates on two planes, following the CARE Dual Plane Model:
-
-```
- Trust Plane (pact.trust)
- +---------------------------------------------------------+
- | Genesis -> Delegation -> Envelope -> Attestation -> Audit|
- | Verification Gradient | Trust Postures | Trust Scoring   |
- +---------------------------------------------------------+
-                          |
-                    verify/enforce
-                          |
- Execution Plane (pact.use.execution)
- +---------------------------------------------------------+
- | Agent Teams | Workspaces | Session Management            |
- | Cross-Functional Bridges | Approval Queues               |
- +---------------------------------------------------------+
-```
-
-### Package Structure
-
-```
-src/pact/
-├── trust/       — TRUST plane (governance primitives)
-│   ├── constraint/     Constraint envelope evaluation and verification gradient engine
-│   ├── audit/          Tamper-evident audit anchor chains
-│   ├── auth/           Authentication and authorization
-│   ├── store/          Storage abstraction (MemoryStore, FilesystemStore)
-│   ├── store_isolation/ Tenant isolation for multi-org deployments
-│   └── resilience/     Circuit breakers and fault tolerance
-├── build/       — BUILD plane (define organizations)
-│   ├── config/         Platform configuration schema (Pydantic models) and YAML loader
-│   ├── org/            Organization builder
-│   ├── templates/      Reusable organization templates
-│   ├── verticals/      Domain-specific team templates
-│   ├── workspace/      Workspace-as-knowledge-base management
-│   ├── bootstrap/      Platform initialization helpers
-│   └── cli/            Command-line interface
-└── use/         — USE plane (run & observe)
-    ├── api/            REST API layer
-    ├── execution/      Agent execution runtime (teams, sessions, approval queues)
-    └── observability/  Metrics, tracing, and monitoring
-```
-
----
-
-## Quick Start
-
-### Installation
+## Installation
 
 ```bash
 pip install pact
 ```
 
-Or for development:
+For development:
 
 ```bash
-git clone https://github.com/terrene-foundation/care.git
-cd care
+git clone https://github.com/terrene-foundation/pact.git
+cd pact
 pip install -e ".[dev]"
 ```
 
-### Configure
+---
 
-Copy the environment template and add your API keys:
+## Define Your Organization in YAML
+
+```yaml
+org_id: "my-org"
+name: "My Organization"
+
+departments:
+  - id: d-executive
+    name: Executive
+  - id: d-operations
+    name: Operations
+
+roles:
+  - id: r-ceo
+    name: CEO
+    heads: d-executive
+  - id: r-ops-lead
+    name: Operations Lead
+    reports_to: r-ceo
+    heads: d-operations
+
+envelopes:
+  - target: r-ops-lead
+    defined_by: r-ceo
+    financial:
+      max_spend_usd: 25000
+    operational:
+      allowed_actions: [read, write, approve]
+```
+
+Validate with the CLI:
 
 ```bash
-cp .env.example .env
+python -m pact.governance.cli validate my-org.yaml
 ```
 
-### Define Your Organization
+---
 
-Create a platform configuration (YAML or Python):
+## The Quartet
 
-```python
-from pact.build.config.schema import (
-    PlatformConfig,
-    GenesisConfig,
-    AgentConfig,
-    TeamConfig,
-    WorkspaceConfig,
-    ConstraintEnvelopeConfig,
-    FinancialConstraintConfig,
-    OperationalConstraintConfig,
-    CommunicationConstraintConfig,
-)
+PACT implements four open specifications published by the Terrene Foundation:
 
-config = PlatformConfig(
-    name="My Organization",
-    genesis=GenesisConfig(
-        authority="my-org.example",
-        authority_name="My Organization",
-        policy_reference="https://my-org.example/policy",
-    ),
-    constraint_envelopes=[
-        ConstraintEnvelopeConfig(
-            id="analyst-envelope",
-            financial=FinancialConstraintConfig(max_spend_usd=100.0),
-            operational=OperationalConstraintConfig(
-                allowed_actions=["read", "analyze", "draft"],
-                blocked_actions=["publish", "delete"],
-            ),
-            communication=CommunicationConstraintConfig(internal_only=True),
-        ),
-    ],
-    agents=[
-        AgentConfig(
-            id="analyst-01",
-            name="Research Analyst",
-            role="Analyze data and produce reports",
-            constraint_envelope="analyst-envelope",
-            capabilities=["read", "analyze", "draft"],
-        ),
-    ],
-    teams=[
-        TeamConfig(
-            id="research-team",
-            name="Research Team",
-            workspace="research-ws",
-            agents=["analyst-01"],
-        ),
-    ],
-    workspaces=[
-        WorkspaceConfig(
-            id="research-ws",
-            path="workspaces/research",
-            description="Research team knowledge base",
-        ),
-    ],
-)
-```
-
-### Establish Trust and Run
-
-```python
-import asyncio
-from pact.trust.eatp_bridge import EATPBridge
-from pact.trust.genesis import GenesisManager
-from pact.trust.delegation import DelegationManager
-
-async def main():
-    # 1. Initialize the EATP bridge
-    bridge = EATPBridge()
-    await bridge.initialize()
-
-    # 2. Establish genesis (root of trust)
-    genesis_mgr = GenesisManager(bridge)
-    genesis = await genesis_mgr.create_genesis(config.genesis)
-
-    # 3. Delegate to agents with constraint envelopes
-    delegation_mgr = DelegationManager(bridge)
-    agent_config = config.get_agent("analyst-01")
-    envelope_config = config.get_envelope("analyst-envelope")
-    delegation = await delegation_mgr.create_delegation(
-        delegator_id=f"authority:{config.genesis.authority}",
-        delegate_config=agent_config,
-        envelope_config=envelope_config,
-    )
-
-    # 4. Verify an action before execution
-    result = await bridge.verify_action(
-        agent_id="analyst-01",
-        action="read",
-        resource="briefs/quarterly-report.md",
-    )
-    print(f"Verification: valid={result.valid}")
-
-    # 5. Record an audit anchor
-    anchor = await bridge.record_audit(
-        agent_id="analyst-01",
-        action="read",
-        resource="briefs/quarterly-report.md",
-        result="SUCCESS",
-    )
-    print(f"Audit anchor recorded: {anchor.id}")
-
-asyncio.run(main())
-```
+| Standard | Full Name                                      | Type         | License   |
+| -------- | ---------------------------------------------- | ------------ | --------- |
+| **CARE** | Collaborative Autonomous Reflective Enterprise | Philosophy   | CC BY 4.0 |
+| **PACT** | Principled Architecture for Constrained Trust  | Architecture | CC BY 4.0 |
+| **EATP** | Enterprise Agent Trust Protocol                | Protocol     | CC BY 4.0 |
+| **CO**   | Cognitive Orchestration                        | Methodology  | CC BY 4.0 |
 
 ---
 
 ## Built On
 
-The PACT is built on the **Kailash Python SDK**, the Foundation's open-source toolkit:
-
-| Framework    | Purpose                                    | Install                        |
-| ------------ | ------------------------------------------ | ------------------------------ |
-| **Core SDK** | Workflow orchestration, 140+ nodes         | `pip install kailash`          |
-| **DataFlow** | Zero-config database operations            | `pip install kailash-dataflow` |
-| **Nexus**    | Multi-channel deployment (API + CLI + MCP) | `pip install kailash-nexus`    |
-| **Kaizen**   | AI agent framework                         | `pip install kailash-kaizen`   |
-
-The EATP SDK provides the cryptographic trust chain implementation:
-
-| Package      | Purpose                                             | Install            |
-| ------------ | --------------------------------------------------- | ------------------ |
-| **EATP SDK** | Trust lineage chains, Ed25519 signing, verification | `pip install eatp` |
+| Framework            | Purpose                | Install                        |
+| -------------------- | ---------------------- | ------------------------------ |
+| **Kailash Core**     | Workflow orchestration | `pip install kailash`          |
+| **Kailash DataFlow** | Database operations    | `pip install kailash-dataflow` |
+| **Kailash Nexus**    | API deployment         | `pip install kailash-nexus`    |
+| **Kailash Kaizen**   | AI agents              | `pip install kailash-kaizen`   |
+| **EATP SDK**         | Trust chains           | `pip install eatp`             |
 
 ---
 
-## Requirements
+## Documentation
 
-- Python 3.11 or later
-- See `pyproject.toml` for the full dependency list
+- [Getting Started](docs/getting-started.md) -- What PACT is and when to use it
+- [Quickstart](docs/quickstart.md) -- From zero to running governance in 10 minutes
+- [Architecture](docs/architecture.md) -- Engine internals, addressing, envelopes, clearance
+- [Vertical Guide](docs/vertical-guide.md) -- Build your own domain on PACT
+- [YAML Schema](docs/yaml-schema.md) -- Complete YAML format reference
+- [Cookbook](docs/cookbook.md) -- Recipes for common tasks
+- [REST API](docs/api.md) -- HTTP endpoints with curl examples
 
 ---
 
 ## Development
 
 ```bash
-# Install with dev dependencies
 pip install -e ".[dev]"
-
-# Run tests
 pytest
-
-# Lint
 ruff check .
+```
 
-# Type check
-mypy pact/
+Run the university demo:
+
+```bash
+python -m pact.examples.university.demo
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contributor guide.
-
----
-
-## Documentation
-
-- [Architecture](docs/architecture.md) -- module structure, data flow, extension points
-- [API Reference](docs/api.md) -- public interfaces and usage examples
-- [Specifications](https://terrene.dev) -- CARE, EATP, and CO standards
-- [Foundation](https://terrene.foundation) -- Terrene Foundation
 
 ---
 
@@ -320,7 +201,7 @@ Copyright 2026 Terrene Foundation
 
 Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for details.
 
-The PACT is Foundation-owned, Apache 2.0 licensed, and irrevocably open. The Foundation has no structural relationship with any commercial entity. Anyone can build commercial implementations on top of the Foundation's open standards and SDKs.
+PACT is Foundation-owned, Apache 2.0 licensed, and irrevocably open. The Foundation has no structural relationship with any commercial entity. Anyone can build commercial implementations on top of the Foundation's open standards and SDKs.
 
-**Specifications** (CARE, EATP, CO): CC BY 4.0
+**Specifications** (CARE, PACT, EATP, CO): CC BY 4.0
 **Code** (PACT, Kailash SDK, EATP SDK): Apache 2.0

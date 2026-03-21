@@ -52,6 +52,7 @@ class GovernanceVerdict:
     audit_details: dict[str, Any] = field(default_factory=dict)
     access_decision: AccessDecision | None = None
     timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
+    envelope_version: str = ""
 
     @property
     def allowed(self) -> bool:
@@ -77,6 +78,7 @@ class GovernanceVerdict:
             "effective_envelope_snapshot": self.effective_envelope_snapshot,
             "audit_details": self.audit_details,
             "timestamp": self.timestamp.isoformat(),
+            "envelope_version": self.envelope_version,
         }
         if self.access_decision is not None:
             result["access_decision"] = {

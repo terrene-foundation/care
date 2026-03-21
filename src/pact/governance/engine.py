@@ -40,9 +40,11 @@ from pact.governance.clearance import RoleClearance, effective_clearance
 from pact.governance.compilation import CompiledOrg, OrgNode, compile_org
 from pact.governance.context import GovernanceContext
 from pact.governance.envelopes import (
+    EffectiveEnvelopeSnapshot,
     RoleEnvelope,
     TaskEnvelope,
     compute_effective_envelope,
+    compute_effective_envelope_with_version,
 )
 from pact.governance.knowledge import KnowledgeItem
 from pact.governance.store import (
@@ -100,6 +102,8 @@ class GovernanceEngine:
 
         # Initialize stores -- use factory if store_backend specified,
         # otherwise use explicit stores or default to memory
+        self._sqlite_audit_log: Any | None = None  # SqliteAuditLog when using sqlite backend
+
         if (
             store_backend == "sqlite"
             and store_url is not None
@@ -109,6 +113,7 @@ class GovernanceEngine:
         ):
             from pact.governance.stores.sqlite import (
                 SqliteAccessPolicyStore,
+                SqliteAuditLog,
                 SqliteClearanceStore,
                 SqliteEnvelopeStore,
                 SqliteOrgStore,
@@ -118,6 +123,7 @@ class GovernanceEngine:
             self._clearance_store: ClearanceStore = SqliteClearanceStore(store_url)
             self._access_policy_store: AccessPolicyStore = SqliteAccessPolicyStore(store_url)
             self._org_store: OrgStore = SqliteOrgStore(store_url)
+            self._sqlite_audit_log = SqliteAuditLog(store_url)
             logger.info("GovernanceEngine using SQLite stores at %s", store_url)
         elif store_backend == "sqlite" and store_url is None:
             raise ValueError("store_backend='sqlite' requires store_url parameter")
@@ -293,12 +299,18 @@ class GovernanceEngine:
     ) -> GovernanceVerdict:
         """Internal verify_action implementation. Caller must hold self._lock.
 
+        Uses versioned envelope computation for TOCTOU defense. The
+        envelope_version hash is included in the GovernanceVerdict so
+        callers can detect stale snapshots.
+
         Returns:
             A GovernanceVerdict with the decision.
         """
-        # Step 1: Compute effective envelope
+        # Step 1: Compute effective envelope with version hash (TOCTOU defense)
         task_id = ctx.get("task_id")
-        effective = self._compute_envelope_locked(role_address, task_id=task_id)
+        snapshot = self._compute_envelope_with_version_locked(role_address, task_id=task_id)
+        effective = snapshot.envelope
+        envelope_version = snapshot.version_hash
 
         # Step 2+3: Evaluate action against envelope
         level = "auto_approved"
@@ -308,6 +320,19 @@ class GovernanceEngine:
         if effective is not None:
             envelope_snapshot = effective.model_dump()
             level, reason = self._evaluate_against_envelope(effective, action, ctx)
+
+        # Multi-level VERIFY: walk accountability chain and check each ancestor's
+        # effective envelope. Most restrictive verdict wins. This prevents a role
+        # from executing an action that is allowed at the leaf but blocked by
+        # an ancestor's envelope.
+        if level in ("auto_approved", "flagged"):
+            ancestor_level, ancestor_reason = self._multi_level_verify(role_address, action, ctx)
+            if ancestor_level is not None:
+                # Escalate to more restrictive level
+                level_order = {"auto_approved": 0, "flagged": 1, "held": 2, "blocked": 3}
+                if level_order.get(ancestor_level, 0) > level_order.get(level, 0):
+                    level = ancestor_level
+                    reason = ancestor_reason
 
         # Step 4: Knowledge access check if resource is provided
         access_decision: AccessDecision | None = None
@@ -332,12 +357,13 @@ class GovernanceEngine:
                 level = "blocked"
                 reason = f"Knowledge access denied: {access_decision.reason}"
 
-        # Build audit details
-        audit_details = {
+        # Build audit details with envelope version (TOCTOU defense)
+        audit_details: dict[str, Any] = {
             "role_address": role_address,
             "action": action,
             "level": level,
             "has_envelope": effective is not None,
+            "envelope_version": envelope_version,
         }
 
         verdict = GovernanceVerdict(
@@ -349,6 +375,7 @@ class GovernanceEngine:
             audit_details=audit_details,
             access_decision=access_decision,
             timestamp=now,
+            envelope_version=envelope_version,
         )
 
         # Step 6: Emit audit anchor (release lock before audit to avoid deadlock)
@@ -388,7 +415,11 @@ class GovernanceEngine:
                 f"Action '{action}' is explicitly blocked by operational constraints",
             )
 
-        if allowed_actions and action not in allowed_actions:
+        # If allowed_actions is explicitly defined (even if empty), the action
+        # must be in the list. Empty allowed_actions + envelope exists = nothing allowed.
+        # When no envelope exists, the caller gets None (maximally permissive)
+        # and _evaluate_against_envelope is never called.
+        if action not in allowed_actions:
             return (
                 "blocked",
                 f"Action '{action}' is not in the allowed actions list: "
@@ -472,6 +503,27 @@ class GovernanceEngine:
             task_envelope = self._envelope_store.get_active_task_envelope(role_address, task_id)
 
         return compute_effective_envelope(
+            role_address=role_address,
+            role_envelopes=ancestor_envelopes,
+            task_envelope=task_envelope,
+        )
+
+    def _compute_envelope_with_version_locked(
+        self,
+        role_address: str,
+        task_id: str | None = None,
+    ) -> EffectiveEnvelopeSnapshot:
+        """Internal versioned envelope computation. Caller must hold self._lock.
+
+        Returns an EffectiveEnvelopeSnapshot with version_hash for TOCTOU defense.
+        """
+        ancestor_envelopes = self._envelope_store.get_ancestor_envelopes(role_address)
+
+        task_envelope: TaskEnvelope | None = None
+        if task_id is not None:
+            task_envelope = self._envelope_store.get_active_task_envelope(role_address, task_id)
+
+        return compute_effective_envelope_with_version(
             role_address=role_address,
             role_envelopes=ancestor_envelopes,
             task_envelope=task_envelope,
@@ -710,26 +762,52 @@ class GovernanceEngine:
     def _emit_audit(self, action: str, details: dict[str, Any]) -> None:
         """Emit an audit anchor if audit_chain is configured.
 
-        Thread-safe: AuditChain has its own internal lock.
+        Thread-safe: AuditChain has its own internal lock. SqliteAuditLog
+        has its own write_lock.
 
         Args:
             action: The audit action name.
             details: Structured details for the audit record.
         """
-        if self._audit_chain is None:
-            return
-        try:
-            self._audit_chain.append(
-                agent_id=f"governance-engine:{self._compiled_org.org_id}",
-                action=action,
-                verification_level=VerificationLevel.AUTO_APPROVED,
-                metadata=details,
-            )
-        except Exception:
-            logger.exception(
-                "Failed to emit audit anchor for action=%s -- continuing without audit",
-                action,
-            )
+        # Emit to EATP audit chain if configured
+        if self._audit_chain is not None:
+            try:
+                self._audit_chain.append(
+                    agent_id=f"governance-engine:{self._compiled_org.org_id}",
+                    action=action,
+                    verification_level=VerificationLevel.AUTO_APPROVED,
+                    metadata=details,
+                )
+            except Exception:
+                logger.exception(
+                    "Failed to emit audit anchor for action=%s -- continuing without audit",
+                    action,
+                )
+
+        # Also emit to SQLite audit log if configured
+        if self._sqlite_audit_log is not None:
+            try:
+                self._sqlite_audit_log.append(action, details)
+            except Exception:
+                logger.exception(
+                    "Failed to emit SQLite audit entry for action=%s -- continuing",
+                    action,
+                )
+
+    def verify_audit_integrity(self) -> tuple[bool, str | None]:
+        """Walk the audit chain and verify all content_hash and chain_hash values.
+
+        If no SQLite audit log is configured (memory backend), returns
+        (True, None) -- vacuously valid because there are no entries to verify.
+
+        Returns:
+            A tuple (is_valid, error_message). is_valid is True if the chain
+            is intact. error_message describes the first violation found, or
+            None if the chain is valid.
+        """
+        if self._sqlite_audit_log is None:
+            return (True, None)
+        return self._sqlite_audit_log.verify_integrity()
 
     def _emit_audit_unlocked(self, action: str, details: dict[str, Any]) -> None:
         """Emit audit anchor from within a locked section.
@@ -738,6 +816,71 @@ class GovernanceEngine:
         to call while holding self._lock (the audit chain uses its own lock).
         """
         self._emit_audit(action, details)
+
+    # -------------------------------------------------------------------
+    # Multi-Level Verification
+    # -------------------------------------------------------------------
+
+    def _multi_level_verify(
+        self,
+        role_address: str,
+        action: str,
+        ctx: dict[str, Any],
+    ) -> tuple[str | None, str]:
+        """Walk the accountability chain and verify action against each ancestor's envelope.
+
+        For each ancestor role in the accountability chain (from root to the
+        target role), compute that ancestor's effective envelope and evaluate
+        the action against it. Return the most restrictive verdict found.
+
+        This prevents a scenario where a leaf role is allowed an action
+        but an ancestor envelope blocks it -- the ancestor's restriction
+        must be respected due to monotonic tightening.
+
+        Args:
+            role_address: The D/T/R address of the role requesting the action.
+            action: The action being performed.
+            ctx: Context dict with optional cost, task_id, etc.
+
+        Returns:
+            A tuple (level, reason) of the most restrictive ancestor verdict,
+            or (None, "") if no ancestor blocks the action.
+        """
+        from pact.governance.addressing import Address
+
+        try:
+            addr = Address.parse(role_address)
+        except Exception:
+            return (None, "")
+
+        most_restrictive_level: str | None = None
+        most_restrictive_reason = ""
+        level_order = {"auto_approved": 0, "flagged": 1, "held": 2, "blocked": 3}
+
+        # Walk each ancestor role address (excluding the target itself)
+        for ancestor_addr in addr.accountability_chain:
+            ancestor_str = str(ancestor_addr)
+            if ancestor_str == role_address:
+                continue  # Skip self -- already evaluated in main path
+
+            # Compute effective envelope for this ancestor
+            ancestor_envelope = self._compute_envelope_locked(ancestor_str)
+            if ancestor_envelope is None:
+                continue
+
+            # Evaluate the action against this ancestor's envelope
+            anc_level, anc_reason = self._evaluate_against_envelope(ancestor_envelope, action, ctx)
+
+            anc_order = level_order.get(anc_level, 0)
+            current_order = level_order.get(most_restrictive_level, -1)
+
+            if anc_order > current_order:
+                most_restrictive_level = anc_level
+                most_restrictive_reason = (
+                    f"Ancestor envelope at '{ancestor_str}' restricts: {anc_reason}"
+                )
+
+        return (most_restrictive_level, most_restrictive_reason)
 
     # -------------------------------------------------------------------
     # Internal Helpers

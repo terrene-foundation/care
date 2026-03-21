@@ -13,6 +13,7 @@ be equal to or more restrictive than parent envelopes.
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import math
 import uuid
@@ -36,11 +37,13 @@ from pact.governance.addressing import Address
 logger = logging.getLogger(__name__)
 
 __all__ = [
+    "EffectiveEnvelopeSnapshot",
     "MonotonicTighteningError",
     "RoleEnvelope",
     "TaskEnvelope",
     "check_degenerate_envelope",
     "compute_effective_envelope",
+    "compute_effective_envelope_with_version",
     "default_envelope_for_posture",
     "intersect_envelopes",
 ]
@@ -543,6 +546,103 @@ def compute_effective_envelope(
             result = intersect_envelopes(result, task_envelope.envelope)
 
     return result
+
+
+# ---------------------------------------------------------------------------
+# TOCTOU Defense: Versioned Envelope Snapshots
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class EffectiveEnvelopeSnapshot:
+    """An effective envelope with a version hash for TOCTOU detection.
+
+    The version_hash is a SHA-256 digest of all ancestor envelope versions
+    that contributed to the effective envelope. If any ancestor envelope
+    changes, the version_hash will differ, allowing callers to detect stale
+    snapshots and re-evaluate.
+
+    Attributes:
+        envelope: The computed effective constraint envelope, or None.
+        version_hash: SHA-256 hex digest of concatenated ancestor versions.
+            Empty string if no envelopes contributed.
+        contributor_versions: Map of role_address -> version for each
+            RoleEnvelope that contributed to this snapshot.
+    """
+
+    envelope: ConstraintEnvelopeConfig | None
+    version_hash: str
+    contributor_versions: dict[str, int] = field(default_factory=dict)
+
+
+def compute_effective_envelope_with_version(
+    role_address: str,
+    role_envelopes: dict[str, RoleEnvelope],
+    task_envelope: TaskEnvelope | None = None,
+    org_envelope: ConstraintEnvelopeConfig | None = None,
+) -> EffectiveEnvelopeSnapshot:
+    """Compute effective envelope with version hash for TOCTOU defense.
+
+    Same as compute_effective_envelope but returns an EffectiveEnvelopeSnapshot
+    that includes a version_hash -- a SHA-256 of all ancestor envelope versions.
+    Callers can compare this hash against a later computation to detect if any
+    ancestor envelope changed between snapshot and use.
+
+    Args:
+        role_address: The D/T/R positional address of the target role.
+        role_envelopes: Map from target_role_address to RoleEnvelope.
+        task_envelope: Optional ephemeral task envelope to apply.
+        org_envelope: Optional organization-level constraint envelope.
+
+    Returns:
+        An EffectiveEnvelopeSnapshot containing the effective envelope,
+        version hash, and contributor versions.
+    """
+    addr = Address.parse(role_address)
+
+    # Track which envelopes contributed and their versions
+    contributor_versions: dict[str, int] = {}
+
+    result: ConstraintEnvelopeConfig | None = org_envelope
+
+    for ancestor in addr.accountability_chain:
+        ancestor_str = str(ancestor)
+        if ancestor_str in role_envelopes:
+            role_env = role_envelopes[ancestor_str]
+            contributor_versions[ancestor_str] = role_env.version
+            if result is None:
+                result = role_env.envelope
+            else:
+                result = intersect_envelopes(result, role_env.envelope)
+
+    # Apply active task envelope if present and not expired
+    if task_envelope is not None and not task_envelope.is_expired:
+        contributor_versions[f"task:{task_envelope.task_id}"] = 1
+        if result is None:
+            result = task_envelope.envelope
+        else:
+            result = intersect_envelopes(result, task_envelope.envelope)
+
+    # Compute version hash from all contributor versions AND envelope IDs
+    # for full TOCTOU detection (even when version numbers are unchanged,
+    # different envelope IDs indicate a different envelope was set).
+    if contributor_versions:
+        hash_parts: list[str] = []
+        for cv_addr, cv_ver in sorted(contributor_versions.items()):
+            env_id = ""
+            if cv_addr in role_envelopes:
+                env_id = role_envelopes[cv_addr].id
+            hash_parts.append(f"{cv_addr}:{cv_ver}:{env_id}")
+        version_str = "|".join(hash_parts)
+        version_hash = hashlib.sha256(version_str.encode()).hexdigest()
+    else:
+        version_hash = ""
+
+    return EffectiveEnvelopeSnapshot(
+        envelope=result,
+        version_hash=version_hash,
+        contributor_versions=contributor_versions,
+    )
 
 
 # ---------------------------------------------------------------------------

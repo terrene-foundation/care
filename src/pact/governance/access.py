@@ -22,6 +22,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from typing import Any
 
 from pact.build.config.schema import ConfidentialityLevel, TrustPostureLevel
 from pact.governance.clearance import (
@@ -130,12 +131,17 @@ class AccessDecision:
         reason: Human-readable explanation of the decision.
         step_failed: Which step (1-5) denied access, or None if allowed.
         audit_details: Structured details for audit logging.
+        valid_until: When this access decision expires, based on the
+            minimum expiry of any KSP or bridge that granted access.
+            None means no expiry (structural access or permanent policy).
+            Only set for ALLOW decisions via KSP or bridge paths.
     """
 
     allowed: bool
     reason: str
     step_failed: int | None = None  # 1-5, or None if allowed
-    audit_details: dict = field(default_factory=dict)
+    audit_details: dict[str, Any] = field(default_factory=dict)
+    valid_until: datetime | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -578,6 +584,7 @@ def _check_ksps(
                 "access_path": "ksp",
                 "ksp_id": ksp.id,
             },
+            valid_until=ksp.expires_at,
         )
 
     return None
@@ -659,6 +666,7 @@ def _check_bridges(
                 "bridge_id": bridge.id,
                 "bridge_type": bridge.bridge_type,
             },
+            valid_until=bridge.expires_at,
         )
 
     return None

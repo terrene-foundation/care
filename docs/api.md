@@ -1,761 +1,537 @@
-# PACT API Reference
+# REST API Reference
 
-This document covers the public interfaces of the PACT. For architecture context, see [architecture.md](architecture.md).
+The PACT governance API exposes all governance operations over HTTP. Endpoints are served by FastAPI and secured with Bearer token authentication.
+
+## Base URL
+
+```
+/api/v1/governance
+```
+
+## Authentication
+
+All endpoints require authentication via Bearer token in the `Authorization` header:
+
+```
+Authorization: Bearer <your-api-token>
+```
+
+Set the token via environment variable:
+
+```bash
+export PACT_GOVERNANCE_API_TOKEN="your-secret-token"
+```
+
+**Dev mode**: When no token is configured, authentication is disabled for local development.
+
+**Scopes**:
+
+- `governance:read` -- query org structure, check access, verify actions
+- `governance:write` -- grant clearance, create bridges, create KSPs, set envelopes
+- `governance:admin` -- all operations including configuration changes
+
+## Rate Limiting
+
+All endpoints are rate-limited to 60 requests per minute per IP address by default. When exceeded, the API returns HTTP 429 with a JSON error body.
 
 ---
 
-## Table of Contents
+## POST /check-access
 
-- [Configuration Models](#configuration-models)
-- [EATPBridge](#eatpbridge)
-- [GenesisManager](#genesismanager)
-- [DelegationManager](#delegationmanager)
-- [Constraint Envelopes](#constraint-envelopes)
-- [Verification Gradient](#verification-gradient)
-- [Trust Postures](#trust-postures)
-- [Trust Scoring](#trust-scoring)
-- [Capability Attestation](#capability-attestation)
-- [Audit Chain](#audit-chain)
-- [Storage](#storage)
+Evaluate whether a role can access a classified knowledge item using the 5-step access enforcement algorithm.
+
+**Scope**: `governance:read`
+
+**Request**:
+
+```bash
+curl -X POST http://localhost:8000/api/v1/governance/check-access \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "role_address": "D1-R1-D1-R1-D1-R1-T1-R1",
+    "item_id": "doc-research-001",
+    "item_classification": "confidential",
+    "item_owning_unit": "D1-R1-D1-R1-D1-R1-T1",
+    "item_compartments": [],
+    "posture": "shared_planning"
+  }'
+```
+
+**Request Body**:
+
+| Field               | Type     | Required | Description                                                                      |
+| ------------------- | -------- | -------- | -------------------------------------------------------------------------------- |
+| role_address        | string   | yes      | D/T/R positional address of the requesting role                                  |
+| item_id             | string   | yes      | Unique identifier of the knowledge item                                          |
+| item_classification | string   | yes      | One of: public, restricted, confidential, secret, top_secret                     |
+| item_owning_unit    | string   | yes      | D or T prefix that owns the knowledge item                                       |
+| item_compartments   | string[] | no       | Named compartments the item belongs to (default: [])                             |
+| posture             | string   | yes      | One of: pseudo_agent, supervised, shared_planning, continuous_insight, delegated |
+
+**Response** (200):
+
+```json
+{
+  "allowed": true,
+  "reason": "Same unit access: role is within 'D1-R1-D1-R1-D1-R1-T1'",
+  "step_failed": null,
+  "audit_details": {
+    "role_address": "D1-R1-D1-R1-D1-R1-T1-R1",
+    "item_id": "doc-research-001",
+    "step": "4a",
+    "access_path": "same_unit"
+  }
+}
+```
+
+**Response Fields**:
+
+| Field         | Type        | Description                                        |
+| ------------- | ----------- | -------------------------------------------------- |
+| allowed       | boolean     | Whether access is granted                          |
+| reason        | string      | Human-readable explanation                         |
+| step_failed   | int or null | Which step (1-5) denied access, or null if allowed |
+| audit_details | object      | Structured details for audit logging               |
 
 ---
 
-## Configuration Models
+## POST /verify-action
 
-**Module**: `pact.build.config.schema`
+Evaluate an action against the effective constraint envelope for a role. This is the primary governance decision endpoint.
 
-### PlatformConfig
+**Scope**: `governance:read`
 
-Top-level configuration for the entire platform. Contains all organization structure: genesis, teams, agents, constraint envelopes, and workspaces.
+**Request**:
 
-```python
-from pact.build.config.schema import PlatformConfig, GenesisConfig
-
-config = PlatformConfig(
-    name="My Organization",
-    version="1.0",
-    genesis=GenesisConfig(
-        authority="my-org.example",
-        authority_name="My Organization",
-        policy_reference="https://my-org.example/policy",
-    ),
-    constraint_envelopes=[...],
-    agents=[...],
-    teams=[...],
-    workspaces=[...],
-)
-
-# Lookup helpers
-envelope = config.get_envelope("envelope-id")    # -> ConstraintEnvelopeConfig | None
-agent = config.get_agent("agent-id")              # -> AgentConfig | None
-team = config.get_team("team-id")                 # -> TeamConfig | None
-workspace = config.get_workspace("workspace-id")  # -> WorkspaceConfig | None
+```bash
+curl -X POST http://localhost:8000/api/v1/governance/verify-action \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "role_address": "D1-R1-D1-R1-D1-R1-T1-R1",
+    "action": "write",
+    "cost": 5000.00
+  }'
 ```
 
-### ConstraintEnvelopeConfig
+**Request Body**:
 
-Defines the five constraint dimensions governing an agent.
+| Field        | Type   | Required | Description                                              |
+| ------------ | ------ | -------- | -------------------------------------------------------- |
+| role_address | string | yes      | D/T/R positional address                                 |
+| action       | string | yes      | Action being performed (e.g., "read", "write", "deploy") |
+| cost         | float  | no       | Cost in USD for financial constraint checks              |
+| resource     | string | no       | Resource path for knowledge access checks                |
+| channel      | string | no       | Communication channel for channel constraint checks      |
 
-```python
-from pact.build.config.schema import (
-    ConstraintEnvelopeConfig,
-    FinancialConstraintConfig,
-    OperationalConstraintConfig,
-    TemporalConstraintConfig,
-    DataAccessConstraintConfig,
-    CommunicationConstraintConfig,
-)
+**Validation**: cost must be finite (NaN and Inf are rejected) and non-negative.
 
-envelope = ConstraintEnvelopeConfig(
-    id="analyst-envelope",
-    description="Constraints for research analysts",
-    financial=FinancialConstraintConfig(
-        max_spend_usd=500.0,
-        api_cost_budget_usd=100.0,
-        requires_approval_above_usd=50.0,
-    ),
-    operational=OperationalConstraintConfig(
-        allowed_actions=["read", "analyze", "draft"],
-        blocked_actions=["publish", "delete"],
-        max_actions_per_day=100,
-    ),
-    temporal=TemporalConstraintConfig(
-        active_hours_start="09:00",
-        active_hours_end="18:00",
-        timezone="UTC",
-    ),
-    data_access=DataAccessConstraintConfig(
-        read_paths=["briefs/*", "reports/*"],
-        write_paths=["drafts/*"],
-        blocked_data_types=["pii", "financial_records"],
-    ),
-    communication=CommunicationConstraintConfig(
-        internal_only=True,
-        allowed_channels=["slack", "email"],
-        external_requires_approval=True,
-    ),
-)
+**Response** (200):
+
+```json
+{
+  "level": "auto_approved",
+  "allowed": true,
+  "reason": "Action 'write' is within all constraint dimensions",
+  "role_address": "D1-R1-D1-R1-D1-R1-T1-R1",
+  "action": "write"
+}
 ```
 
-### The Five Constraint Dimensions
+**Response Fields**:
 
-| Dimension     | Config Class                    | Key Fields                                                               |
-| ------------- | ------------------------------- | ------------------------------------------------------------------------ |
-| Financial     | `FinancialConstraintConfig`     | `max_spend_usd`, `api_cost_budget_usd`, `requires_approval_above_usd`    |
-| Operational   | `OperationalConstraintConfig`   | `allowed_actions`, `blocked_actions`, `max_actions_per_day`              |
-| Temporal      | `TemporalConstraintConfig`      | `active_hours_start`, `active_hours_end`, `timezone`, `blackout_periods` |
-| Data Access   | `DataAccessConstraintConfig`    | `read_paths`, `write_paths`, `blocked_data_types`                        |
-| Communication | `CommunicationConstraintConfig` | `internal_only`, `allowed_channels`, `external_requires_approval`        |
-
-### TrustPostureLevel
-
-```python
-from pact.build.config.schema import TrustPostureLevel
-
-TrustPostureLevel.PSEUDO_AGENT        # No autonomous action
-TrustPostureLevel.SUPERVISED           # Every action requires approval (default)
-TrustPostureLevel.SHARED_PLANNING      # Agent proposes, human approves plans
-TrustPostureLevel.CONTINUOUS_INSIGHT   # Agent executes with oversight
-TrustPostureLevel.DELEGATED            # Autonomous within constraints
-```
-
-### VerificationLevel
-
-```python
-from pact.build.config.schema import VerificationLevel
-
-VerificationLevel.AUTO_APPROVED  # Execute and log
-VerificationLevel.FLAGGED        # Execute but highlight for review
-VerificationLevel.HELD           # Queue for human approval
-VerificationLevel.BLOCKED        # Reject outright
-```
-
-### AgentConfig
-
-```python
-from pact.build.config.schema import AgentConfig
-
-agent = AgentConfig(
-    id="analyst-01",
-    name="Research Analyst",
-    role="Analyze data and produce reports",
-    constraint_envelope="analyst-envelope",  # References ConstraintEnvelopeConfig.id
-    initial_posture=TrustPostureLevel.SUPERVISED,
-    capabilities=["read", "analyze", "draft"],
-    llm_backend=None,  # Uses team default
-)
-```
-
-### VerificationGradientConfig
-
-```python
-from pact.build.config.schema import VerificationGradientConfig, GradientRuleConfig
-
-gradient = VerificationGradientConfig(
-    rules=[
-        GradientRuleConfig(
-            pattern="read*",
-            level=VerificationLevel.AUTO_APPROVED,
-            reason="Read operations are low risk",
-        ),
-        GradientRuleConfig(
-            pattern="publish*",
-            level=VerificationLevel.HELD,
-            reason="Publishing requires human approval",
-        ),
-        GradientRuleConfig(
-            pattern="delete*",
-            level=VerificationLevel.BLOCKED,
-            reason="Deletion is not permitted",
-        ),
-    ],
-    default_level=VerificationLevel.HELD,
-)
-```
+| Field        | Type    | Description                                                    |
+| ------------ | ------- | -------------------------------------------------------------- |
+| level        | string  | One of: auto_approved, flagged, held, blocked                  |
+| allowed      | boolean | True for auto_approved and flagged; false for held and blocked |
+| reason       | string  | Human-readable explanation                                     |
+| role_address | string  | The role that requested the action                             |
+| action       | string  | The action that was evaluated                                  |
 
 ---
 
-## EATPBridge
+## GET /org
 
-**Module**: `pact.trust.eatp_bridge`
+Get a summary of the compiled organization structure.
 
-The central bridge between PACT configuration models and the EATP SDK. Manages the full trust lifecycle: ESTABLISH, DELEGATE, VERIFY, AUDIT.
+**Scope**: `governance:read`
 
-### Initialization
+**Request**:
 
-```python
-from pact.trust.eatp_bridge import EATPBridge
-
-bridge = EATPBridge()           # Uses InMemoryTrustStore by default
-await bridge.initialize()       # Must be called before any operations
+```bash
+curl http://localhost:8000/api/v1/governance/org \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
-### establish_genesis
+**Response** (200):
 
-Create the root of trust for an organization.
-
-```python
-from pact.build.config.schema import GenesisConfig
-
-genesis_config = GenesisConfig(
-    authority="my-org.example",
-    authority_name="My Organization",
-    policy_reference="https://my-org.example/policy",
-)
-
-genesis_record = await bridge.establish_genesis(genesis_config)
-# Returns: eatp.chain.GenesisRecord
-# The genesis authority's agent_id is "authority:my-org.example"
-```
-
-### delegate
-
-Delegate capabilities from one agent/authority to another, mapping CARE constraint envelopes to EATP constraints.
-
-```python
-delegation_record = await bridge.delegate(
-    delegator_id="authority:my-org.example",
-    delegate_agent_config=agent_config,      # AgentConfig
-    envelope_config=envelope_config,          # ConstraintEnvelopeConfig
-)
-# Returns: eatp.chain.DelegationRecord
-```
-
-The constraint mapping translates five CARE dimensions to EATP constraint strings:
-
-- Financial: `budget:500.0`, `approval_threshold:50.0`
-- Operational: `allow:read`, `block:publish`, `rate_limit:100`
-- Temporal: `time:09:00-18:00`
-- Data Access: `read:briefs/*`, `write:drafts/*`
-- Communication: `comm:internal_only`, `channel:slack`
-
-### verify_action
-
-Verify whether an agent is allowed to perform an action.
-
-```python
-result = await bridge.verify_action(
-    agent_id="analyst-01",
-    action="read",
-    resource="briefs/quarterly-report.md",
-    level="STANDARD",  # "QUICK", "STANDARD", or "FULL"
-)
-# Returns: eatp.chain.VerificationResult
-# result.valid -> bool
-# result.reason -> str
-```
-
-### record_audit
-
-Record a tamper-evident audit anchor for a completed action.
-
-```python
-anchor = await bridge.record_audit(
-    agent_id="analyst-01",
-    action="read",
-    resource="briefs/quarterly-report.md",
-    result="SUCCESS",       # "SUCCESS", "FAILURE", "DENIED", "PARTIAL"
-    reasoning="Accessed quarterly report for analysis task",
-)
-# Returns: eatp.chain.AuditAnchor
-```
-
-### Helper Methods
-
-```python
-# Get an agent's full trust lineage chain
-chain = await bridge.get_trust_chain("analyst-01")
-# Returns: eatp.chain.TrustLineageChain | None
-
-# Check if a signing key exists
-bridge.has_signing_key("analyst-01")  # -> bool
-
-# Get delegation depth from genesis
-bridge.get_transitive_depth("analyst-01")  # -> int (0 = genesis)
-
-# Get ancestor chain back to genesis
-bridge.get_delegation_ancestors("analyst-01")  # -> list[str]
+```json
+{
+  "org_id": "university-001",
+  "name": "State University",
+  "department_count": 6,
+  "team_count": 5,
+  "role_count": 12,
+  "total_nodes": 23
+}
 ```
 
 ---
 
-## GenesisManager
+## GET /org/nodes/{address}
 
-**Module**: `pact.trust.genesis`
+Look up a single node by its positional address.
 
-Higher-level operations around genesis records: creation, validation, and renewal.
+**Scope**: `governance:read`
 
-```python
-from pact.trust.genesis import GenesisManager
+**Request**:
 
-genesis_mgr = GenesisManager(bridge)
+```bash
+curl http://localhost:8000/api/v1/governance/org/nodes/D1-R1-D1-R1 \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
-### create_genesis
+**Response** (200):
 
-```python
-genesis_record = await genesis_mgr.create_genesis(genesis_config)
-# Returns: eatp.chain.GenesisRecord
+```json
+{
+  "address": "D1-R1-D1-R1",
+  "name": "Provost",
+  "node_type": "R",
+  "parent_address": "D1-R1-D1",
+  "is_vacant": false,
+  "children": ["D1-R1-D1-R1-D1", "D1-R1-D1-R1-D2"]
+}
 ```
 
-### validate_genesis
+**Response** (404): No node found at address.
 
-```python
-is_valid, message = await genesis_mgr.validate_genesis("authority:my-org.example")
-# Returns: tuple[bool, str]
-# Example: (True, "Genesis record for agent 'authority:my-org.example' is valid")
+---
+
+## GET /org/tree
+
+Get the full organizational tree as a flat list of nodes.
+
+**Scope**: `governance:read`
+
+**Request**:
+
+```bash
+curl http://localhost:8000/api/v1/governance/org/tree \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
-### renew_genesis
+**Response** (200):
 
-Renew an expired or soon-to-expire genesis record.
-
-```python
-new_genesis = await genesis_mgr.renew_genesis(
-    authority_id="my-org.example",
-    new_signing_key=None,  # Auto-generates new Ed25519 key pair
-)
-# Returns: eatp.chain.GenesisRecord
-# Raises: ValueError if no prior genesis exists
+```json
+{
+  "org_id": "university-001",
+  "nodes": [
+    {
+      "address": "D1",
+      "name": "Office of the President",
+      "node_type": "D",
+      "parent_address": null,
+      "is_vacant": false,
+      "children": ["D1-R1"]
+    },
+    ...
+  ]
+}
 ```
 
 ---
 
-## DelegationManager
+## POST /clearances
 
-**Module**: `pact.trust.delegation`
+Grant knowledge clearance to a role.
 
-Manages delegation chains with monotonic tightening validation and chain walking.
+**Scope**: `governance:write`
 
-```python
-from pact.trust.delegation import DelegationManager
+**Request**:
 
-delegation_mgr = DelegationManager(bridge)
+```bash
+curl -X POST http://localhost:8000/api/v1/governance/clearances \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "role_address": "D1-R1-D1-R1-D2-R1-T1-R1",
+    "max_clearance": "secret",
+    "compartments": ["human-subjects"],
+    "granted_by_role_address": "D1-R1-D1-R1-D2-R1"
+  }'
 ```
 
-### create_delegation
+**Request Body**:
 
-```python
-delegation_record = await delegation_mgr.create_delegation(
-    delegator_id="authority:my-org.example",
-    delegate_config=agent_config,
-    envelope_config=envelope_config,
-)
-# Returns: eatp.chain.DelegationRecord
-```
+| Field                   | Type     | Required | Description                                                  |
+| ----------------------- | -------- | -------- | ------------------------------------------------------------ |
+| role_address            | string   | yes      | D/T/R address of the role to grant clearance to              |
+| max_clearance           | string   | yes      | One of: public, restricted, confidential, secret, top_secret |
+| compartments            | string[] | no       | Named compartments to grant access to (default: [])          |
+| granted_by_role_address | string   | yes      | D/T/R address of the granting role (audit trail)             |
 
-### validate_tightening
+**Response** (201):
 
-Validate that a child envelope is a valid monotonic tightening of a parent envelope.
-
-```python
-is_valid, violations = delegation_mgr.validate_tightening(
-    parent_envelope=parent_config,
-    child_envelope=child_config,
-)
-# Returns: tuple[bool, list[str]]
-# violations example: ["Financial: child budget $1000 exceeds parent budget $500"]
-```
-
-Tightening rules:
-
-- Financial: child budget <= parent budget
-- Operational: child allowed_actions must be subset of parent; child must include all parent blocked_actions
-- Operational: child rate limit <= parent rate limit
-- Communication: child cannot remove internal_only or external_requires_approval restrictions
-
-### walk_chain
-
-Walk the trust chain from an agent back to genesis.
-
-```python
-from pact.trust.delegation import ChainWalkResult, ChainStatus
-
-result = await delegation_mgr.walk_chain("analyst-01")
-# Returns: ChainWalkResult
-# result.status -> ChainStatus (VALID, BROKEN, EXPIRED, REVOKED)
-# result.chain -> list (genesis + delegation records)
-# result.depth -> int (delegation depth)
-# result.errors -> list[str]
+```json
+{
+  "status": "granted",
+  "role_address": "D1-R1-D1-R1-D2-R1-T1-R1",
+  "max_clearance": "secret"
+}
 ```
 
 ---
 
-## Constraint Envelopes
+## POST /bridges
 
-**Module**: `pact.trust.constraint.envelope`
+Create a Cross-Functional Bridge between two roles.
 
-### ConstraintEnvelope
+**Scope**: `governance:write`
 
-Runtime wrapper around `ConstraintEnvelopeConfig` with evaluation logic, versioning, and expiry.
+**Request**:
 
-```python
-from pact.trust.constraint.envelope import ConstraintEnvelope
-
-envelope = ConstraintEnvelope(config=envelope_config)
-# Default expiry: 90 days from creation
+```bash
+curl -X POST http://localhost:8000/api/v1/governance/bridges \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "role_a_address": "D1-R1-D1-R1",
+    "role_b_address": "D1-R1-D2-R1",
+    "bridge_type": "standing",
+    "max_classification": "restricted",
+    "bilateral": false
+  }'
 ```
 
-### evaluate_action
+**Request Body**:
 
-Evaluate an agent action against all five constraint dimensions.
+| Field              | Type     | Required | Description                                           |
+| ------------------ | -------- | -------- | ----------------------------------------------------- |
+| role_a_address     | string   | yes      | First role in the bridge                              |
+| role_b_address     | string   | yes      | Second role in the bridge                             |
+| bridge_type        | string   | yes      | One of: standing, scoped, ad_hoc                      |
+| max_classification | string   | yes      | Maximum classification accessible via this bridge     |
+| bilateral          | boolean  | no       | Whether both roles have mutual access (default: true) |
+| operational_scope  | string[] | no       | Limit bridge to specific operations (default: [])     |
 
-```python
-from pact.trust.constraint.envelope import EvaluationResult
+**Response** (201):
 
-evaluation = envelope.evaluate_action(
-    action="draft",
-    agent_id="analyst-01",
-    spend_amount=25.0,           # For financial dimension
-    current_action_count=45,      # For operational rate limit
-    data_paths=["briefs/q4.md"],  # For data access dimension
-    is_external=False,            # For communication dimension
-)
-# Returns: EnvelopeEvaluation
-# evaluation.overall_result -> EvaluationResult (ALLOWED, NEAR_BOUNDARY, DENIED)
-# evaluation.is_allowed -> bool
-# evaluation.dimensions -> list[DimensionEvaluation]
-```
-
-The overall result is the most restrictive across all five dimensions. Each dimension evaluation includes:
-
-- `dimension` -- which dimension ("financial", "operational", "temporal", "data_access", "communication")
-- `result` -- ALLOWED, NEAR_BOUNDARY, or DENIED
-- `reason` -- human-readable explanation
-- `utilization` -- 0.0 to 1.0 (how close to the limit)
-
-### is_tighter_than
-
-Verify monotonic tightening against a parent envelope.
-
-```python
-is_valid = child_envelope.is_tighter_than(parent_envelope)
-# Returns: bool
-```
-
-### Other Properties
-
-```python
-envelope.id                # -> str (from config.id)
-envelope.is_expired        # -> bool (checks against 90-day expiry)
-envelope.content_hash()    # -> str (SHA-256 of envelope content)
+```json
+{
+  "status": "created",
+  "bridge_id": "bridge-a1b2c3d4",
+  "bridge_type": "standing"
+}
 ```
 
 ---
 
-## Verification Gradient
+## POST /ksps
 
-**Module**: `pact.trust.constraint.gradient`
+Create a Knowledge Share Policy for cross-unit access.
 
-### GradientEngine
+**Scope**: `governance:write`
 
-Classifies agent actions into verification levels using pattern matching and envelope evaluation.
+**Request**:
 
-```python
-from pact.trust.constraint.gradient import GradientEngine, VerificationThoroughness
-
-engine = GradientEngine(gradient_config)
-
-result = engine.classify(
-    action="publish_report",
-    agent_id="analyst-01",
-    thoroughness=VerificationThoroughness.STANDARD,
-    envelope_evaluation=evaluation,  # Optional, from ConstraintEnvelope.evaluate_action
-)
-# Returns: VerificationResult
-# result.level -> VerificationLevel (AUTO_APPROVED, FLAGGED, HELD, BLOCKED)
-# result.requires_human_approval -> bool (True if HELD)
-# result.is_blocked -> bool (True if BLOCKED)
-# result.is_auto_approved -> bool (True if AUTO_APPROVED)
-# result.matched_rule -> str | None (the glob pattern that matched)
-# result.reason -> str
-# result.duration_ms -> float
+```bash
+curl -X POST http://localhost:8000/api/v1/governance/ksps \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "source_unit_address": "D1-R1-D1",
+    "target_unit_address": "D1-R1-D2-R1-T1",
+    "max_classification": "restricted",
+    "created_by_role_address": "D1-R1",
+    "compartments": []
+  }'
 ```
 
-### VerificationThoroughness
+**Request Body**:
 
-```python
-VerificationThoroughness.QUICK      # ~1ms, pattern match only
-VerificationThoroughness.STANDARD   # ~5ms, pattern match + envelope check
-VerificationThoroughness.FULL       # ~50ms, pattern + envelope + chain verification
-```
+| Field                   | Type     | Required | Description                                             |
+| ----------------------- | -------- | -------- | ------------------------------------------------------- |
+| source_unit_address     | string   | yes      | D/T prefix sharing knowledge                            |
+| target_unit_address     | string   | yes      | D/T prefix receiving access                             |
+| max_classification      | string   | yes      | Maximum classification level shared                     |
+| created_by_role_address | string   | yes      | Role that created this policy (audit trail)             |
+| compartments            | string[] | no       | Restrict sharing to specific compartments (default: []) |
 
----
+**Response** (201):
 
-## Trust Postures
-
-**Module**: `pact.trust.posture`
-
-### TrustPosture
-
-Manages the evolutionary trust lifecycle for an agent.
-
-```python
-from pact.trust.posture import TrustPosture, PostureEvidence
-
-posture = TrustPosture(
-    agent_id="analyst-01",
-    current_level=TrustPostureLevel.SUPERVISED,
-)
-```
-
-### Upgrade Check
-
-```python
-evidence = PostureEvidence(
-    successful_operations=150,
-    total_operations=155,
-    days_at_current_posture=95,
-    shadow_enforcer_pass_rate=0.92,
-    incidents=0,
-)
-
-can_upgrade, reason = posture.can_upgrade(evidence)
-# Returns: tuple[bool, str]
-```
-
-Upgrade requirements:
-
-| Target Level       | Min Days | Min Success Rate | Min Operations | Shadow Pass Rate |
-| ------------------ | -------- | ---------------- | -------------- | ---------------- |
-| Shared Planning    | 90       | 95%              | 100            | 90%              |
-| Continuous Insight | 180      | 98%              | 500            | 95%              |
-| Delegated          | 365      | 99%              | 1,000          | 98%              |
-
-### Upgrade and Downgrade
-
-```python
-# Upgrade (gradual, evidence-based)
-change = posture.upgrade(evidence, reason="Performance criteria met")
-# Returns: PostureChange
-# Raises: ValueError if not eligible
-
-# Downgrade (instant, on any incident)
-change = posture.downgrade(
-    reason="Security incident detected",
-    to_level=TrustPostureLevel.SUPERVISED,  # Optional, defaults to SUPERVISED
-)
-# Returns: PostureChange
-# Raises: ValueError if target is not below current level
-```
-
-### Never-Delegated Actions
-
-Certain actions are always HELD regardless of posture level:
-
-```python
-posture.is_action_always_held("financial_decisions")  # -> True
-posture.is_action_always_held("read")                 # -> False
-```
-
-Never-delegated actions: `content_strategy`, `novel_outreach`, `crisis_response`, `financial_decisions`, `modify_constraints`, `modify_governance`, `external_publication`.
-
----
-
-## Trust Scoring
-
-**Module**: `pact.trust.scoring`
-
-### calculate_trust_score
-
-```python
-from pact.trust.scoring import TrustFactors, calculate_trust_score
-
-factors = TrustFactors(
-    has_genesis=True,
-    has_delegation=True,
-    has_envelope=True,
-    has_attestation=True,
-    has_audit_anchor=True,
-    delegation_depth=1,
-    dimensions_configured=5,
-    posture_level=TrustPostureLevel.SHARED_PLANNING,
-    newest_attestation_age_days=10,
-)
-
-score = calculate_trust_score("analyst-01", factors)
-# Returns: TrustScore
-# score.overall_score -> float (0.0 to 1.0)
-# score.grade -> TrustGrade (A+, A, B+, B, C, D, F)
-# score.factors -> dict[str, float] (per-factor breakdown)
-```
-
-### Factor Weights
-
-| Factor                | Weight | Description                             |
-| --------------------- | ------ | --------------------------------------- |
-| `chain_completeness`  | 30%    | Count of 5 EATP elements present        |
-| `delegation_depth`    | 15%    | Shorter chains score higher             |
-| `constraint_coverage` | 25%    | Dimensions configured out of 5          |
-| `posture_level`       | 20%    | Current trust posture level             |
-| `chain_recency`       | 10%    | Age of newest attestation vs 90-day max |
-
----
-
-## Capability Attestation
-
-**Module**: `pact.trust.attestation`
-
-### CapabilityAttestation
-
-EATP Element 4 -- a signed declaration of what an agent is authorized to do.
-
-```python
-from pact.trust.attestation import CapabilityAttestation
-
-attestation = CapabilityAttestation(
-    attestation_id="att-001",
-    agent_id="analyst-01",
-    delegation_id="del-001",
-    constraint_envelope_id="analyst-envelope",
-    capabilities=["read", "analyze", "draft"],
-    issuer_id="authority:my-org.example",
-)
-# Default expiry: 90 days from issuance
-```
-
-### Key Properties and Methods
-
-```python
-attestation.is_valid       # -> bool (not revoked and not expired)
-attestation.is_expired     # -> bool
-attestation.has_capability("read")   # -> bool
-
-# Integrity verification
-attestation.content_hash()  # -> str (SHA-256)
-
-# Revocation
-attestation.revoke("Security incident")
-
-# Consistency check against envelope
-is_consistent, drift = attestation.verify_consistency(
-    envelope_capabilities=["read", "analyze", "draft"]
-)
-# drift contains capabilities in attestation but not in envelope
+```json
+{
+  "status": "created",
+  "ksp_id": "ksp-e5f6g7h8",
+  "source_unit": "D1-R1-D1",
+  "target_unit": "D1-R1-D2-R1-T1"
+}
 ```
 
 ---
 
-## Audit Chain
+## POST /envelopes
 
-**Module**: `pact.trust.audit.anchor`
+Set a role envelope with constraint dimensions.
 
-### AuditAnchor
+**Scope**: `governance:write`
 
-A single tamper-evident record. Each anchor contains a SHA-256 hash of its content plus the hash of the previous anchor, forming an integrity chain.
+**Request**:
 
-```python
-from pact.trust.audit.anchor import AuditAnchor, AuditChain
-from pact.build.config.schema import VerificationLevel
-
-anchor = AuditAnchor(
-    anchor_id="chain-001-0",
-    sequence=0,
-    previous_hash=None,  # None for genesis anchor
-    agent_id="analyst-01",
-    action="read",
-    verification_level=VerificationLevel.AUTO_APPROVED,
-    envelope_id="analyst-envelope",
-    result="success",
-)
-anchor.seal()              # Compute and store SHA-256 content hash
-anchor.is_sealed           # -> True
-anchor.verify_integrity()  # -> True (hash matches content)
+```bash
+curl -X POST http://localhost:8000/api/v1/governance/envelopes \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "defining_role_address": "D1-R1-D1-R1-D1-R1",
+    "target_role_address": "D1-R1-D1-R1-D1-R1-T1-R1",
+    "envelope_id": "env-cs-chair",
+    "constraints": {
+      "financial": {
+        "max_spend_usd": 10000,
+        "requires_approval_above_usd": 5000
+      },
+      "operational": {
+        "allowed_actions": ["read", "write", "approve"],
+        "blocked_actions": ["deploy"]
+      }
+    }
+  }'
 ```
 
-### AuditChain
+**Request Body**:
 
-An ordered chain of audit anchors with integrity verification.
+| Field                 | Type   | Required | Description                                        |
+| --------------------- | ------ | -------- | -------------------------------------------------- |
+| defining_role_address | string | yes      | D/T/R address of the role defining the envelope    |
+| target_role_address   | string | yes      | D/T/R address of the role this envelope applies to |
+| envelope_id           | string | yes      | Unique identifier for this envelope                |
+| constraints           | object | yes      | Constraint dimensions (see below)                  |
 
-```python
-chain = AuditChain(chain_id="chain-001")
+**Constraint Dimensions**:
 
-# Append creates a sealed anchor linked to the previous
-anchor = chain.append(
-    agent_id="analyst-01",
-    action="read",
-    verification_level=VerificationLevel.AUTO_APPROVED,
-    envelope_id="analyst-envelope",
-    result="success",
-    metadata={"resource": "briefs/q4.md"},
-)
+```json
+{
+  "financial": {
+    "max_spend_usd": 10000,
+    "api_cost_budget_usd": 500,
+    "requires_approval_above_usd": 5000,
+    "reasoning_required": false
+  },
+  "operational": {
+    "allowed_actions": ["read", "write"],
+    "blocked_actions": ["deploy"],
+    "max_actions_per_day": 100,
+    "max_actions_per_hour": 20,
+    "reasoning_required": false
+  }
+}
+```
 
-# Chain properties
-chain.length   # -> int
-chain.latest   # -> AuditAnchor | None
+**Validation**: All numeric financial fields must be finite (NaN and Inf are rejected).
 
-# Integrity verification (walks entire chain)
-is_valid, errors = chain.verify_chain_integrity()
-# Checks: sequence numbers, content hashes, chain linkage
+**Response** (201):
 
-# Filtering
-chain.filter_by_agent("analyst-01")                  # -> list[AuditAnchor]
-chain.filter_by_level(VerificationLevel.HELD)        # -> list[AuditAnchor]
-
-# Export for external audit
-records = chain.export(agent_id="analyst-01", since=some_datetime)
-# -> list[dict] (JSON-serializable)
+```json
+{
+  "status": "set",
+  "envelope_id": "env-cs-chair",
+  "target_role_address": "D1-R1-D1-R1-D1-R1-T1-R1"
+}
 ```
 
 ---
 
-## Storage
+## Error Responses
 
-**Module**: `pact.trust.store`
+All endpoints return errors in a consistent format:
 
-### TrustStore Protocol
+**401 Unauthorized**:
 
-Abstract interface for trust object persistence. Implement this protocol to add custom storage backends.
-
-```python
-from pact.trust.store import TrustStore
-
-class MyStore:
-    """Custom storage implementation."""
-
-    def store_envelope(self, envelope_id: str, data: dict) -> None: ...
-    def get_envelope(self, envelope_id: str) -> dict | None: ...
-    def list_envelopes(self, agent_id: str | None = None) -> list[dict]: ...
-
-    def store_audit_anchor(self, anchor_id: str, data: dict) -> None: ...
-    def get_audit_anchor(self, anchor_id: str) -> dict | None: ...
-    def query_anchors(
-        self, *, agent_id=None, action=None, since=None, until=None,
-        verification_level=None, limit=100,
-    ) -> list[dict]: ...
-
-    def store_posture_change(self, agent_id: str, data: dict) -> None: ...
-    def get_posture_history(self, agent_id: str) -> list[dict]: ...
-
-    def store_revocation(self, revocation_id: str, data: dict) -> None: ...
-    def get_revocations(self, agent_id: str | None = None) -> list[dict]: ...
+```json
+{
+  "detail": "Authentication required: provide Bearer token in Authorization header"
+}
 ```
 
-### Built-in Implementations
+**404 Not Found**:
 
-```python
-from pact.trust.store import MemoryStore, FilesystemStore
-
-# In-memory (development/testing)
-store = MemoryStore()
-
-# JSON file-based (single-instance deployments)
-store = FilesystemStore("/path/to/trust-data")
-# Creates subdirectories: envelopes/, anchors/, posture/, revocations/
+```json
+{
+  "detail": "No node found at address 'D99-R1'"
+}
 ```
 
-### Query Anchors
+**422 Validation Error**:
+
+```json
+{
+  "detail": [
+    {
+      "loc": ["body", "cost"],
+      "msg": "cost must be finite, got nan. NaN/Inf values bypass governance checks.",
+      "type": "value_error"
+    }
+  ]
+}
+```
+
+**429 Rate Limited**:
+
+```json
+{
+  "error": "Rate limit exceeded",
+  "detail": "60 per 1 minute"
+}
+```
+
+---
+
+## WebSocket Events
+
+The governance API emits real-time events over WebSocket for dashboard integration:
+
+| Event Type                     | Trigger                          |
+| ------------------------------ | -------------------------------- |
+| `governance.access_checked`    | After a check-access evaluation  |
+| `governance.action_verified`   | After a verify-action evaluation |
+| `governance.clearance_granted` | After granting clearance         |
+| `governance.clearance_revoked` | After revoking clearance         |
+| `governance.bridge_created`    | After creating a bridge          |
+| `governance.ksp_created`       | After creating a KSP             |
+| `governance.envelope_set`      | After setting an envelope        |
+
+Events are published to the platform EventBus and are available on the WebSocket endpoint.
+
+---
+
+## Mounting the API
+
+### On an existing FastAPI app
 
 ```python
-from datetime import datetime, UTC
+from fastapi import FastAPI
+from pact.governance.engine import GovernanceEngine
+from pact.governance.api.auth import GovernanceAuth
+from pact.governance.api.router import mount_governance_api
 
-anchors = store.query_anchors(
-    agent_id="analyst-01",
-    action="read",
-    since=datetime(2026, 1, 1, tzinfo=UTC),
-    until=datetime(2026, 3, 1, tzinfo=UTC),
-    verification_level="AUTO_APPROVED",
-    limit=50,
-)
-# Returns: list[dict]
+app = FastAPI()
+engine = GovernanceEngine(org_definition)
+auth = GovernanceAuth()
+
+mount_governance_api(app, engine, auth, rate_limit="60/minute")
+```
+
+### Standalone app (for testing)
+
+```python
+from pact.governance.api.router import create_governance_app
+
+app = create_governance_app(engine, auth, rate_limit="60/minute")
+
+# Run with uvicorn
+import uvicorn
+uvicorn.run(app, host="0.0.0.0", port=8000)
 ```
