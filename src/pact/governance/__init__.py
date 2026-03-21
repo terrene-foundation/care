@@ -38,6 +38,8 @@ from pact.governance.envelopes import (
     default_envelope_for_posture,
     intersect_envelopes,
 )
+from pact.governance.agent_mapping import AgentRoleMapping
+from pact.governance.context import GovernanceContext
 from pact.governance.knowledge import KnowledgeItem
 from pact.governance.audit import (
     PactAuditAction,
@@ -53,6 +55,22 @@ from pact.governance.store import (
     MemoryEnvelopeStore,
     MemoryOrgStore,
     OrgStore,
+)
+from pact.governance.engine import GovernanceEngine
+from pact.governance.explain import (
+    describe_address,
+    explain_access,
+    explain_envelope,
+)
+from pact.governance.verdict import GovernanceVerdict
+from pact.governance.yaml_loader import (
+    BridgeSpec,
+    ClearanceSpec,
+    ConfigurationError,
+    EnvelopeSpec,
+    KspSpec,
+    LoadedOrg,
+    load_org_yaml,
 )
 
 __all__ = [
@@ -81,6 +99,10 @@ __all__ = [
     "KnowledgeSharePolicy",
     "PactBridge",
     "can_access",
+    # Agent mapping (TODO-7017)
+    "AgentRoleMapping",
+    # Governance context (TODO-7016)
+    "GovernanceContext",
     # Envelopes (TODO-3001 through 3006)
     "MonotonicTighteningError",
     "RoleEnvelope",
@@ -102,4 +124,20 @@ __all__ = [
     "MemoryEnvelopeStore",
     "MemoryOrgStore",
     "OrgStore",
+    # Engine (TODO-7010, 7012, 7014, 7015)
+    "GovernanceEngine",
+    # Verdict (TODO-7010)
+    "GovernanceVerdict",
+    # YAML loader (TODO-7011)
+    "ConfigurationError",
+    "ClearanceSpec",
+    "EnvelopeSpec",
+    "BridgeSpec",
+    "KspSpec",
+    "LoadedOrg",
+    "load_org_yaml",
+    # Explain/convenience API (TODO-7013)
+    "describe_address",
+    "explain_access",
+    "explain_envelope",
 ]
