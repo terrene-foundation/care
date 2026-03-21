@@ -14,6 +14,7 @@ be equal to or more restrictive than parent envelopes.
 from __future__ import annotations
 
 import logging
+import math
 import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -61,8 +62,46 @@ class MonotonicTighteningError(ValueError):
 # ---------------------------------------------------------------------------
 
 
+def _validate_finite(value: float | None, field_name: str) -> None:
+    """Raise ValueError if value is NaN or Inf.
+
+    Security-critical: NaN bypasses all numeric comparisons (NaN < X is always
+    False, NaN > X is always False). Inf bypasses budget checks (cost > Inf is
+    always False). Both must be rejected explicitly.
+
+    Per trust-plane-security.md rule 3: math.isfinite() on all numeric fields.
+    """
+    if value is not None and not math.isfinite(value):
+        raise ValueError(
+            f"{field_name} must be finite, got {value!r}. "
+            f"NaN/Inf values bypass numeric comparisons and break governance checks."
+        )
+
+
+def _validate_finite_int(value: int | None, field_name: str) -> None:
+    """Raise ValueError/TypeError if value is a non-finite float masquerading as int.
+
+    Python allows float('nan') to be passed where int is expected at runtime.
+    This guard catches that case.
+    """
+    if value is not None:
+        if isinstance(value, float):
+            if not math.isfinite(value):
+                raise ValueError(
+                    f"{field_name} must be finite, got {value!r}. "
+                    f"NaN/Inf values bypass numeric comparisons and break governance checks."
+                )
+        elif not isinstance(value, int):
+            raise TypeError(f"{field_name} must be int or None, got {type(value).__name__}")
+
+
 def _min_optional(a: float | None, b: float | None) -> float | None:
-    """Return the minimum of two optional floats. None is treated as unbounded (permissive)."""
+    """Return the minimum of two optional floats. None is treated as unbounded (permissive).
+
+    Raises ValueError if either value is NaN or Inf.
+    """
+    _validate_finite(a, "min_optional argument a")
+    _validate_finite(b, "min_optional argument b")
     if a is None and b is None:
         return None
     if a is None:
@@ -73,7 +112,12 @@ def _min_optional(a: float | None, b: float | None) -> float | None:
 
 
 def _min_optional_int(a: int | None, b: int | None) -> int | None:
-    """Return the minimum of two optional ints. None is treated as unbounded."""
+    """Return the minimum of two optional ints. None is treated as unbounded.
+
+    Raises ValueError if either value is a non-finite float (NaN/Inf).
+    """
+    _validate_finite_int(a, "min_optional_int argument a")
+    _validate_finite_int(b, "min_optional_int argument b")
     if a is None and b is None:
         return None
     if a is None:
@@ -99,13 +143,35 @@ def _intersect_financial(
     a: FinancialConstraintConfig | None,
     b: FinancialConstraintConfig | None,
 ) -> FinancialConstraintConfig | None:
-    """Intersect financial dimensions: min() of numeric limits."""
+    """Intersect financial dimensions: min() of numeric limits.
+
+    Raises ValueError if any numeric field is NaN or Inf.
+    """
     if a is None and b is None:
         return None
     if a is None:
+        _validate_finite(b.max_spend_usd, "financial.max_spend_usd")  # type: ignore[union-attr]
+        _validate_finite(b.api_cost_budget_usd, "financial.api_cost_budget_usd")  # type: ignore[union-attr]
+        _validate_finite(b.requires_approval_above_usd, "financial.requires_approval_above_usd")  # type: ignore[union-attr]
         return b
     if b is None:
+        _validate_finite(a.max_spend_usd, "financial.max_spend_usd")
+        _validate_finite(a.api_cost_budget_usd, "financial.api_cost_budget_usd")
+        _validate_finite(a.requires_approval_above_usd, "financial.requires_approval_above_usd")
         return a
+
+    # Validate all numeric fields before any min() calls
+    _validate_finite(a.max_spend_usd, "financial.max_spend_usd (envelope a)")
+    _validate_finite(b.max_spend_usd, "financial.max_spend_usd (envelope b)")
+    _validate_finite(a.api_cost_budget_usd, "financial.api_cost_budget_usd (envelope a)")
+    _validate_finite(b.api_cost_budget_usd, "financial.api_cost_budget_usd (envelope b)")
+    _validate_finite(
+        a.requires_approval_above_usd, "financial.requires_approval_above_usd (envelope a)"
+    )
+    _validate_finite(
+        b.requires_approval_above_usd, "financial.requires_approval_above_usd (envelope b)"
+    )
+
     return FinancialConstraintConfig(
         max_spend_usd=min(a.max_spend_usd, b.max_spend_usd),
         api_cost_budget_usd=_min_optional(a.api_cost_budget_usd, b.api_cost_budget_usd),
@@ -294,8 +360,39 @@ class RoleEnvelope:
 
         Raises:
             MonotonicTighteningError: If child_envelope is looser on any dimension.
+            ValueError: If any numeric field is NaN or Inf (security guard).
         """
         violations: list[str] = []
+
+        # Security: validate all financial numeric fields are finite before comparisons.
+        # NaN > X is always False, so NaN bypasses all tightening checks.
+        # Inf > X is always False for finite X, allowing infinite budgets.
+        if parent_envelope.financial is not None:
+            _validate_finite(
+                parent_envelope.financial.max_spend_usd,
+                "parent financial.max_spend_usd",
+            )
+            _validate_finite(
+                parent_envelope.financial.api_cost_budget_usd,
+                "parent financial.api_cost_budget_usd",
+            )
+            _validate_finite(
+                parent_envelope.financial.requires_approval_above_usd,
+                "parent financial.requires_approval_above_usd",
+            )
+        if child_envelope.financial is not None:
+            _validate_finite(
+                child_envelope.financial.max_spend_usd,
+                "child financial.max_spend_usd",
+            )
+            _validate_finite(
+                child_envelope.financial.api_cost_budget_usd,
+                "child financial.api_cost_budget_usd",
+            )
+            _validate_finite(
+                child_envelope.financial.requires_approval_above_usd,
+                "child financial.requires_approval_above_usd",
+            )
 
         # Financial: child max_spend must be <= parent max_spend
         if parent_envelope.financial is not None and child_envelope.financial is not None:

@@ -16,6 +16,7 @@ rules -- evicts oldest entries when capacity is exceeded.
 from __future__ import annotations
 
 import logging
+import threading
 from collections import OrderedDict
 from typing import Protocol, runtime_checkable
 
@@ -114,31 +115,36 @@ class MemoryOrgStore:
     """In-memory OrgStore using OrderedDict with bounded size.
 
     Stores compiled organizations keyed by org_id. Evicts oldest entries
-    when exceeding MAX_STORE_SIZE.
+    when exceeding MAX_STORE_SIZE. All public methods are thread-safe via
+    an internal ``threading.Lock``.
     """
 
     def __init__(self) -> None:
+        self._lock = threading.Lock()
         self._orgs: OrderedDict[str, CompiledOrg] = OrderedDict()
 
     def save_org(self, org: CompiledOrg) -> None:
         """Save a compiled organization, overwriting any existing entry."""
-        # Move to end if updating existing key, or insert new
-        if org.org_id in self._orgs:
-            self._orgs.move_to_end(org.org_id)
-        self._orgs[org.org_id] = org
-        _evict_oldest(self._orgs, MAX_STORE_SIZE)
+        with self._lock:
+            # Move to end if updating existing key, or insert new
+            if org.org_id in self._orgs:
+                self._orgs.move_to_end(org.org_id)
+            self._orgs[org.org_id] = org
+            _evict_oldest(self._orgs, MAX_STORE_SIZE)
         logger.info("Saved org '%s' (%d nodes)", org.org_id, len(org.nodes))
 
     def load_org(self, org_id: str) -> CompiledOrg | None:
         """Load a compiled organization by ID, or None if not found."""
-        org = self._orgs.get(org_id)
+        with self._lock:
+            org = self._orgs.get(org_id)
         if org is None:
             logger.debug("Org '%s' not found in store", org_id)
         return org
 
     def get_node(self, org_id: str, address: str) -> OrgNode | None:
         """Look up a single node by org_id and address."""
-        org = self._orgs.get(org_id)
+        with self._lock:
+            org = self._orgs.get(org_id)
         if org is None:
             logger.debug("get_node: org '%s' not found in store", org_id)
             return None
@@ -146,7 +152,8 @@ class MemoryOrgStore:
 
     def query_by_prefix(self, org_id: str, prefix: str) -> list[OrgNode]:
         """Return all nodes whose address starts with the given prefix."""
-        org = self._orgs.get(org_id)
+        with self._lock:
+            org = self._orgs.get(org_id)
         if org is None:
             logger.debug("query_by_prefix: org '%s' not found in store", org_id)
             return []
@@ -162,20 +169,23 @@ class MemoryEnvelopeStore:
 
     Role envelopes are keyed by target_role_address.
     Task envelopes are keyed by (role_address, task_id) derived from
-    the TaskEnvelope's parent_envelope_id relationship.
+    the TaskEnvelope's parent_envelope_id relationship. All public methods
+    are thread-safe via an internal ``threading.Lock``.
     """
 
     def __init__(self) -> None:
+        self._lock = threading.Lock()
         self._role_envelopes: OrderedDict[str, RoleEnvelope] = OrderedDict()
         self._task_envelopes: OrderedDict[str, TaskEnvelope] = OrderedDict()
 
     def save_role_envelope(self, envelope: RoleEnvelope) -> None:
         """Save a role envelope, keyed by target_role_address."""
         key = envelope.target_role_address
-        if key in self._role_envelopes:
-            self._role_envelopes.move_to_end(key)
-        self._role_envelopes[key] = envelope
-        _evict_oldest(self._role_envelopes, MAX_STORE_SIZE)
+        with self._lock:
+            if key in self._role_envelopes:
+                self._role_envelopes.move_to_end(key)
+            self._role_envelopes[key] = envelope
+            _evict_oldest(self._role_envelopes, MAX_STORE_SIZE)
         logger.info(
             "Saved role envelope '%s' for target '%s'",
             envelope.id,
@@ -184,7 +194,8 @@ class MemoryEnvelopeStore:
 
     def get_role_envelope(self, target_role_address: str) -> RoleEnvelope | None:
         """Get a role envelope by target role address."""
-        return self._role_envelopes.get(target_role_address)
+        with self._lock:
+            return self._role_envelopes.get(target_role_address)
 
     def save_task_envelope(self, envelope: TaskEnvelope) -> None:
         """Save a task envelope, keyed by task_id.
@@ -194,10 +205,11 @@ class MemoryEnvelopeStore:
         narrowed, and can be used for cross-referencing.
         """
         key = envelope.task_id
-        if key in self._task_envelopes:
-            self._task_envelopes.move_to_end(key)
-        self._task_envelopes[key] = envelope
-        _evict_oldest(self._task_envelopes, MAX_STORE_SIZE)
+        with self._lock:
+            if key in self._task_envelopes:
+                self._task_envelopes.move_to_end(key)
+            self._task_envelopes[key] = envelope
+            _evict_oldest(self._task_envelopes, MAX_STORE_SIZE)
         logger.info(
             "Saved task envelope '%s' for task '%s' (parent envelope '%s')",
             envelope.id,
@@ -212,7 +224,8 @@ class MemoryEnvelopeStore:
         interface compatibility and future filtering; task IDs are unique
         per assignment.
         """
-        te = self._task_envelopes.get(task_id)
+        with self._lock:
+            te = self._task_envelopes.get(task_id)
         if te is None:
             return None
         if te.is_expired:
@@ -238,29 +251,33 @@ class MemoryEnvelopeStore:
             Dict mapping ancestor target_role_address to RoleEnvelope.
         """
         result: dict[str, RoleEnvelope] = {}
-        for addr, envelope in self._role_envelopes.items():
-            # addr is an ancestor if role_address starts with addr
-            if role_address == addr or role_address.startswith(addr + "-"):
-                result[addr] = envelope
+        with self._lock:
+            for addr, envelope in self._role_envelopes.items():
+                # addr is an ancestor if role_address starts with addr
+                if role_address == addr or role_address.startswith(addr + "-"):
+                    result[addr] = envelope
         return result
 
 
 class MemoryClearanceStore:
     """In-memory ClearanceStore using OrderedDict with bounded size.
 
-    Clearances are keyed by role_address.
+    Clearances are keyed by role_address. All public methods are thread-safe
+    via an internal ``threading.Lock``.
     """
 
     def __init__(self) -> None:
+        self._lock = threading.Lock()
         self._clearances: OrderedDict[str, RoleClearance] = OrderedDict()
 
     def grant_clearance(self, clearance: RoleClearance) -> None:
         """Grant or update a clearance for a role address."""
         key = clearance.role_address
-        if key in self._clearances:
-            self._clearances.move_to_end(key)
-        self._clearances[key] = clearance
-        _evict_oldest(self._clearances, MAX_STORE_SIZE)
+        with self._lock:
+            if key in self._clearances:
+                self._clearances.move_to_end(key)
+            self._clearances[key] = clearance
+            _evict_oldest(self._clearances, MAX_STORE_SIZE)
         logger.info(
             "Granted clearance '%s' to role '%s'",
             clearance.max_clearance.value,
@@ -269,11 +286,13 @@ class MemoryClearanceStore:
 
     def get_clearance(self, role_address: str) -> RoleClearance | None:
         """Get the clearance for a role address, or None if not found."""
-        return self._clearances.get(role_address)
+        with self._lock:
+            return self._clearances.get(role_address)
 
     def revoke_clearance(self, role_address: str) -> None:
         """Revoke clearance for a role address. No-op if not found."""
-        removed = self._clearances.pop(role_address, None)
+        with self._lock:
+            removed = self._clearances.pop(role_address, None)
         if removed is not None:
             logger.info("Revoked clearance for role '%s'", role_address)
         else:
@@ -287,10 +306,12 @@ class MemoryAccessPolicyStore:
     """In-memory AccessPolicyStore using OrderedDict with bounded size.
 
     KSPs are keyed by their id.
-    Bridges are keyed by their id.
+    Bridges are keyed by their id. All public methods are thread-safe via
+    an internal ``threading.Lock``.
     """
 
     def __init__(self) -> None:
+        self._lock = threading.Lock()
         self._ksps: OrderedDict[str, KnowledgeSharePolicy] = OrderedDict()
         self._bridges: OrderedDict[str, PactBridge] = OrderedDict()
 
@@ -298,10 +319,11 @@ class MemoryAccessPolicyStore:
 
     def save_ksp(self, ksp: KnowledgeSharePolicy) -> None:
         """Save a Knowledge Share Policy."""
-        if ksp.id in self._ksps:
-            self._ksps.move_to_end(ksp.id)
-        self._ksps[ksp.id] = ksp
-        _evict_oldest(self._ksps, MAX_STORE_SIZE)
+        with self._lock:
+            if ksp.id in self._ksps:
+                self._ksps.move_to_end(ksp.id)
+            self._ksps[ksp.id] = ksp
+            _evict_oldest(self._ksps, MAX_STORE_SIZE)
         logger.info(
             "Saved KSP '%s': %s -> %s",
             ksp.id,
@@ -324,26 +346,29 @@ class MemoryAccessPolicyStore:
         Returns:
             The first matching KSP, or None if no match found.
         """
-        for ksp in self._ksps.values():
-            if (
-                ksp.source_unit_address == source_prefix
-                and ksp.target_unit_address == target_prefix
-            ):
-                return ksp
+        with self._lock:
+            for ksp in self._ksps.values():
+                if (
+                    ksp.source_unit_address == source_prefix
+                    and ksp.target_unit_address == target_prefix
+                ):
+                    return ksp
         return None
 
     def list_ksps(self) -> list[KnowledgeSharePolicy]:
         """Return all stored KSPs."""
-        return list(self._ksps.values())
+        with self._lock:
+            return list(self._ksps.values())
 
     # ---- Bridge operations ----
 
     def save_bridge(self, bridge: PactBridge) -> None:
         """Save a Cross-Functional Bridge."""
-        if bridge.id in self._bridges:
-            self._bridges.move_to_end(bridge.id)
-        self._bridges[bridge.id] = bridge
-        _evict_oldest(self._bridges, MAX_STORE_SIZE)
+        with self._lock:
+            if bridge.id in self._bridges:
+                self._bridges.move_to_end(bridge.id)
+            self._bridges[bridge.id] = bridge
+            _evict_oldest(self._bridges, MAX_STORE_SIZE)
         logger.info(
             "Saved bridge '%s': %s <-> %s (%s)",
             bridge.id,
@@ -366,15 +391,19 @@ class MemoryAccessPolicyStore:
         Returns:
             The first matching bridge, or None if no match found.
         """
-        for bridge in self._bridges.values():
-            if (
-                bridge.role_a_address == role_a_address and bridge.role_b_address == role_b_address
-            ) or (
-                bridge.role_a_address == role_b_address and bridge.role_b_address == role_a_address
-            ):
-                return bridge
+        with self._lock:
+            for bridge in self._bridges.values():
+                if (
+                    bridge.role_a_address == role_a_address
+                    and bridge.role_b_address == role_b_address
+                ) or (
+                    bridge.role_a_address == role_b_address
+                    and bridge.role_b_address == role_a_address
+                ):
+                    return bridge
         return None
 
     def list_bridges(self) -> list[PactBridge]:
         """Return all stored bridges."""
-        return list(self._bridges.values())
+        with self._lock:
+            return list(self._bridges.values())

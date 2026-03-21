@@ -89,6 +89,14 @@ function initializeSession(data) {
   // ── Detect framework ──────────────────────────────────────────────────
   const framework = detectFramework(cwd);
 
+  // ── Governance-specific session context ─────────────────────────────
+  if (framework === "pact-governance") {
+    console.error(
+      "[FRAMEWORK] PACT governance framework detected. " +
+        "Key rules: rules/governance.md, rules/boundary-test.md",
+    );
+  }
+
   // ── Log observation ───────────────────────────────────────────────────
   try {
     const observationsFile = path.join(learningDir, "observations.jsonl");
@@ -182,7 +190,11 @@ function initializeSession(data) {
 function checkPythonPackageFreshness(cwd) {
   // Check all packages for version consistency
   const packageDirs = [
-    { name: "kailash", pyproject: "pyproject.toml", init: "src/kailash/__init__.py" },
+    {
+      name: "kailash",
+      pyproject: "pyproject.toml",
+      init: "src/kailash/__init__.py",
+    },
   ];
 
   // Also check packages/ subdirectories
@@ -263,7 +275,9 @@ function checkPythonPackageFreshness(cwd) {
     try {
       const marker = JSON.parse(fs.readFileSync(markerPath, "utf8").trim());
       if (marker.synced_at) {
-        const daysSince = (Date.now() - new Date(marker.synced_at).getTime()) / (1000 * 60 * 60 * 24);
+        const daysSince =
+          (Date.now() - new Date(marker.synced_at).getTime()) /
+          (1000 * 60 * 60 * 24);
         if (daysSince > 7) {
           console.error(
             `[COC-SYNC] WARNING: COC sync is ${Math.floor(daysSince)} days old. ` +
@@ -279,6 +293,22 @@ function checkPythonPackageFreshness(cwd) {
 
 function detectFramework(cwd) {
   try {
+    // Check for PACT governance framework (src/pact/governance/ or src/*/governance/)
+    const srcDir = path.join(cwd, "src");
+    if (fs.existsSync(srcDir)) {
+      try {
+        const srcEntries = fs.readdirSync(srcDir, { withFileTypes: true });
+        for (const entry of srcEntries.filter((e) => e.isDirectory())) {
+          const govDir = path.join(srcDir, entry.name, "governance");
+          const addressingPy = path.join(govDir, "addressing.py");
+          const accessPy = path.join(govDir, "access.py");
+          if (fs.existsSync(addressingPy) || fs.existsSync(accessPy)) {
+            return "pact-governance";
+          }
+        }
+      } catch {}
+    }
+
     const files = fs.readdirSync(cwd);
     for (const file of files.filter((f) => f.endsWith(".py")).slice(0, 10)) {
       try {

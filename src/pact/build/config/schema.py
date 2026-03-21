@@ -8,6 +8,7 @@ envelopes, and workspace layout in YAML configuration files.
 
 from __future__ import annotations
 
+import math
 from datetime import datetime
 from enum import Enum
 
@@ -109,6 +110,22 @@ class FinancialConstraintConfig(BaseModel):
         default=False,
         description="When True, any action touching this dimension must include a reasoning trace",
     )
+
+    @field_validator("max_spend_usd", "api_cost_budget_usd", "requires_approval_above_usd")
+    @classmethod
+    def reject_non_finite(cls, v: float | None, info: Any) -> float | None:
+        """Reject NaN and Inf values -- they bypass numeric comparisons.
+
+        Security-critical: NaN < X is always False, Inf > X is always False
+        for finite X. Both silently bypass budget checks and tightening
+        validation. Per trust-plane-security.md rule 3.
+        """
+        if v is not None and not math.isfinite(v):
+            raise ValueError(
+                f"{info.field_name} must be finite, got {v!r}. "
+                f"NaN/Inf values bypass governance checks."
+            )
+        return v
 
 
 class OperationalConstraintConfig(BaseModel):

@@ -1,6 +1,6 @@
 # TODO-0005: Fix Remaining CARE Platform References
 
-Status: pending
+Status: completed
 Priority: high
 Dependencies: []
 Milestone: M0

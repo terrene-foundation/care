@@ -519,14 +519,13 @@ class TestTOCTOU:
         with pytest.raises((AttributeError, FrozenInstanceError)):
             compiled.org_id = "HACKED"  # type: ignore[misc]
 
-    def test_role_definition_is_not_frozen_documented(self) -> None:
-        """RoleDefinition is NOT frozen -- it is a build-time type.
+    def test_role_definition_is_frozen(self) -> None:
+        """RoleDefinition IS frozen (TODO-7006 security fix).
 
-        DOCUMENTED: RoleDefinition is mutable because the address field is set
-        during compilation. It is not a runtime security type -- the compiled
-        OrgNode (which IS frozen) is what matters for access decisions.
+        RoleDefinition is now frozen=True to prevent post-construction mutation.
+        During compilation, object.__setattr__ is used to set the address field.
+        After compilation, the RoleDefinition is immutable.
         """
         rd = RoleDefinition(role_id="test", name="Test")
-        # This should NOT raise -- RoleDefinition is intentionally mutable
-        rd.address = "D1-R1"
-        assert rd.address == "D1-R1"
+        with pytest.raises((AttributeError, FrozenInstanceError)):
+            rd.address = "D1-R1"  # type: ignore[misc]

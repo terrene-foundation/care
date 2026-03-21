@@ -243,7 +243,8 @@ decisions:
 
   - decision: "Consume EATP decorators, don't rebuild them"
     rationale: "EATP SDK already has @verified, @audited, @shadow. CARE adds governance context on top."
-    alternatives_rejected: ["Build decorators from scratch", "Copy EATP source into CARE"]
+    alternatives_rejected:
+      ["Build decorators from scratch", "Copy EATP source into CARE"]
     date: 2026-03-15
     initiative: pact-m8
     confidence: high
@@ -307,3 +308,124 @@ decisions:
     date: 2026-03-15
     initiative: product-architecture
     confidence: high
+
+  # --- Governance-Era Architecture (PACT Framework Layer) ---
+
+  - decision: "Option B architecture — build primitives in pact repo, migrate to kailash-py/packages/kailash-pact/ when stable"
+    rationale: "Fast iteration without polluting SDK monorepo during exploratory design. Migration once API surface stabilises."
+    alternatives_rejected:
+      [
+        "Option A: build directly in kailash-py from day one",
+        "Option C: keep everything in pact forever",
+      ]
+    date: 2026-03-21
+    initiative: pact-governance
+    confidence: high
+    source: governance-era/architecture
+
+  - decision: "Package name kailash-pact for eventual SDK package"
+    rationale: "'pact' is taken on PyPI (contract testing library). kailash-pact aligns with ecosystem naming (kailash, kailash-dataflow, kailash-nexus, kailash-kaizen)."
+    alternatives_rejected: ["pact-python", "pact"]
+    date: 2026-03-21
+    initiative: pact-governance
+    confidence: high
+    source: governance-era/naming
+
+  - decision: "D/T/R grammar invariant — every D or T must be immediately followed by exactly one R"
+    rationale: "The R is the accountability anchor. A department or team without a responsible role has no one accountable. Enforced at construction time."
+    alternatives_rejected:
+      ["Optional R with default", "Validation after construction"]
+    date: 2026-03-21
+    initiative: pact-governance
+    confidence: high
+    source: governance-era/grammar
+
+  - decision: "Five-step access algorithm: Clearance, Classification, Compartment, Containment, Deny"
+    rationale: "Each step narrows independently. Order is deliberate: cheapest checks first, containment (tree traversal) last. Any step failure denies access with no fallback."
+    alternatives_rejected:
+      ["Single-pass access check", "Role-based only without compartments"]
+    date: 2026-03-21
+    initiative: pact-governance
+    confidence: high
+    source: governance-era/knowledge-clearance
+
+  - decision: "Three-layer envelope model: Role (standing) + Task (ephemeral) = Effective (computed intersection)"
+    rationale: "Separates standing authority from task-specific delegation. Same role operates under different constraints for different tasks without modifying permanent authority. Effective envelope can never be wider than Role envelope (monotonic tightening)."
+    alternatives_rejected: ["Single envelope per role", "Task overrides role"]
+    date: 2026-03-21
+    initiative: pact-governance
+    confidence: high
+    source: governance-era/envelopes
+
+  - decision: "Frozen dataclass pattern — all governance state uses @dataclass(frozen=True)"
+    rationale: "Governance state represents trust decisions. Mutating after creation violates auditability. Updates create new records. Aligns with EATP append-only trust model. Use object.__setattr__ in __post_init__ for computed fields."
+    alternatives_rejected:
+      ["Mutable with validation hooks", "Copy-on-read pattern"]
+    date: 2026-03-21
+    initiative: pact-governance
+    confidence: high
+    source: governance-era/immutability
+
+  - decision: "Bounded stores (maxlen=10,000) for all in-memory collections"
+    rationale: "Prevents memory exhaustion in production. Evict oldest 10% at capacity. Applies to deques, caches, registries. Default configurable but never unbounded."
+    alternatives_rejected:
+      ["Unbounded with monitoring", "Periodic cleanup task"]
+    date: 2026-03-21
+    initiative: pact-governance
+    confidence: high
+    source: governance-era/bounded-resources
+
+  - decision: "University as canonical example vertical"
+    rationale: "Exercises all PACT concepts (departments, teams, roles, clearance, bridges, approvals) without requiring domain expertise. Passes boundary test — replacing university vocabulary with any other domain vocabulary changes zero lines in src/pact/."
+    alternatives_rejected:
+      ["Hospital", "Government agency", "Generic corporation"]
+    date: 2026-03-21
+    initiative: pact-governance
+    confidence: high
+    source: governance-era/example-vertical
+
+  - decision: "Governance imports from build.config, never the reverse"
+    rationale: "Config defines schema (what an envelope looks like). Governance implements rules (how envelopes compose). Config is pure data; governance is behaviour. Circular imports indicate layer violation."
+    alternatives_rejected: ["Bidirectional imports", "Single merged module"]
+    date: 2026-03-21
+    initiative: pact-governance
+    confidence: high
+    source: governance-era/dependency-direction
+
+  - decision: "GovernanceEngine as single facade composing all governance components"
+    rationale: "External code should never wire grammar validation, envelope composition, knowledge clearance, and verification gradient together manually. Facade ensures invariants enforced in correct order."
+    alternatives_rejected: ["Direct component access", "DI container"]
+    date: 2026-03-21
+    initiative: pact-governance
+    confidence: high
+    source: governance-era/facade
+
+  - decision: "Security baked in, not bolted on — every milestone includes security requirements"
+    rationale: "Ten red team rounds proved bolting security on after the fact creates gaps. Each feature designed, implemented, and validated with security properties as acceptance criteria."
+    alternatives_rejected:
+      ["Separate security phase", "Security review at end only"]
+    date: 2026-03-21
+    initiative: pact-governance
+    confidence: high
+    source: governance-era/security-model
+
+  - decision: "EATP merging into Kailash core — workspaces created in kailash-py and kailash-rs"
+    rationale: "EATP trust operations are foundational to the Kailash platform, not an optional add-on. Separate package created unnecessary dependency management and version coordination."
+    alternatives_rejected:
+      ["Keep EATP as separate package forever", "Fork EATP into pact"]
+    date: 2026-03-21
+    initiative: pact-governance
+    confidence: high
+    source: governance-era/eatp-merge
+
+  - decision: "Transitional dependency: kailash + eatp now, kailash only after merge"
+    rationale: "During EATP merge, both packages exist. PACT imports from eatp for trust operations and kailash for everything else. After merge, eatp dependency drops and all imports move to kailash.trust. Transition must be atomic."
+    alternatives_rejected:
+      [
+        "Immediate switch before merge complete",
+        "Maintain dual dependency permanently",
+      ]
+    date: 2026-03-21
+    initiative: pact-governance
+    confidence: high
+    source: governance-era/dependencies

@@ -12,6 +12,7 @@ from __future__ import annotations
 import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Any
 
 from pact.governance.addressing import AddressSegment, GrammarError, NodeType
@@ -25,11 +26,27 @@ logger = logging.getLogger(__name__)
 __all__ = [
     "CompilationError",
     "CompiledOrg",
+    "MAX_CHILDREN_PER_NODE",
+    "MAX_COMPILATION_DEPTH",
+    "MAX_TOTAL_NODES",
     "OrgNode",
     "RoleDefinition",
     "VacancyStatus",
     "compile_org",
 ]
+
+# ---------------------------------------------------------------------------
+# Compilation limits (TODO-7008) -- prevent resource exhaustion attacks
+# ---------------------------------------------------------------------------
+
+MAX_COMPILATION_DEPTH: int = 50
+"""Maximum address depth (number of segments) allowed during compilation."""
+
+MAX_CHILDREN_PER_NODE: int = 500
+"""Maximum number of direct children any single role may have."""
+
+MAX_TOTAL_NODES: int = 100_000
+"""Maximum total nodes allowed in a compiled organization."""
 
 
 # ---------------------------------------------------------------------------
@@ -48,12 +65,17 @@ class CompilationError(Exception):
 # ---------------------------------------------------------------------------
 
 
-@dataclass
+@dataclass(frozen=True)
 class RoleDefinition:
     """A first-class Role node in the PACT organizational model.
 
     Roles are the accountability anchors -- positions occupied by people.
     Every Department or Team must have exactly one primary Role (head).
+
+    frozen=True (TODO-7006 security fix): prevents post-construction mutation.
+    The address field is set during compilation via object.__setattr__ to
+    bypass frozen=True during the build phase. After compilation completes,
+    the RoleDefinition is immutable.
     """
 
     role_id: str
@@ -135,12 +157,16 @@ class CompiledOrg:
     frozen=True (C2 security fix): prevents post-compilation mutation of
     organizational structure. During compilation, object.__setattr__ is used
     to build the nodes dict; afterward, the CompiledOrg is immutable.
-    The nodes dict itself is mutable during compilation (dict contents can
-    be modified even on a frozen dataclass), but the reference cannot be
-    replaced.
+
+    TODO-7007: After compilation completes, the nodes dict is wrapped in
+    MappingProxyType to prevent post-compilation insertion, deletion, or
+    modification of nodes. Read operations (get, iterate, len, contains)
+    still work normally.
     """
 
     org_id: str
+    # Type is dict for static analysis. At runtime, compile_org() wraps this
+    # in MappingProxyType via object.__setattr__ after the build phase completes.
     nodes: dict[str, OrgNode] = field(default_factory=dict)
 
     # ---- Node lookup ----
@@ -298,7 +324,10 @@ def compile_org(org: OrgDefinition) -> CompiledOrg:
 
     # Short-circuit for empty orgs
     if not roles and not org.departments and not org.teams:
-        return CompiledOrg(org_id=org.org_id)
+        empty = CompiledOrg(org_id=org.org_id)
+        # TODO-7007: Wrap empty dict in MappingProxyType for consistency
+        object.__setattr__(empty, "nodes", MappingProxyType(empty.nodes))
+        return empty
 
     # --- Phase 1: Validate role definitions ---
     _validate_roles(roles, org)
@@ -451,6 +480,11 @@ def compile_org(org: OrgDefinition) -> CompiledOrg:
                 unit_head_map=unit_head_map,
             )
 
+    # TODO-7007: Wrap nodes dict in MappingProxyType to make it read-only
+    # post-compilation. This prevents insertion of malicious nodes after
+    # the compilation phase completes.
+    object.__setattr__(compiled, "nodes", MappingProxyType(compiled.nodes))
+
     return compiled
 
 
@@ -476,6 +510,14 @@ def _assign_children_of_external_root(
     children = children_of.get(parent_role.role_id, [])
     if not children:
         return
+
+    # TODO-7008: Check breadth limit
+    if len(children) > MAX_CHILDREN_PER_NODE:
+        raise CompilationError(
+            f"Role '{parent_role.role_id}' has {len(children)} children, "
+            f"exceeding the maximum of {MAX_CHILDREN_PER_NODE}. "
+            f"This may indicate a structural error or resource exhaustion attack."
+        )
 
     dept_counter = dept_counter_start
     team_counter = team_counter_start
@@ -587,10 +629,38 @@ def _assign_children_addresses(
     - Head roles of departments (D{n}-R{m}) => creates D node + R node
     - Head roles of teams (T{n}-R{m}) => creates T node + R node
     - Additional roles (R{n}) => creates R node directly
+
+    Raises:
+        CompilationError: If depth, breadth, or total node limits are exceeded.
     """
     children = children_of.get(parent_role.role_id, [])
     if not children:
         return
+
+    # TODO-7008: Check depth limit — count segments in the parent address
+    parent_depth = len(parent_role_addr.split("-"))
+    # Children will be at least parent_depth + 1 (for R node) or +2 (for D/T + R)
+    if parent_depth >= MAX_COMPILATION_DEPTH:
+        raise CompilationError(
+            f"Compilation depth limit exceeded at address '{parent_role_addr}' "
+            f"(depth {parent_depth} >= {MAX_COMPILATION_DEPTH}). "
+            f"This may indicate a circular structure or an excessively deep hierarchy."
+        )
+
+    # TODO-7008: Check breadth limit
+    if len(children) > MAX_CHILDREN_PER_NODE:
+        raise CompilationError(
+            f"Role '{parent_role.role_id}' at address '{parent_role_addr}' has "
+            f"{len(children)} children, exceeding the maximum of {MAX_CHILDREN_PER_NODE}. "
+            f"This may indicate a structural error or resource exhaustion attack."
+        )
+
+    # TODO-7008: Check total nodes limit
+    if len(compiled.nodes) > MAX_TOTAL_NODES:
+        raise CompilationError(
+            f"Total node count ({len(compiled.nodes)}) exceeds the maximum of "
+            f"{MAX_TOTAL_NODES}. This may indicate a resource exhaustion attack."
+        )
 
     # Track counters for each child type under this parent
     dept_counter = 0
@@ -710,6 +780,10 @@ def _create_role_node(
     parent_address: str | None,
 ) -> None:
     """Create an OrgNode for a role and add it to the compiled org."""
+    # Set the address on the frozen RoleDefinition via object.__setattr__
+    # (TODO-7006: RoleDefinition is now frozen=True)
+    object.__setattr__(role_def, "address", address)
+
     node = OrgNode(
         address=address,
         node_type=NodeType.ROLE,
