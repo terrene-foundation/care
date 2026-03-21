@@ -2,8 +2,8 @@
 # Licensed under the Apache License, Version 2.0
 """Tests for trust scoring model."""
 
-from care_platform.build.config.schema import TrustPostureLevel
-from care_platform.trust.scoring import (
+from pact.build.config.schema import TrustPostureLevel
+from pact.trust.scoring import (
     TrustFactors,
     TrustGrade,
     calculate_trust_score,
@@ -73,6 +73,6 @@ class TestTrustScoring:
             (0.36, TrustGrade.D),
             (0.10, TrustGrade.F),
         ]:
-            from care_platform.trust.scoring import _score_to_grade
+            from pact.trust.scoring import _score_to_grade
 
             assert _score_to_grade(score_val) == expected_grade

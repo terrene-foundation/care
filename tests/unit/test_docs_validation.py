@@ -9,7 +9,7 @@ This ensures documentation stays accurate as the code evolves.
 
 from datetime import UTC, datetime
 
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     AgentConfig,
     CommunicationConstraintConfig,
     ConstraintDimension,
@@ -19,7 +19,7 @@ from care_platform.build.config.schema import (
     GenesisConfig,
     GradientRuleConfig,
     OperationalConstraintConfig,
-    PlatformConfig,
+    PactConfig,
     TeamConfig,
     TemporalConstraintConfig,
     TrustPostureLevel,
@@ -33,11 +33,11 @@ from care_platform.build.config.schema import (
 # ---------------------------------------------------------------------------
 
 
-class TestPlatformConfigInstantiation:
-    """PlatformConfig is referenced in getting-started.md and cookbook.md."""
+class TestPactConfigInstantiation:
+    """PactConfig is referenced in getting-started.md and cookbook.md."""
 
     def test_minimal_instantiation(self):
-        config = PlatformConfig(
+        config = PactConfig(
             name="Test Org",
             genesis=GenesisConfig(
                 authority="test.example",
@@ -49,7 +49,7 @@ class TestPlatformConfigInstantiation:
 
     def test_has_lookup_methods(self):
         """Docs reference get_envelope, get_agent, get_team, get_workspace."""
-        config = PlatformConfig(
+        config = PactConfig(
             name="Test",
             genesis=GenesisConfig(authority="t", authority_name="T"),
         )
@@ -59,7 +59,7 @@ class TestPlatformConfigInstantiation:
         assert callable(config.get_workspace)
 
     def test_default_posture(self):
-        config = PlatformConfig(
+        config = PactConfig(
             name="Test",
             genesis=GenesisConfig(authority="t", authority_name="T"),
         )
@@ -67,7 +67,7 @@ class TestPlatformConfigInstantiation:
 
     def test_with_full_structure(self):
         """Docs show configs with envelopes, agents, teams, workspaces."""
-        config = PlatformConfig(
+        config = PactConfig(
             name="Full Org",
             genesis=GenesisConfig(
                 authority="full.example",
@@ -167,7 +167,7 @@ class TestConstraintEnvelopeInstantiation:
     """ConstraintEnvelope is demonstrated in getting-started and cookbook."""
 
     def test_instantiation(self):
-        from care_platform import ConstraintEnvelope
+        from pact import ConstraintEnvelope
 
         envelope = ConstraintEnvelope(
             config=ConstraintEnvelopeConfig(id="test"),
@@ -177,7 +177,7 @@ class TestConstraintEnvelopeInstantiation:
         assert not envelope.is_expired
 
     def test_evaluate_action_method_exists(self):
-        from care_platform import ConstraintEnvelope
+        from pact import ConstraintEnvelope
 
         envelope = ConstraintEnvelope(
             config=ConstraintEnvelopeConfig(id="test"),
@@ -186,7 +186,7 @@ class TestConstraintEnvelopeInstantiation:
 
     def test_is_tighter_than_method_exists(self):
         """Cookbook Example 4 uses is_tighter_than."""
-        from care_platform import ConstraintEnvelope
+        from pact import ConstraintEnvelope
 
         envelope = ConstraintEnvelope(
             config=ConstraintEnvelopeConfig(id="test"),
@@ -194,7 +194,7 @@ class TestConstraintEnvelopeInstantiation:
         assert callable(envelope.is_tighter_than)
 
     def test_content_hash_method_exists(self):
-        from care_platform import ConstraintEnvelope
+        from pact import ConstraintEnvelope
 
         envelope = ConstraintEnvelope(
             config=ConstraintEnvelopeConfig(id="test"),
@@ -205,7 +205,7 @@ class TestConstraintEnvelopeInstantiation:
 
     def test_evaluate_action_returns_envelope_evaluation(self):
         """Docs show accessing result.overall_result, result.is_allowed, result.dimensions."""
-        from care_platform import ConstraintEnvelope, EvaluationResult
+        from pact import ConstraintEnvelope, EvaluationResult
 
         envelope = ConstraintEnvelope(
             config=ConstraintEnvelopeConfig(
@@ -232,7 +232,7 @@ class TestGradientEngineInstantiation:
     """GradientEngine is referenced in getting-started (verification gradient concept)."""
 
     def test_instantiation(self):
-        from care_platform import GradientEngine
+        from pact import GradientEngine
 
         engine = GradientEngine(
             config=VerificationGradientConfig(
@@ -249,7 +249,7 @@ class TestGradientEngineInstantiation:
         assert engine is not None
 
     def test_classify_method_exists(self):
-        from care_platform import GradientEngine
+        from pact import GradientEngine
 
         engine = GradientEngine(
             config=VerificationGradientConfig(
@@ -259,8 +259,8 @@ class TestGradientEngineInstantiation:
         assert callable(engine.classify)
 
     def test_classify_returns_verification_result(self):
-        from care_platform import GradientEngine
-        from care_platform.trust.constraint.gradient import VerificationResult
+        from pact import GradientEngine
+        from pact.trust.constraint.gradient import VerificationResult
 
         engine = GradientEngine(
             config=VerificationGradientConfig(
@@ -287,14 +287,14 @@ class TestTrustPostureInstantiation:
     """TrustPosture is referenced in getting-started (trust posture concept)."""
 
     def test_instantiation(self):
-        from care_platform import TrustPosture
+        from pact import TrustPosture
 
         posture = TrustPosture(agent_id="test-agent")
         assert posture.agent_id == "test-agent"
         assert posture.current_level == TrustPostureLevel.SUPERVISED
 
     def test_has_upgrade_and_downgrade(self):
-        from care_platform import TrustPosture
+        from pact import TrustPosture
 
         posture = TrustPosture(agent_id="test-agent")
         assert callable(posture.can_upgrade)
@@ -302,7 +302,7 @@ class TestTrustPostureInstantiation:
         assert callable(posture.downgrade)
 
     def test_is_action_always_held(self):
-        from care_platform import TrustPosture
+        from pact import TrustPosture
 
         posture = TrustPosture(agent_id="test-agent")
         assert callable(posture.is_action_always_held)
@@ -315,7 +315,7 @@ class TestCapabilityAttestationInstantiation:
     """CapabilityAttestation is EATP Element 4, referenced in trust chain docs."""
 
     def test_instantiation(self):
-        from care_platform import CapabilityAttestation
+        from pact import CapabilityAttestation
 
         attestation = CapabilityAttestation(
             attestation_id="att-001",
@@ -331,7 +331,7 @@ class TestCapabilityAttestationInstantiation:
         assert not attestation.has_capability("delete")
 
     def test_has_key_methods(self):
-        from care_platform import CapabilityAttestation
+        from pact import CapabilityAttestation
 
         attestation = CapabilityAttestation(
             attestation_id="att-002",
@@ -346,7 +346,7 @@ class TestCapabilityAttestationInstantiation:
         assert callable(attestation.verify_consistency)
 
     def test_revocation(self):
-        from care_platform import CapabilityAttestation
+        from pact import CapabilityAttestation
 
         attestation = CapabilityAttestation(
             attestation_id="att-003",
@@ -366,8 +366,8 @@ class TestTrustScoringInstantiation:
     """Trust scoring is demonstrated in getting-started step 7 and cookbook."""
 
     def test_calculate_trust_score(self):
-        from care_platform import TrustScore, calculate_trust_score
-        from care_platform.trust.scoring import TrustFactors
+        from pact import TrustScore, calculate_trust_score
+        from pact.trust.scoring import TrustFactors
 
         factors = TrustFactors(
             has_genesis=True,
@@ -388,8 +388,8 @@ class TestTrustScoringInstantiation:
 
     def test_trust_score_has_factors_dict(self):
         """Docs show iterating score.factors.items()."""
-        from care_platform import calculate_trust_score
-        from care_platform.trust.scoring import TrustFactors
+        from pact import calculate_trust_score
+        from pact.trust.scoring import TrustFactors
 
         factors = TrustFactors(has_genesis=True)
         score = calculate_trust_score("agent", factors)
@@ -410,7 +410,7 @@ class TestAuditChainInstantiation:
     """AuditChain is demonstrated in getting-started step 8 and cookbook examples 5-6."""
 
     def test_instantiation(self):
-        from care_platform import AuditChain
+        from pact import AuditChain
 
         chain = AuditChain(chain_id="test-chain")
         assert chain.chain_id == "test-chain"
@@ -418,7 +418,7 @@ class TestAuditChainInstantiation:
         assert chain.latest is None
 
     def test_append_and_verify(self):
-        from care_platform import AuditChain
+        from pact import AuditChain
 
         chain = AuditChain(chain_id="test-chain")
         anchor = chain.append(
@@ -437,7 +437,7 @@ class TestAuditChainInstantiation:
 
     def test_chain_has_filter_methods(self):
         """Cookbook shows filter_by_agent and filter_by_level."""
-        from care_platform import AuditChain
+        from pact import AuditChain
 
         chain = AuditChain(chain_id="test")
         assert callable(chain.filter_by_agent)
@@ -445,7 +445,7 @@ class TestAuditChainInstantiation:
 
     def test_chain_has_export_method(self):
         """Cookbook Example 6 uses chain.export()."""
-        from care_platform import AuditChain
+        from pact import AuditChain
 
         chain = AuditChain(chain_id="test")
         chain.append(
@@ -461,7 +461,7 @@ class TestAuditChainInstantiation:
 
     def test_chain_integrity_detects_tampering(self):
         """Getting-started troubleshooting section references chain verification."""
-        from care_platform import AuditChain
+        from pact import AuditChain
 
         chain = AuditChain(chain_id="tamper-test")
         chain.append(
@@ -487,7 +487,7 @@ class TestAuditAnchorInstantiation:
     """AuditAnchor is referenced in cookbook Example 5 chain walk."""
 
     def test_instantiation(self):
-        from care_platform import AuditAnchor
+        from pact import AuditAnchor
 
         anchor = AuditAnchor(
             anchor_id="a-0",
@@ -500,7 +500,7 @@ class TestAuditAnchorInstantiation:
         assert not anchor.is_sealed
 
     def test_seal_and_verify(self):
-        from care_platform import AuditAnchor
+        from pact import AuditAnchor
 
         anchor = AuditAnchor(
             anchor_id="a-0",
@@ -523,7 +523,7 @@ class TestAgentDefinitionInstantiation:
     """AgentDefinition is referenced in architecture discussions."""
 
     def test_from_config(self):
-        from care_platform import AgentDefinition
+        from pact import AgentDefinition
 
         agent = AgentDefinition.from_config(
             AgentConfig(
@@ -539,7 +539,7 @@ class TestAgentDefinitionInstantiation:
         assert agent.posture.current_level == TrustPostureLevel.SUPERVISED
 
     def test_revoke(self):
-        from care_platform import AgentDefinition
+        from pact import AgentDefinition
 
         agent = AgentDefinition.from_config(
             AgentConfig(
@@ -558,7 +558,7 @@ class TestTeamDefinitionInstantiation:
     """TeamDefinition is referenced in architecture discussions."""
 
     def test_instantiation(self):
-        from care_platform import TeamDefinition
+        from pact import TeamDefinition
 
         team = TeamDefinition(
             config=TeamConfig(
@@ -573,7 +573,7 @@ class TestTeamDefinitionInstantiation:
         assert team.operational_agents == []
 
     def test_add_and_revoke_agent(self):
-        from care_platform import AgentDefinition, TeamDefinition
+        from pact import AgentDefinition, TeamDefinition
 
         team = TeamDefinition(
             config=TeamConfig(id="t", name="T", workspace="w"),
@@ -592,14 +592,14 @@ class TestApprovalQueueInstantiation:
     """ApprovalQueue is referenced in the approval workflow."""
 
     def test_instantiation(self):
-        from care_platform import ApprovalQueue
+        from pact import ApprovalQueue
 
         queue = ApprovalQueue()
         assert queue.queue_depth == 0
         assert queue.pending == []
 
     def test_submit_approve_reject(self):
-        from care_platform import ApprovalQueue
+        from pact import ApprovalQueue
 
         queue = ApprovalQueue()
         pa = queue.submit(
@@ -613,7 +613,7 @@ class TestApprovalQueueInstantiation:
         assert queue.queue_depth == 0
 
     def test_capacity_metrics(self):
-        from care_platform import ApprovalQueue
+        from pact import ApprovalQueue
 
         queue = ApprovalQueue()
         metrics = queue.get_capacity_metrics()
@@ -623,10 +623,10 @@ class TestApprovalQueueInstantiation:
 
 
 class TestSessionManagementInstantiation:
-    """SessionManager, PlatformSession, SessionCheckpoint are referenced in session docs."""
+    """SessionManager, PactSession, SessionCheckpoint are referenced in session docs."""
 
     def test_session_manager(self):
-        from care_platform import SessionManager
+        from pact import SessionManager
 
         mgr = SessionManager()
         assert mgr.current_session is None
@@ -636,7 +636,7 @@ class TestSessionManagementInstantiation:
         assert session.state.value == "active"
 
     def test_checkpoint(self):
-        from care_platform import SessionManager
+        from pact import SessionManager
 
         mgr = SessionManager()
         mgr.start_session()
@@ -650,7 +650,7 @@ class TestSessionManagementInstantiation:
         assert cp.pending_approvals == 3
 
     def test_end_session_and_briefing(self):
-        from care_platform import SessionManager
+        from pact import SessionManager
 
         mgr = SessionManager()
         mgr.start_session()
@@ -673,7 +673,7 @@ class TestWorkspaceInstantiation:
     """Workspace and WorkspaceRegistry are referenced in architecture docs."""
 
     def test_workspace(self):
-        from care_platform import Workspace, WorkspacePhase
+        from pact import Workspace, WorkspacePhase
 
         ws = Workspace(
             config=WorkspaceConfig(id="test-ws", path="workspaces/test/"),
@@ -682,7 +682,7 @@ class TestWorkspaceInstantiation:
         assert ws.current_phase == WorkspacePhase.ANALYZE
 
     def test_phase_transitions(self):
-        from care_platform import Workspace, WorkspacePhase
+        from pact import Workspace, WorkspacePhase
 
         ws = Workspace(
             config=WorkspaceConfig(id="test-ws", path="workspaces/test/"),
@@ -696,7 +696,7 @@ class TestWorkspaceInstantiation:
         assert ws.current_phase == WorkspacePhase.PLAN
 
     def test_workspace_registry(self):
-        from care_platform import Workspace, WorkspaceRegistry
+        from pact import Workspace, WorkspaceRegistry
 
         registry = WorkspaceRegistry()
         ws = Workspace(
@@ -739,7 +739,7 @@ class TestEnumValues:
 
     def test_evaluation_result_values(self):
         """Cookbook references these evaluation results."""
-        from care_platform import EvaluationResult
+        from pact import EvaluationResult
 
         assert EvaluationResult.ALLOWED.value == "allowed"
         assert EvaluationResult.DENIED.value == "denied"

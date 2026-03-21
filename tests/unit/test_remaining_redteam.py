@@ -8,22 +8,22 @@ import asyncio
 
 import pytest
 
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     ConstraintEnvelopeConfig,
     DataAccessConstraintConfig,
     FinancialConstraintConfig,
     TemporalConstraintConfig,
     VerificationLevel,
 )
-from care_platform.build.workspace.bridge import (
+from pact.build.workspace.bridge import (
     Bridge,
     BridgeManager,
     BridgePermission,
     BridgeStatus,
     BridgeType,
 )
-from care_platform.trust.audit.anchor import AuditAnchor, AuditChain
-from care_platform.trust.eatp_bridge import EATPBridge
+from pact.trust.audit.anchor import AuditAnchor, AuditChain
+from pact.trust.eatp_bridge import EATPBridge
 
 # ---------------------------------------------------------------------------
 # RT-11: No wildcard capabilities in delegated agents
@@ -35,7 +35,7 @@ class TestRT11NoWildcardDelegation:
 
     def test_delegate_method_does_not_inject_wildcard(self):
         """The delegate method should not add '*' to delegatee capabilities."""
-        from care_platform.build.config.schema import AgentConfig, GenesisConfig
+        from pact.build.config.schema import AgentConfig, GenesisConfig
 
         bridge = EATPBridge()
 
@@ -316,7 +316,7 @@ class TestRT26AttestationWiring:
 
     def test_delegation_creates_attestation(self):
         """Delegating to an agent should create a CapabilityAttestation."""
-        from care_platform.build.config.schema import AgentConfig, GenesisConfig
+        from pact.build.config.schema import AgentConfig, GenesisConfig
 
         bridge = EATPBridge()
 
@@ -353,7 +353,7 @@ class TestRT26AttestationWiring:
 
     def test_verify_capability_checks_attestation(self):
         """verify_capability should check the attestation registry."""
-        from care_platform.build.config.schema import AgentConfig, GenesisConfig
+        from pact.build.config.schema import AgentConfig, GenesisConfig
 
         bridge = EATPBridge()
 
@@ -388,7 +388,7 @@ class TestRT26AttestationWiring:
 
     def test_revoke_agent_also_revokes_attestation(self):
         """Revoking an agent should also revoke its attestation."""
-        from care_platform.build.config.schema import AgentConfig, GenesisConfig
+        from pact.build.config.schema import AgentConfig, GenesisConfig
 
         bridge = EATPBridge()
 

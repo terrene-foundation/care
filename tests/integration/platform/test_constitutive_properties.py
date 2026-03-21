@@ -3,7 +3,7 @@
 """Integration tests for the five Constrained Organization constitutive properties
 and three behavioral tests (Milestone 19, Todos 1901-1909).
 
-These tests PROVE that the CARE Platform satisfies the Constrained Organization
+These tests PROVE that the PACT satisfies the Constrained Organization
 thesis. They use real instances of all components — no mocking.
 
 Five Constitutive Properties:
@@ -25,7 +25,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     AgentConfig,
     CommunicationConstraintConfig,
     ConstraintEnvelopeConfig,
@@ -39,26 +39,26 @@ from care_platform.build.config.schema import (
     VerificationLevel,
     WorkspaceConfig,
 )
-from care_platform.build.org.builder import OrgBuilder
-from care_platform.build.workspace.models import (
+from pact.build.org.builder import OrgBuilder
+from pact.build.workspace.models import (
     Workspace,
     WorkspacePhase,
     WorkspaceState,
 )
-from care_platform.trust.audit.anchor import AuditChain
-from care_platform.trust.constraint.enforcer import ConstraintEnforcer
-from care_platform.trust.constraint.envelope import ConstraintEnvelope
-from care_platform.trust.constraint.gradient import GradientEngine
-from care_platform.trust.constraint.middleware import (
+from pact.trust.audit.anchor import AuditChain
+from pact.trust.constraint.enforcer import ConstraintEnforcer
+from pact.trust.constraint.envelope import ConstraintEnvelope
+from pact.trust.constraint.gradient import GradientEngine
+from pact.trust.constraint.middleware import (
     ActionOutcome,
     VerificationMiddleware,
 )
-from care_platform.trust.credentials import CredentialManager
-from care_platform.trust.delegation import ChainStatus, DelegationManager
-from care_platform.trust.eatp_bridge import EATPBridge
-from care_platform.trust.genesis import GenesisManager
-from care_platform.trust.integrity import TrustChainIntegrity
-from care_platform.trust.revocation import RevocationManager
+from pact.trust.credentials import CredentialManager
+from pact.trust.delegation import ChainStatus, DelegationManager
+from pact.trust.eatp_bridge import EATPBridge
+from pact.trust.genesis import GenesisManager
+from pact.trust.integrity import TrustChainIntegrity
+from pact.trust.revocation import RevocationManager
 
 # ===========================================================================
 # 1901: Test Harness — Shared Fixtures
@@ -463,7 +463,7 @@ class TestOrgHarnessSetup:
             .add_agent(_agent_alpha_config())
             .add_agent(_agent_beta_config())
             .add_team(
-                __import__("care_platform.build.config.schema", fromlist=["TeamConfig"]).TeamConfig(
+                __import__("pact.build.config.schema", fromlist=["TeamConfig"]).TeamConfig(
                     id="team-test",
                     name="Test Team",
                     workspace="ws-test",

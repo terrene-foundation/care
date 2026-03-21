@@ -1,9 +1,9 @@
 # Copyright 2026 Terrene Foundation
 # Licensed under the Apache License, Version 2.0
-"""Alembic environment configuration for CARE Platform migrations.
+"""Alembic environment configuration for PACT migrations.
 
 Reads the database URL from the DATABASE_URL environment variable
-(consistent with care_platform.config.env). Supports both offline
+(consistent with pact.config.env). Supports both offline
 (SQL script generation) and online (direct database connection) modes.
 """
 

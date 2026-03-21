@@ -13,15 +13,15 @@ from datetime import UTC, datetime, timedelta
 import httpx
 import pytest
 
-import care_platform.use.api.server as server_module
-from care_platform.build.config.env import EnvConfig
-from care_platform.build.config.schema import VerificationLevel
-from care_platform.trust.audit.anchor import AuditChain
-from care_platform.trust.store.cost_tracking import CostTracker
-from care_platform.use.api.endpoints import PlatformAPI
-from care_platform.use.api.server import create_app
-from care_platform.use.execution.approval import ApprovalQueue
-from care_platform.use.execution.registry import AgentRegistry
+import pact.use.api.server as server_module
+from pact.build.config.env import EnvConfig
+from pact.build.config.schema import VerificationLevel
+from pact.trust.audit.anchor import AuditChain
+from pact.trust.store.cost_tracking import CostTracker
+from pact.use.api.endpoints import PactAPI
+from pact.use.api.server import create_app
+from pact.use.execution.approval import ApprovalQueue
+from pact.use.execution.registry import AgentRegistry
 
 
 @pytest.fixture(autouse=True)
@@ -89,9 +89,9 @@ def audit_chain() -> AuditChain:
 
 
 @pytest.fixture()
-def platform_api(audit_chain: AuditChain) -> PlatformAPI:
-    """PlatformAPI wired with an audit chain for trends."""
-    return PlatformAPI(
+def platform_api(audit_chain: AuditChain) -> PactAPI:
+    """PactAPI wired with an audit chain for trends."""
+    return PactAPI(
         registry=AgentRegistry(),
         approval_queue=ApprovalQueue(),
         cost_tracker=CostTracker(),
@@ -101,9 +101,9 @@ def platform_api(audit_chain: AuditChain) -> PlatformAPI:
 
 
 @pytest.fixture()
-def app(platform_api: PlatformAPI) -> object:
-    """FastAPI app with dev config and wired PlatformAPI."""
-    cfg = EnvConfig(care_dev_mode=True, care_api_token="")
+def app(platform_api: PactAPI) -> object:
+    """FastAPI app with dev config and wired PactAPI."""
+    cfg = EnvConfig(pact_dev_mode=True, pact_api_token="")
     return create_app(platform_api=platform_api, env_config=cfg)
 
 
@@ -188,13 +188,13 @@ class TestDashboardTrendsNoAuditChain:
     @pytest.mark.asyncio
     async def test_trends_without_audit_chain_returns_zeros(self):
         """When no audit chain is wired, return 7 days of zeros."""
-        api = PlatformAPI(
+        api = PactAPI(
             registry=AgentRegistry(),
             approval_queue=ApprovalQueue(),
             cost_tracker=CostTracker(),
             verification_stats={},
         )
-        cfg = EnvConfig(care_dev_mode=True, care_api_token="")
+        cfg = EnvConfig(pact_dev_mode=True, pact_api_token="")
         application = create_app(platform_api=api, env_config=cfg)
 
         transport = httpx.ASGITransport(app=application)

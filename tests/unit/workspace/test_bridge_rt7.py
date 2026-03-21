@@ -10,7 +10,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from care_platform.build.workspace.bridge import (
+from pact.build.workspace.bridge import (
     BridgeManager,
     BridgePermission,
     BridgeStatus,

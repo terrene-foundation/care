@@ -1,12 +1,12 @@
 # Copyright 2026 Terrene Foundation
 # Licensed under the Apache License, Version 2.0
 #
-# CARE Platform Mobile Dashboard
+# PACT Mobile Dashboard
 # Governance dashboard for trust chains, agents, envelopes, and approvals.
 
-name: care_platform_mobile
+name: pact_mobile
 description: >
-  CARE Platform mobile and desktop dashboard. Provides governance oversight
+  PACT mobile and desktop dashboard. Provides governance oversight
   for EATP trust chains, constraint envelopes, agent management, and
   approval workflows across phone, tablet, and desktop form factors.
 version: 0.1.0

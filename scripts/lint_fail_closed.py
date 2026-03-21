@@ -4,7 +4,7 @@
 """Lint rule: fail-closed compliance for trust and constraint layers.
 
 Scans trust/constraint/audit/persistence code for patterns that could
-silently allow actions when an error occurs. The CARE Platform's trust
+silently allow actions when an error occurs. The PACT's trust
 layer must fail closed — any error must result in denial, not approval.
 
 Usage:
@@ -24,10 +24,10 @@ from pathlib import Path
 
 # Directories to scan
 SCAN_DIRS = [
-    "src/care_platform/trust",
-    "src/care_platform/trust/constraint",
-    "src/care_platform/trust/audit",
-    "src/care_platform/trust/store",
+    "src/pact/trust",
+    "src/pact/trust/constraint",
+    "src/pact/trust/audit",
+    "src/pact/trust/store",
 ]
 
 # Files exempt from fail-closed requirement (intentional fail-open)

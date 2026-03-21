@@ -1,6 +1,6 @@
-# CARE Platform API Reference
+# PACT API Reference
 
-This document covers the public interfaces of the CARE Platform. For architecture context, see [architecture.md](architecture.md).
+This document covers the public interfaces of the PACT. For architecture context, see [architecture.md](architecture.md).
 
 ---
 
@@ -22,14 +22,14 @@ This document covers the public interfaces of the CARE Platform. For architectur
 
 ## Configuration Models
 
-**Module**: `care_platform.build.config.schema`
+**Module**: `pact.build.config.schema`
 
 ### PlatformConfig
 
 Top-level configuration for the entire platform. Contains all organization structure: genesis, teams, agents, constraint envelopes, and workspaces.
 
 ```python
-from care_platform.build.config.schema import PlatformConfig, GenesisConfig
+from pact.build.config.schema import PlatformConfig, GenesisConfig
 
 config = PlatformConfig(
     name="My Organization",
@@ -57,7 +57,7 @@ workspace = config.get_workspace("workspace-id")  # -> WorkspaceConfig | None
 Defines the five constraint dimensions governing an agent.
 
 ```python
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     ConstraintEnvelopeConfig,
     FinancialConstraintConfig,
     OperationalConstraintConfig,
@@ -110,7 +110,7 @@ envelope = ConstraintEnvelopeConfig(
 ### TrustPostureLevel
 
 ```python
-from care_platform.build.config.schema import TrustPostureLevel
+from pact.build.config.schema import TrustPostureLevel
 
 TrustPostureLevel.PSEUDO_AGENT        # No autonomous action
 TrustPostureLevel.SUPERVISED           # Every action requires approval (default)
@@ -122,7 +122,7 @@ TrustPostureLevel.DELEGATED            # Autonomous within constraints
 ### VerificationLevel
 
 ```python
-from care_platform.build.config.schema import VerificationLevel
+from pact.build.config.schema import VerificationLevel
 
 VerificationLevel.AUTO_APPROVED  # Execute and log
 VerificationLevel.FLAGGED        # Execute but highlight for review
@@ -133,7 +133,7 @@ VerificationLevel.BLOCKED        # Reject outright
 ### AgentConfig
 
 ```python
-from care_platform.build.config.schema import AgentConfig
+from pact.build.config.schema import AgentConfig
 
 agent = AgentConfig(
     id="analyst-01",
@@ -149,7 +149,7 @@ agent = AgentConfig(
 ### VerificationGradientConfig
 
 ```python
-from care_platform.build.config.schema import VerificationGradientConfig, GradientRuleConfig
+from pact.build.config.schema import VerificationGradientConfig, GradientRuleConfig
 
 gradient = VerificationGradientConfig(
     rules=[
@@ -177,14 +177,14 @@ gradient = VerificationGradientConfig(
 
 ## EATPBridge
 
-**Module**: `care_platform.trust.eatp_bridge`
+**Module**: `pact.trust.eatp_bridge`
 
-The central bridge between CARE Platform configuration models and the EATP SDK. Manages the full trust lifecycle: ESTABLISH, DELEGATE, VERIFY, AUDIT.
+The central bridge between PACT configuration models and the EATP SDK. Manages the full trust lifecycle: ESTABLISH, DELEGATE, VERIFY, AUDIT.
 
 ### Initialization
 
 ```python
-from care_platform.trust.eatp_bridge import EATPBridge
+from pact.trust.eatp_bridge import EATPBridge
 
 bridge = EATPBridge()           # Uses InMemoryTrustStore by default
 await bridge.initialize()       # Must be called before any operations
@@ -195,7 +195,7 @@ await bridge.initialize()       # Must be called before any operations
 Create the root of trust for an organization.
 
 ```python
-from care_platform.build.config.schema import GenesisConfig
+from pact.build.config.schema import GenesisConfig
 
 genesis_config = GenesisConfig(
     authority="my-org.example",
@@ -281,12 +281,12 @@ bridge.get_delegation_ancestors("analyst-01")  # -> list[str]
 
 ## GenesisManager
 
-**Module**: `care_platform.trust.genesis`
+**Module**: `pact.trust.genesis`
 
 Higher-level operations around genesis records: creation, validation, and renewal.
 
 ```python
-from care_platform.trust.genesis import GenesisManager
+from pact.trust.genesis import GenesisManager
 
 genesis_mgr = GenesisManager(bridge)
 ```
@@ -323,12 +323,12 @@ new_genesis = await genesis_mgr.renew_genesis(
 
 ## DelegationManager
 
-**Module**: `care_platform.trust.delegation`
+**Module**: `pact.trust.delegation`
 
 Manages delegation chains with monotonic tightening validation and chain walking.
 
 ```python
-from care_platform.trust.delegation import DelegationManager
+from pact.trust.delegation import DelegationManager
 
 delegation_mgr = DelegationManager(bridge)
 ```
@@ -369,7 +369,7 @@ Tightening rules:
 Walk the trust chain from an agent back to genesis.
 
 ```python
-from care_platform.trust.delegation import ChainWalkResult, ChainStatus
+from pact.trust.delegation import ChainWalkResult, ChainStatus
 
 result = await delegation_mgr.walk_chain("analyst-01")
 # Returns: ChainWalkResult
@@ -383,14 +383,14 @@ result = await delegation_mgr.walk_chain("analyst-01")
 
 ## Constraint Envelopes
 
-**Module**: `care_platform.trust.constraint.envelope`
+**Module**: `pact.trust.constraint.envelope`
 
 ### ConstraintEnvelope
 
 Runtime wrapper around `ConstraintEnvelopeConfig` with evaluation logic, versioning, and expiry.
 
 ```python
-from care_platform.trust.constraint.envelope import ConstraintEnvelope
+from pact.trust.constraint.envelope import ConstraintEnvelope
 
 envelope = ConstraintEnvelope(config=envelope_config)
 # Default expiry: 90 days from creation
@@ -401,7 +401,7 @@ envelope = ConstraintEnvelope(config=envelope_config)
 Evaluate an agent action against all five constraint dimensions.
 
 ```python
-from care_platform.trust.constraint.envelope import EvaluationResult
+from pact.trust.constraint.envelope import EvaluationResult
 
 evaluation = envelope.evaluate_action(
     action="draft",
@@ -445,14 +445,14 @@ envelope.content_hash()    # -> str (SHA-256 of envelope content)
 
 ## Verification Gradient
 
-**Module**: `care_platform.trust.constraint.gradient`
+**Module**: `pact.trust.constraint.gradient`
 
 ### GradientEngine
 
 Classifies agent actions into verification levels using pattern matching and envelope evaluation.
 
 ```python
-from care_platform.trust.constraint.gradient import GradientEngine, VerificationThoroughness
+from pact.trust.constraint.gradient import GradientEngine, VerificationThoroughness
 
 engine = GradientEngine(gradient_config)
 
@@ -484,14 +484,14 @@ VerificationThoroughness.FULL       # ~50ms, pattern + envelope + chain verifica
 
 ## Trust Postures
 
-**Module**: `care_platform.trust.posture`
+**Module**: `pact.trust.posture`
 
 ### TrustPosture
 
 Manages the evolutionary trust lifecycle for an agent.
 
 ```python
-from care_platform.trust.posture import TrustPosture, PostureEvidence
+from pact.trust.posture import TrustPosture, PostureEvidence
 
 posture = TrustPosture(
     agent_id="analyst-01",
@@ -554,12 +554,12 @@ Never-delegated actions: `content_strategy`, `novel_outreach`, `crisis_response`
 
 ## Trust Scoring
 
-**Module**: `care_platform.trust.scoring`
+**Module**: `pact.trust.scoring`
 
 ### calculate_trust_score
 
 ```python
-from care_platform.trust.scoring import TrustFactors, calculate_trust_score
+from pact.trust.scoring import TrustFactors, calculate_trust_score
 
 factors = TrustFactors(
     has_genesis=True,
@@ -594,14 +594,14 @@ score = calculate_trust_score("analyst-01", factors)
 
 ## Capability Attestation
 
-**Module**: `care_platform.trust.attestation`
+**Module**: `pact.trust.attestation`
 
 ### CapabilityAttestation
 
 EATP Element 4 -- a signed declaration of what an agent is authorized to do.
 
 ```python
-from care_platform.trust.attestation import CapabilityAttestation
+from pact.trust.attestation import CapabilityAttestation
 
 attestation = CapabilityAttestation(
     attestation_id="att-001",
@@ -638,15 +638,15 @@ is_consistent, drift = attestation.verify_consistency(
 
 ## Audit Chain
 
-**Module**: `care_platform.trust.audit.anchor`
+**Module**: `pact.trust.audit.anchor`
 
 ### AuditAnchor
 
 A single tamper-evident record. Each anchor contains a SHA-256 hash of its content plus the hash of the previous anchor, forming an integrity chain.
 
 ```python
-from care_platform.trust.audit.anchor import AuditAnchor, AuditChain
-from care_platform.build.config.schema import VerificationLevel
+from pact.trust.audit.anchor import AuditAnchor, AuditChain
+from pact.build.config.schema import VerificationLevel
 
 anchor = AuditAnchor(
     anchor_id="chain-001-0",
@@ -701,14 +701,14 @@ records = chain.export(agent_id="analyst-01", since=some_datetime)
 
 ## Storage
 
-**Module**: `care_platform.trust.store`
+**Module**: `pact.trust.store`
 
 ### TrustStore Protocol
 
 Abstract interface for trust object persistence. Implement this protocol to add custom storage backends.
 
 ```python
-from care_platform.trust.store import TrustStore
+from pact.trust.store import TrustStore
 
 class MyStore:
     """Custom storage implementation."""
@@ -734,7 +734,7 @@ class MyStore:
 ### Built-in Implementations
 
 ```python
-from care_platform.trust.store import MemoryStore, FilesystemStore
+from pact.trust.store import MemoryStore, FilesystemStore
 
 # In-memory (development/testing)
 store = MemoryStore()

@@ -1,6 +1,6 @@
 # Copyright 2026 Terrene Foundation
 # Licensed under the Apache License, Version 2.0
-"""Edge case tests for CARE Platform core models.
+"""Edge case tests for PACT core models.
 
 Covers boundary conditions, minimal/empty configurations, maximum constraints,
 expired attestations, revoked agents, and other adversarial inputs.
@@ -10,7 +10,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     CommunicationConstraintConfig,
     ConstraintEnvelopeConfig,
     DataAccessConstraintConfig,
@@ -22,18 +22,18 @@ from care_platform.build.config.schema import (
     VerificationGradientConfig,
     VerificationLevel,
 )
-from care_platform.trust.attestation import CapabilityAttestation
-from care_platform.trust.audit.anchor import AuditChain
-from care_platform.trust.constraint.envelope import (
+from pact.trust.attestation import CapabilityAttestation
+from pact.trust.audit.anchor import AuditChain
+from pact.trust.constraint.envelope import (
     ConstraintEnvelope,
     EnvelopeEvaluation,
     EvaluationResult,
 )
-from care_platform.trust.constraint.gradient import (
+from pact.trust.constraint.gradient import (
     GradientEngine,
     VerificationThoroughness,
 )
-from care_platform.trust.posture import (
+from pact.trust.posture import (
     NEVER_DELEGATED_ACTIONS,
     PostureEvidence,
     TrustPosture,

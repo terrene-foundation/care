@@ -11,19 +11,19 @@ import threading
 
 import pytest
 
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     TrustPostureLevel,
     VerificationGradientConfig,
     VerificationLevel,
 )
-from care_platform.trust.audit.anchor import AuditChain
-from care_platform.trust.constraint.gradient import GradientEngine
-from care_platform.trust.revocation import RevocationManager
-from care_platform.trust.store.store import MemoryStore
-from care_platform.use.execution.approval import ApprovalQueue
-from care_platform.use.execution.approver_auth import AuthenticatedApprovalQueue
-from care_platform.use.execution.registry import AgentRegistry, AgentStatus
-from care_platform.use.execution.runtime import (
+from pact.trust.audit.anchor import AuditChain
+from pact.trust.constraint.gradient import GradientEngine
+from pact.trust.revocation import RevocationManager
+from pact.trust.store.store import MemoryStore
+from pact.use.execution.approval import ApprovalQueue
+from pact.use.execution.approver_auth import AuthenticatedApprovalQueue
+from pact.use.execution.registry import AgentRegistry, AgentStatus
+from pact.use.execution.runtime import (
     ExecutionRuntime,
     Task,
     TaskExecutor,
@@ -549,7 +549,7 @@ class TestPostureCheck:
 
     def test_pseudo_agent_blocked(self):
         """PSEUDO_AGENT posture blocks execution."""
-        from care_platform.trust.posture import TrustPosture
+        from pact.trust.posture import TrustPosture
 
         posture_mgr: dict[str, TrustPosture] = {
             "agent-1": TrustPosture(
@@ -569,7 +569,7 @@ class TestPostureCheck:
 
     def test_supervised_agent_escalated_to_held(self):
         """SUPERVISED posture escalates AUTO_APPROVED to HELD (RT5-07)."""
-        from care_platform.trust.posture import TrustPosture
+        from pact.trust.posture import TrustPosture
 
         posture_mgr: dict[str, TrustPosture] = {
             "agent-1": TrustPosture(
@@ -750,7 +750,7 @@ class TestApprovalQueueTyping:
 
     def test_accepts_authenticated_approval_queue(self):
         """AuthenticatedApprovalQueue is accepted via the approval_queue param."""
-        from care_platform.use.execution.approver_auth import ApproverRegistry
+        from pact.use.execution.approver_auth import ApproverRegistry
 
         registry = AgentRegistry()
         registry.register(agent_id="a1", name="A1", role="worker", team_id="t1")

@@ -12,7 +12,7 @@ temporal/data path consistency, multi-team validation, and severity levels.
 
 import pytest
 
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     AgentConfig,
     CommunicationConstraintConfig,
     ConstraintEnvelopeConfig,
@@ -21,14 +21,14 @@ from care_platform.build.config.schema import (
     GenesisConfig,
     GradientRuleConfig,
     OperationalConstraintConfig,
-    PlatformConfig,
+    PactConfig,
     TeamConfig,
     TemporalConstraintConfig,
     VerificationGradientConfig,
     VerificationLevel,
     WorkspaceConfig,
 )
-from care_platform.build.org.builder import (
+from pact.build.org.builder import (
     OrgBuilder,
     OrgDefinition,
     OrgTemplate,
@@ -128,9 +128,9 @@ class TestOrgValidationMissingEnvelope:
         )
         valid, errors = org.validate_org()
         assert valid is False
-        assert any("nonexistent-envelope" in e for e in errors), (
-            f"Expected error about 'nonexistent-envelope', got: {errors}"
-        )
+        assert any(
+            "nonexistent-envelope" in e for e in errors
+        ), f"Expected error about 'nonexistent-envelope', got: {errors}"
 
     def test_validation_catches_missing_workspace_reference(self):
         """A team referencing a non-existent workspace must fail validation."""
@@ -142,9 +142,9 @@ class TestOrgValidationMissingEnvelope:
         )
         valid, errors = org.validate_org()
         assert valid is False
-        assert any("nonexistent-ws" in e for e in errors), (
-            f"Expected error about 'nonexistent-ws', got: {errors}"
-        )
+        assert any(
+            "nonexistent-ws" in e for e in errors
+        ), f"Expected error about 'nonexistent-ws', got: {errors}"
 
 
 class TestOrgValidationDuplicateIDs:
@@ -207,8 +207,8 @@ class TestOrgFromConfigRoundTrip:
     """Test 704: from_config round-trips correctly."""
 
     def test_from_config_round_trips(self):
-        """Creating an OrgDefinition from PlatformConfig should preserve all data."""
-        platform = PlatformConfig(
+        """Creating an OrgDefinition from PactConfig should preserve all data."""
+        platform = PactConfig(
             name="Round Trip Org",
             genesis=GenesisConfig(
                 authority="test.org",

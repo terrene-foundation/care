@@ -8,7 +8,7 @@ the behavioral change introduced by the fix.
 
 import pytest
 
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     ConstraintEnvelopeConfig,
     FinancialConstraintConfig,
     GradientRuleConfig,
@@ -17,21 +17,21 @@ from care_platform.build.config.schema import (
     VerificationGradientConfig,
     VerificationLevel,
 )
-from care_platform.trust.audit.anchor import AuditChain
-from care_platform.trust.constraint.envelope import ConstraintEnvelope
-from care_platform.trust.constraint.gradient import GradientEngine
-from care_platform.trust.constraint.middleware import ActionOutcome, VerificationMiddleware
-from care_platform.trust.constraint.verification_level import (
+from pact.trust.audit.anchor import AuditChain
+from pact.trust.constraint.envelope import ConstraintEnvelope
+from pact.trust.constraint.gradient import GradientEngine
+from pact.trust.constraint.middleware import ActionOutcome, VerificationMiddleware
+from pact.trust.constraint.verification_level import (
     VerificationThoroughness,
     select_verification_level,
 )
-from care_platform.trust.posture import (
+from pact.trust.posture import (
     UPGRADE_REQUIREMENTS,
     PostureEvidence,
     TrustPosture,
 )
-from care_platform.trust.revocation import RevocationManager
-from care_platform.trust.shadow_enforcer import ShadowEnforcer
+from pact.trust.revocation import RevocationManager
+from pact.trust.shadow_enforcer import ShadowEnforcer
 
 # ---------------------------------------------------------------------------
 # RT-14: Wire cascade revocation into EATP bridge
@@ -307,7 +307,7 @@ class TestRT31VerificationThoroughness:
 
     def test_gradient_uses_same_thoroughness(self):
         """GradientEngine must use the same VerificationThoroughness class."""
-        from care_platform.trust.constraint.gradient import (
+        from pact.trust.constraint.gradient import (
             VerificationThoroughness as GradientVT,
         )
 

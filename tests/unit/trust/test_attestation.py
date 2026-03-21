@@ -2,7 +2,7 @@
 # Licensed under the Apache License, Version 2.0
 """Tests for capability attestation model."""
 
-from care_platform.trust.attestation import CapabilityAttestation
+from pact.trust.attestation import CapabilityAttestation
 
 
 class TestCapabilityAttestation:

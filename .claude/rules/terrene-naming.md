@@ -31,8 +31,8 @@ See `rules/independence.md` for the full no-commercial-coupling policy.
 
 ### License Accuracy
 
-- Specifications (CARE, EATP, CO, CDI): **CC BY 4.0** (NOT CC-BY-SA — ShareAlike would prevent proprietary implementations)
-- Open source code (Kailash Python, EATP SDK, CO Toolkit, CARE Platform): **Apache 2.0**
+- Specifications (CARE, PACT, EATP, CO, CDI): **CC BY 4.0** (NOT CC-BY-SA — ShareAlike would prevent proprietary implementations)
+- Open source code (Kailash Python, EATP SDK, CO Toolkit, PACT reference implementation): **Apache 2.0**
 - BSL 1.1 is **NOT** open source — use "source-available" or "open-core"
 
 ### Canonical Terminology
@@ -41,16 +41,24 @@ See `rules/independence.md` for the full no-commercial-coupling policy.
 - Constraint dimensions: **Financial, Operational, Temporal, Data Access, Communication** (these exact five names — no synonyms, no reordering)
 - CO = Cognitive Orchestration (domain-agnostic base methodology)
 - COC = Cognitive Orchestration for Codegen (CO applied to software development — the "C" already means "for Codegen")
-- CO sits in the trinity: CARE (philosophy) + EATP (protocol) + CO (methodology)
+- PACT = Principled Architecture for Constrained Trust (organizational architecture standard — D/T/R grammar, operating envelopes, knowledge clearance, verification gradient)
+- The Quartet: CARE (philosophy) + PACT (architecture) + EATP (protocol) + CO (methodology)
 
-### CARE Platform Terminology
+### PACT Terminology
 
-**Platform identity:**
+**Standard vs Implementation:**
 
-- **CARE Platform** = governed operational model (configuration + methodology + constraint templates), NOT a generic agent orchestrator
-- "CARE specification" = the CARE standard itself (CC BY 4.0) — the philosophy and requirements
-- "CARE Platform" = the Foundation's reference implementation of that specification (Apache 2.0) — code, configuration, constraint templates
-- Never conflate the two: the specification defines what; the platform implements how
+- "PACT specification" = the PACT standard itself (CC BY 4.0) — the architectural patterns and requirements
+- "PACT" (this repo) = the Foundation's reference implementation of the PACT specification (Apache 2.0) — code, configuration, constraint templates
+- Never conflate the two: the specification defines what; the implementation delivers how
+
+**PACT-specific terms:**
+
+- **D/T/R Grammar** — Department/Team/Role accountability grammar with core invariant: every D or T must be immediately followed by exactly one R
+- **Positional Address** — globally unique D/T/R path encoding both containment and accountability (e.g., `D1-R1-D1-R1-T1-R1`)
+- **Operating Envelope** — three layers: Role Envelope (standing), Task Envelope (ephemeral), Effective Envelope (computed intersection)
+- **Monotonic Tightening** — child envelopes can only be equal to or more restrictive than parent envelopes
+- **Knowledge Clearance** — five levels (OFFICIAL, SENSITIVE, CONFIDENTIAL, SECRET, TOP_SECRET) independent of authority/seniority
 
 **Verification gradient levels** (exact names, uppercase):
 

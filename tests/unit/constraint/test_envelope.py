@@ -4,7 +4,7 @@
 
 from datetime import UTC, datetime
 
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     CommunicationConstraintConfig,
     ConstraintEnvelopeConfig,
     DataAccessConstraintConfig,
@@ -12,7 +12,7 @@ from care_platform.build.config.schema import (
     OperationalConstraintConfig,
     TemporalConstraintConfig,
 )
-from care_platform.trust.constraint.envelope import (
+from pact.trust.constraint.envelope import (
     ConstraintEnvelope,
     EvaluationResult,
 )

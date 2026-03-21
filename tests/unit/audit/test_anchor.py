@@ -2,8 +2,8 @@
 # Licensed under the Apache License, Version 2.0
 """Tests for audit anchor chain."""
 
-from care_platform.build.config.schema import VerificationLevel
-from care_platform.trust.audit.anchor import AuditAnchor, AuditChain
+from pact.build.config.schema import VerificationLevel
+from pact.trust.audit.anchor import AuditAnchor, AuditChain
 
 
 class TestAuditAnchor:

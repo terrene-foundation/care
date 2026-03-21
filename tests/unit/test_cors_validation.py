@@ -13,9 +13,9 @@ import logging
 
 import pytest
 
-import care_platform.use.api.server as server_module
-from care_platform.build.config.env import EnvConfig
-from care_platform.use.api.server import create_app
+import pact.use.api.server as server_module
+from pact.build.config.env import EnvConfig
+from pact.use.api.server import create_app
 
 
 @pytest.fixture(autouse=True)
@@ -33,9 +33,9 @@ class TestCorsValidationProduction:
     def test_production_rejects_wildcard_origin(self):
         """In production mode, wildcard '*' must be rejected."""
         cfg = EnvConfig(
-            care_dev_mode=False,
-            care_api_token="test-token-12345",
-            care_cors_origins=["*"],
+            pact_dev_mode=False,
+            pact_api_token="test-token-12345",
+            pact_cors_origins=["*"],
         )
         app = create_app(env_config=cfg)
         # The app should have been created with empty CORS origins
@@ -51,9 +51,9 @@ class TestCorsValidationProduction:
     def test_production_rejects_http_origins(self):
         """In production mode, HTTP (non-HTTPS) origins must be rejected."""
         cfg = EnvConfig(
-            care_dev_mode=False,
-            care_api_token="test-token-12345",
-            care_cors_origins=["http://example.com"],
+            pact_dev_mode=False,
+            pact_api_token="test-token-12345",
+            pact_cors_origins=["http://example.com"],
         )
         app = create_app(env_config=cfg)
         cors_middleware = None
@@ -67,9 +67,9 @@ class TestCorsValidationProduction:
     def test_production_allows_https_origins(self):
         """In production mode, HTTPS origins should be allowed."""
         cfg = EnvConfig(
-            care_dev_mode=False,
-            care_api_token="test-token-12345",
-            care_cors_origins=["https://app.example.com"],
+            pact_dev_mode=False,
+            pact_api_token="test-token-12345",
+            pact_cors_origins=["https://app.example.com"],
         )
         app = create_app(env_config=cfg)
         cors_middleware = None
@@ -83,9 +83,9 @@ class TestCorsValidationProduction:
     def test_production_filters_mixed_origins(self):
         """In production, only HTTPS origins survive; HTTP ones are dropped."""
         cfg = EnvConfig(
-            care_dev_mode=False,
-            care_api_token="test-token-12345",
-            care_cors_origins=[
+            pact_dev_mode=False,
+            pact_api_token="test-token-12345",
+            pact_cors_origins=[
                 "https://good.example.com",
                 "http://bad.example.com",
                 "https://also-good.example.com",
@@ -106,20 +106,20 @@ class TestCorsValidationProduction:
     def test_production_logs_warning_for_invalid_origins(self, caplog):
         """Production mode should log a warning when invalid origins are found."""
         cfg = EnvConfig(
-            care_dev_mode=False,
-            care_api_token="test-token-12345",
-            care_cors_origins=["http://insecure.com", "*"],
+            pact_dev_mode=False,
+            pact_api_token="test-token-12345",
+            pact_cors_origins=["http://insecure.com", "*"],
         )
-        with caplog.at_level(logging.WARNING, logger="care_platform.use.api.server"):
+        with caplog.at_level(logging.WARNING, logger="pact.use.api.server"):
             create_app(env_config=cfg)
         assert any("CORS" in r.message for r in caplog.records)
 
     def test_dev_mode_allows_http_origins(self):
         """In dev mode (is_production=False), HTTP origins should be accepted."""
         cfg = EnvConfig(
-            care_dev_mode=True,
-            care_api_token="",
-            care_cors_origins=["http://localhost:3000"],
+            pact_dev_mode=True,
+            pact_api_token="",
+            pact_cors_origins=["http://localhost:3000"],
         )
         app = create_app(env_config=cfg)
         cors_middleware = None
@@ -133,9 +133,9 @@ class TestCorsValidationProduction:
     def test_dev_mode_allows_wildcard(self):
         """In dev mode, wildcard should be accepted without modification."""
         cfg = EnvConfig(
-            care_dev_mode=True,
-            care_api_token="",
-            care_cors_origins=["*"],
+            pact_dev_mode=True,
+            pact_api_token="",
+            pact_cors_origins=["*"],
         )
         app = create_app(env_config=cfg)
         cors_middleware = None

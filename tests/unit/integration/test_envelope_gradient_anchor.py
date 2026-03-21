@@ -12,7 +12,7 @@ Tests the full EATP trust chain flow:
 
 from datetime import UTC, datetime
 
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     CommunicationConstraintConfig,
     ConstraintEnvelopeConfig,
     DataAccessConstraintConfig,
@@ -23,13 +23,13 @@ from care_platform.build.config.schema import (
     VerificationGradientConfig,
     VerificationLevel,
 )
-from care_platform.trust.attestation import CapabilityAttestation
-from care_platform.trust.audit.anchor import AuditChain
-from care_platform.trust.constraint.envelope import (
+from pact.trust.attestation import CapabilityAttestation
+from pact.trust.audit.anchor import AuditChain
+from pact.trust.constraint.envelope import (
     ConstraintEnvelope,
     EvaluationResult,
 )
-from care_platform.trust.constraint.gradient import (
+from pact.trust.constraint.gradient import (
     GradientEngine,
     VerificationThoroughness,
 )

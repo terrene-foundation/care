@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Copyright 2026 Terrene Foundation
 # Licensed under the Apache License, Version 2.0
-"""Demo seed script — populates realistic data for all CARE Platform dashboard pages.
+"""Demo seed script — populates realistic data for all PACT dashboard pages.
 
 Seeds 4 teams, 14 agents, constraint envelopes, 250+ audit anchors, held actions,
 cross-functional bridges, posture history, cost tracking data, and shadow enforcer
@@ -11,7 +11,7 @@ Usage:
     python scripts/seed_demo.py           # Seed data (idempotent)
     python scripts/seed_demo.py --reset   # Clear existing data, then seed
 
-The script uses CARE Platform Python SDK internals directly (no HTTP calls).
+The script uses PACT Python SDK internals directly (no HTTP calls).
 """
 
 from __future__ import annotations
@@ -25,9 +25,9 @@ from typing import TYPE_CHECKING
 from uuid import uuid4
 
 # ---------------------------------------------------------------------------
-# CARE Platform imports
+# PACT imports
 # ---------------------------------------------------------------------------
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     CommunicationConstraintConfig,
     ConstraintEnvelopeConfig,
     DataAccessConstraintConfig,
@@ -38,17 +38,17 @@ from care_platform.build.config.schema import (
     VerificationLevel,
     WorkspaceConfig,
 )
-from care_platform.trust.audit.anchor import AuditAnchor, AuditChain
-from care_platform.use.execution.approval import ApprovalQueue, UrgencyLevel
-from care_platform.use.execution.registry import AgentRegistry
-from care_platform.trust.store.cost_tracking import ApiCostRecord, CostTracker
-from care_platform.trust.store.posture_history import (
+from pact.trust.audit.anchor import AuditAnchor, AuditChain
+from pact.use.execution.approval import ApprovalQueue, UrgencyLevel
+from pact.use.execution.registry import AgentRegistry
+from pact.trust.store.cost_tracking import ApiCostRecord, CostTracker
+from pact.trust.store.posture_history import (
     PostureChangeRecord,
     PostureChangeTrigger,
     PostureHistoryStore,
 )
-from care_platform.build.workspace.bridge import BridgeManager, BridgePermission
-from care_platform.build.workspace.models import (
+from pact.build.workspace.bridge import BridgeManager, BridgePermission
+from pact.build.workspace.models import (
     Workspace,
     WorkspacePhase,
     WorkspaceRegistry,
@@ -56,7 +56,7 @@ from care_platform.build.workspace.models import (
 )
 
 if TYPE_CHECKING:
-    from care_platform.trust.shadow_enforcer import ShadowEnforcer
+    from pact.trust.shadow_enforcer import ShadowEnforcer
 
 logging.basicConfig(
     level=logging.WARNING,
@@ -95,7 +95,7 @@ TEAMS = {
 }
 
 AGENTS = [
-    # dm-team (canonical agents from care_platform.build.verticals.dm_team)
+    # dm-team (canonical agents from pact.build.verticals.dm_team)
     {
         "agent_id": "dm-team-lead",
         "name": "DM Team Lead",
@@ -295,7 +295,7 @@ AGENTS = [
 def _build_envelopes() -> dict[str, ConstraintEnvelopeConfig]:
     """Build constraint envelopes keyed by agent_id."""
     return {
-        # --- dm-team (canonical envelopes from care_platform.build.verticals.dm_team) ---
+        # --- dm-team (canonical envelopes from pact.build.verticals.dm_team) ---
         "dm-team-lead": ConstraintEnvelopeConfig(
             id="env-dm-team-lead",
             description="DM Team Lead: broadest authority within DM, $0 spend, internal-only",
@@ -1643,7 +1643,7 @@ def convert_verification_stats_to_enum_keys(
 
     The seed_verification_stats function returns string keys for simplicity
     during aggregation. This function converts those to VerificationLevel
-    enum keys for type-safe consumption by PlatformAPI.
+    enum keys for type-safe consumption by PactAPI.
 
     Args:
         string_stats: Dict mapping verification level strings to counts.
@@ -1681,7 +1681,7 @@ def build_audit_chain(audit_records: list[dict]) -> AuditChain:
 
     Creates a proper AuditChain with sealed anchors for each audit record,
     preserving timestamps and verification levels. This chain can be passed
-    to PlatformAPI for dashboard_trends() to produce non-zero trend data.
+    to PactAPI for dashboard_trends() to produce non-zero trend data.
 
     Args:
         audit_records: List of audit record dicts from seed_audit_anchors().
@@ -1698,7 +1698,7 @@ def build_audit_chain(audit_records: list[dict]) -> AuditChain:
             "Run seed_audit_anchors() first to generate records."
         )
 
-    chain = AuditChain(chain_id="care-platform-main")
+    chain = AuditChain(chain_id="pact-main")
 
     # Sort records by timestamp to ensure chronological ordering
     sorted_records = sorted(
@@ -1767,9 +1767,9 @@ def seed_shadow_evaluations() -> ShadowEnforcer:
     Returns:
         A fully populated ShadowEnforcer instance.
     """
-    from care_platform.trust.constraint.envelope import ConstraintEnvelope
-    from care_platform.trust.constraint.gradient import GradientEngine
-    from care_platform.trust.shadow_enforcer import ShadowEnforcer
+    from pact.trust.constraint.envelope import ConstraintEnvelope
+    from pact.trust.constraint.gradient import GradientEngine
+    from pact.trust.shadow_enforcer import ShadowEnforcer
 
     # Build a permissive envelope for seeding — most actions pass cleanly
     envelope_config = ConstraintEnvelopeConfig(
@@ -1804,7 +1804,7 @@ def seed_shadow_evaluations() -> ShadowEnforcer:
     envelope = ConstraintEnvelope(config=envelope_config)
 
     # Use a gradient engine that defaults to AUTO_APPROVED (most actions pass)
-    from care_platform.build.config.schema import GradientRuleConfig, VerificationGradientConfig
+    from pact.build.config.schema import GradientRuleConfig, VerificationGradientConfig
 
     gradient_config = VerificationGradientConfig(
         rules=[
@@ -2083,7 +2083,7 @@ def seed_dm_runner_tasks():
     Returns:
         The DMTeamRunner instance with completed tasks and calibration data.
     """
-    from care_platform.build.verticals.dm_runner import DMTeamRunner
+    from pact.build.verticals.dm_runner import DMTeamRunner
 
     runner = DMTeamRunner()
 
@@ -2108,7 +2108,7 @@ def seed_dm_runner_tasks():
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Seed demo data for the CARE Platform dashboard")
+    parser = argparse.ArgumentParser(description="Seed demo data for the PACT dashboard")
     parser.add_argument(
         "--reset",
         action="store_true",
@@ -2116,7 +2116,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    print("CARE Platform Demo Seed")
+    print("PACT Demo Seed")
     print("=" * 50)
 
     # Create platform components

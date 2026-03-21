@@ -1,6 +1,6 @@
 # Copyright 2026 Terrene Foundation
 # Licensed under the Apache License, Version 2.0
-"""E2E test: The CARE Platform IS a Constrained Organization (Milestone 19, Todo 1910).
+"""E2E test: The PACT IS a Constrained Organization (Milestone 19, Todo 1910).
 
 A single comprehensive test proving all 5 constitutive properties and
 3 behavioral tests hold SIMULTANEOUSLY in a bootstrapped organization.
@@ -28,7 +28,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     AgentConfig,
     CommunicationConstraintConfig,
     ConstraintEnvelopeConfig,
@@ -43,25 +43,25 @@ from care_platform.build.config.schema import (
     VerificationLevel,
     WorkspaceConfig,
 )
-from care_platform.build.org.builder import OrgBuilder
-from care_platform.build.workspace.models import (
+from pact.build.org.builder import OrgBuilder
+from pact.build.workspace.models import (
     Workspace,
     WorkspacePhase,
 )
-from care_platform.trust.audit.anchor import AuditChain
-from care_platform.trust.constraint.enforcer import ConstraintEnforcer
-from care_platform.trust.constraint.envelope import ConstraintEnvelope
-from care_platform.trust.constraint.gradient import GradientEngine
-from care_platform.trust.constraint.middleware import (
+from pact.trust.audit.anchor import AuditChain
+from pact.trust.constraint.enforcer import ConstraintEnforcer
+from pact.trust.constraint.envelope import ConstraintEnvelope
+from pact.trust.constraint.gradient import GradientEngine
+from pact.trust.constraint.middleware import (
     ActionOutcome,
     VerificationMiddleware,
 )
-from care_platform.trust.credentials import CredentialManager
-from care_platform.trust.delegation import ChainStatus, DelegationManager
-from care_platform.trust.eatp_bridge import EATPBridge
-from care_platform.trust.genesis import GenesisManager
-from care_platform.trust.integrity import TrustChainIntegrity
-from care_platform.trust.revocation import RevocationManager
+from pact.trust.credentials import CredentialManager
+from pact.trust.delegation import ChainStatus, DelegationManager
+from pact.trust.eatp_bridge import EATPBridge
+from pact.trust.genesis import GenesisManager
+from pact.trust.integrity import TrustChainIntegrity
+from pact.trust.revocation import RevocationManager
 
 # ===========================================================================
 # Configuration
@@ -256,8 +256,8 @@ class TestPlatformIsConstrainedOrganization:
     """
 
     @pytest.mark.asyncio
-    async def test_care_platform_is_constrained_organization(self):
-        """PROOF: The CARE Platform satisfies all Constrained Organization requirements.
+    async def test_pact_is_constrained_organization(self):
+        """PROOF: The PACT satisfies all Constrained Organization requirements.
 
         This test executes a complete organizational lifecycle and verifies
         all five constitutive properties and three behavioral tests hold
@@ -694,4 +694,4 @@ class TestPlatformIsConstrainedOrganization:
         # B2 Trust Verifiable: Revoked agent BLOCKED
         # B3 Knowledge Compounds: Cycle N accesses Cycle N-1 knowledge
         #
-        # The CARE Platform IS a Constrained Organization. QED.
+        # The PACT IS a Constrained Organization. QED.

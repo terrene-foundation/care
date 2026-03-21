@@ -1,4 +1,4 @@
-# care_platform_mobile
+# pact_mobile
 
 A new Flutter project.
 

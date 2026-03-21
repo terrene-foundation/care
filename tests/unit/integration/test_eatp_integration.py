@@ -14,7 +14,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     AgentConfig,
     CommunicationConstraintConfig,
     ConstraintEnvelopeConfig,
@@ -27,14 +27,14 @@ from care_platform.build.config.schema import (
     VerificationGradientConfig,
     VerificationLevel,
 )
-from care_platform.trust.constraint.envelope import ConstraintEnvelope
-from care_platform.trust.constraint.gradient import GradientEngine
-from care_platform.trust.credentials import CredentialManager, VerificationToken
-from care_platform.trust.delegation import ChainStatus, DelegationManager
-from care_platform.trust.eatp_bridge import EATPBridge
-from care_platform.trust.genesis import GenesisManager
-from care_platform.trust.revocation import RevocationManager
-from care_platform.trust.shadow_enforcer import ShadowEnforcer
+from pact.trust.constraint.envelope import ConstraintEnvelope
+from pact.trust.constraint.gradient import GradientEngine
+from pact.trust.credentials import CredentialManager, VerificationToken
+from pact.trust.delegation import ChainStatus, DelegationManager
+from pact.trust.eatp_bridge import EATPBridge
+from pact.trust.genesis import GenesisManager
+from pact.trust.revocation import RevocationManager
+from pact.trust.shadow_enforcer import ShadowEnforcer
 
 # ---------------------------------------------------------------------------
 # Fixtures

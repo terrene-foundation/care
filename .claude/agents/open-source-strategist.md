@@ -85,9 +85,9 @@ These projects compete for developer mindshare:
 4. **Reference competitive landscape** when discussing positioning
 5. **Be practical about community building** — developers need docs, examples, and a responsive maintainer
 
-## CARE Platform as Reference Implementation
+## PACT as Reference Implementation
 
-CARE Platform (Apache 2.0) is the Foundation's reference implementation of the CARE specification. It demonstrates:
+PACT (Apache 2.0) is the Foundation's reference implementation of the CARE specification. It demonstrates:
 
 - Fractal Dual Plane at L1 (Organization): TRUST / BUILD / USE structure
 - Full EATP trust chain with constraint envelopes and verification gradient

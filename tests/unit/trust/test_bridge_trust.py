@@ -15,7 +15,7 @@ Covers:
 
 import pytest
 
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     AgentConfig,
     CommunicationConstraintConfig,
     ConstraintEnvelopeConfig,
@@ -27,20 +27,20 @@ from care_platform.build.config.schema import (
     TrustPostureLevel,
     VerificationLevel,
 )
-from care_platform.build.workspace.bridge import BridgeType
-from care_platform.trust.audit.bridge_audit import (
+from pact.build.workspace.bridge import BridgeType
+from pact.trust.audit.bridge_audit import (
     BridgeAuditAnchor,
     _compute_anchor_hash,
     _compute_counterpart_hash,
     create_bridge_audit_pair,
 )
-from care_platform.trust.bridge_posture import bridge_verification_level, effective_posture
-from care_platform.trust.bridge_trust import (
+from pact.trust.bridge_posture import bridge_verification_level, effective_posture
+from pact.trust.bridge_trust import (
     BridgeDelegation,
     BridgeTrustManager,
     BridgeTrustRecord,
 )
-from care_platform.trust.eatp_bridge import EATPBridge
+from pact.trust.eatp_bridge import EATPBridge
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -435,7 +435,7 @@ class TestEffectivePosture:
 
     def test_all_pairwise_combinations(self):
         """Exhaustive check: effective posture is always min(source, target)."""
-        from care_platform.trust.posture import POSTURE_ORDER
+        from pact.trust.posture import POSTURE_ORDER
 
         for src in TrustPostureLevel:
             for tgt in TrustPostureLevel:

@@ -12,8 +12,8 @@ from __future__ import annotations
 
 import pytest
 
-from care_platform.trust.store.sqlite_store import SQLiteTrustStore
-from care_platform.trust.store_isolation import (
+from pact.trust.store.sqlite_store import SQLiteTrustStore
+from pact.trust.store_isolation import (
     DataPlaneStore,
     ManagementPlaneStore,
     PlaneViolationError,

@@ -3,7 +3,7 @@
 """Unit tests for PlatformBootstrap — trust hierarchy initialization.
 
 Tests verify that bootstrap:
-- Creates genesis records from PlatformConfig
+- Creates genesis records from PactConfig
 - Discovers workspaces from disk
 - Registers agents, teams, and constraint envelopes
 - Creates delegation records
@@ -17,19 +17,19 @@ from pathlib import Path
 
 import pytest
 
-from care_platform.build.bootstrap import BootstrapResult, PlatformBootstrap
-from care_platform.build.config.schema import (
+from pact.build.bootstrap import BootstrapResult, PlatformBootstrap
+from pact.build.config.schema import (
     AgentConfig,
     ConstraintEnvelopeConfig,
     FinancialConstraintConfig,
     GenesisConfig,
     OperationalConstraintConfig,
-    PlatformConfig,
+    PactConfig,
     TeamConfig,
     TrustPostureLevel,
     WorkspaceConfig,
 )
-from care_platform.trust.store.sqlite_store import SQLiteTrustStore
+from pact.trust.store.sqlite_store import SQLiteTrustStore
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -39,9 +39,9 @@ from care_platform.trust.store.sqlite_store import SQLiteTrustStore
 def _make_config(
     *,
     workspaces: list[WorkspaceConfig] | None = None,
-) -> PlatformConfig:
-    """Create a minimal PlatformConfig for testing."""
-    return PlatformConfig(
+) -> PactConfig:
+    """Create a minimal PactConfig for testing."""
+    return PactConfig(
         name="Test Foundation",
         genesis=GenesisConfig(
             authority="test.foundation",
@@ -93,7 +93,7 @@ def store() -> SQLiteTrustStore:
 
 
 @pytest.fixture
-def config() -> PlatformConfig:
+def config() -> PactConfig:
     return _make_config()
 
 
@@ -105,7 +105,7 @@ def config() -> PlatformConfig:
 class TestGenesis:
     """Bootstrap creates a genesis record (root of trust)."""
 
-    def test_creates_genesis(self, store: SQLiteTrustStore, config: PlatformConfig):
+    def test_creates_genesis(self, store: SQLiteTrustStore, config: PactConfig):
         bootstrap = PlatformBootstrap(store=store)
         result = bootstrap.initialize(config)
         assert result.is_successful
@@ -114,7 +114,7 @@ class TestGenesis:
         assert genesis is not None
         assert genesis["authority_name"] == "Test Foundation"
 
-    def test_idempotent_genesis(self, store: SQLiteTrustStore, config: PlatformConfig):
+    def test_idempotent_genesis(self, store: SQLiteTrustStore, config: PactConfig):
         bootstrap = PlatformBootstrap(store=store)
         result1 = bootstrap.initialize(config)
         result2 = bootstrap.initialize(config)
@@ -133,13 +133,13 @@ class TestGenesis:
 class TestAgentsAndDelegations:
     """Bootstrap registers agents and creates delegation records."""
 
-    def test_registers_agents(self, store: SQLiteTrustStore, config: PlatformConfig):
+    def test_registers_agents(self, store: SQLiteTrustStore, config: PactConfig):
         bootstrap = PlatformBootstrap(store=store)
         result = bootstrap.initialize(config)
         assert result.agents_registered == 2
         assert result.delegations_created == 2
 
-    def test_delegation_links_to_authority(self, store: SQLiteTrustStore, config: PlatformConfig):
+    def test_delegation_links_to_authority(self, store: SQLiteTrustStore, config: PactConfig):
         bootstrap = PlatformBootstrap(store=store)
         bootstrap.initialize(config)
         # Check agent-writer has a delegation from authority
@@ -148,14 +148,14 @@ class TestAgentsAndDelegations:
         assert delegations[0]["delegator_id"] == "test.foundation"
         assert delegations[0]["delegatee_id"] == "agent-writer"
 
-    def test_delegation_includes_envelope_id(self, store: SQLiteTrustStore, config: PlatformConfig):
+    def test_delegation_includes_envelope_id(self, store: SQLiteTrustStore, config: PactConfig):
         bootstrap = PlatformBootstrap(store=store)
         bootstrap.initialize(config)
         delegations = store.get_delegations_for("agent-writer")
         assert delegations[0]["envelope_id"] == "env-default"
 
     def test_attestation_stored_for_capable_agents(
-        self, store: SQLiteTrustStore, config: PlatformConfig
+        self, store: SQLiteTrustStore, config: PactConfig
     ):
         bootstrap = PlatformBootstrap(store=store)
         bootstrap.initialize(config)
@@ -172,7 +172,7 @@ class TestAgentsAndDelegations:
 class TestTeams:
     """Bootstrap registers teams."""
 
-    def test_registers_teams(self, store: SQLiteTrustStore, config: PlatformConfig):
+    def test_registers_teams(self, store: SQLiteTrustStore, config: PactConfig):
         bootstrap = PlatformBootstrap(store=store)
         result = bootstrap.initialize(config)
         assert result.teams_registered == 1
@@ -186,7 +186,7 @@ class TestTeams:
 class TestEnvelopes:
     """Bootstrap creates constraint envelopes."""
 
-    def test_creates_envelopes(self, store: SQLiteTrustStore, config: PlatformConfig):
+    def test_creates_envelopes(self, store: SQLiteTrustStore, config: PactConfig):
         bootstrap = PlatformBootstrap(store=store)
         result = bootstrap.initialize(config)
         assert result.envelopes_created == 1
@@ -251,7 +251,7 @@ class TestWorkspaceDiscovery:
 class TestBootstrapCompletionMarker:
     """RT4-H7: Bootstrap stores a completion marker after successful run."""
 
-    def test_completion_marker_stored(self, store: SQLiteTrustStore, config: PlatformConfig):
+    def test_completion_marker_stored(self, store: SQLiteTrustStore, config: PactConfig):
         bootstrap = PlatformBootstrap(store=store)
         result = bootstrap.initialize(config)
         assert result.is_successful
@@ -264,7 +264,7 @@ class TestBootstrapCompletionMarker:
         assert marker["agents_registered"] == 2
         assert marker["delegations_created"] == 2
 
-    def test_rerun_logs_previous_bootstrap(self, store: SQLiteTrustStore, config: PlatformConfig):
+    def test_rerun_logs_previous_bootstrap(self, store: SQLiteTrustStore, config: PactConfig):
         """Re-running bootstrap succeeds and updates the marker."""
         bootstrap = PlatformBootstrap(store=store)
         bootstrap.initialize(config)
@@ -279,7 +279,7 @@ class TestBootstrapCompletionMarker:
 class TestAttestationFormat:
     """RT4-M3: Attestations include required capability attestation fields."""
 
-    def test_attestation_has_required_fields(self, store: SQLiteTrustStore, config: PlatformConfig):
+    def test_attestation_has_required_fields(self, store: SQLiteTrustStore, config: PactConfig):
         bootstrap = PlatformBootstrap(store=store)
         bootstrap.initialize(config)
 
@@ -292,7 +292,7 @@ class TestAttestationFormat:
         assert att["delegation_id"].startswith("del-")
 
     def test_attestation_has_all_fields_for_reviewer(
-        self, store: SQLiteTrustStore, config: PlatformConfig
+        self, store: SQLiteTrustStore, config: PactConfig
     ):
         bootstrap = PlatformBootstrap(store=store)
         bootstrap.initialize(config)
@@ -309,7 +309,7 @@ class TestAttestationFormat:
 class TestDelegationExpiry:
     """RT4-M6: Delegations include an expires_at timestamp."""
 
-    def test_delegation_has_expires_at(self, store: SQLiteTrustStore, config: PlatformConfig):
+    def test_delegation_has_expires_at(self, store: SQLiteTrustStore, config: PactConfig):
         bootstrap = PlatformBootstrap(store=store)
         bootstrap.initialize(config)
 
@@ -323,7 +323,7 @@ class TestDelegationExpiry:
         delta = expires - created
         assert delta == timedelta(days=365)
 
-    def test_all_delegations_have_expires_at(self, store: SQLiteTrustStore, config: PlatformConfig):
+    def test_all_delegations_have_expires_at(self, store: SQLiteTrustStore, config: PactConfig):
         bootstrap = PlatformBootstrap(store=store)
         bootstrap.initialize(config)
 

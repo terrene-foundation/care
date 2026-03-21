@@ -13,13 +13,13 @@ Validates that:
 
 import pytest
 
-from care_platform.trust.constraint.circuit_breaker import CircuitBreaker
-from care_platform.trust.store.health import (
+from pact.trust.constraint.circuit_breaker import CircuitBreaker
+from pact.trust.store.health import (
     StoreHealthStatus,
     TrustStoreHealthCheck,
 )
-from care_platform.trust.store.sqlite_store import SQLiteTrustStore
-from care_platform.trust.store.store import FilesystemStore, MemoryStore
+from pact.trust.store.sqlite_store import SQLiteTrustStore
+from pact.trust.store.store import FilesystemStore, MemoryStore
 
 
 class _FailingStore:

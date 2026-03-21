@@ -4,12 +4,12 @@
 
 Covers:
 - Task 6050: verification_stats uses VerificationLevel enum keys consistently
-- Task 6051: AuditChain wired into PlatformAPI for dashboard_trends()
+- Task 6051: AuditChain wired into PactAPI for dashboard_trends()
 - Task 6052: GET /api/v1/agents/{agent_id}/upgrade-evidence endpoint
 - Task 6053: Frontend API client upgrade-evidence method (tested via endpoint behavior)
 
 Test structure:
-- Unit tests for PlatformAPI handler methods (no HTTP, no mocking)
+- Unit tests for PactAPI handler methods (no HTTP, no mocking)
 - Unit tests for seed_demo AuditChain construction
 - Unit tests for the upgrade_evidence endpoint handler
 """
@@ -20,7 +20,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     CommunicationConstraintConfig,
     ConstraintEnvelopeConfig,
     DataAccessConstraintConfig,
@@ -31,14 +31,14 @@ from care_platform.build.config.schema import (
     VerificationGradientConfig,
     VerificationLevel,
 )
-from care_platform.trust.audit.anchor import AuditAnchor, AuditChain
-from care_platform.trust.constraint.envelope import ConstraintEnvelope
-from care_platform.trust.constraint.gradient import GradientEngine
-from care_platform.trust.shadow_enforcer import ShadowEnforcer
-from care_platform.trust.store.cost_tracking import CostTracker
-from care_platform.use.api.endpoints import PlatformAPI
-from care_platform.use.execution.approval import ApprovalQueue
-from care_platform.use.execution.registry import AgentRegistry
+from pact.trust.audit.anchor import AuditAnchor, AuditChain
+from pact.trust.constraint.envelope import ConstraintEnvelope
+from pact.trust.constraint.gradient import GradientEngine
+from pact.trust.shadow_enforcer import ShadowEnforcer
+from pact.trust.store.cost_tracking import CostTracker
+from pact.use.api.endpoints import PactAPI
+from pact.use.execution.approval import ApprovalQueue
+from pact.use.execution.registry import AgentRegistry
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -216,15 +216,15 @@ def api_with_audit_chain(
     approval_queue,
     cost_tracker,
     audit_chain_with_data,
-) -> PlatformAPI:
-    """PlatformAPI with audit_chain wired for dashboard_trends."""
+) -> PactAPI:
+    """PactAPI with audit_chain wired for dashboard_trends."""
     verification_stats = {
         VerificationLevel.AUTO_APPROVED: 35,
         VerificationLevel.FLAGGED: 14,
         VerificationLevel.HELD: 7,
         VerificationLevel.BLOCKED: 0,
     }
-    return PlatformAPI(
+    return PactAPI(
         registry=registry,
         approval_queue=approval_queue,
         cost_tracker=cost_tracker,
@@ -239,15 +239,15 @@ def api_with_shadow(
     approval_queue,
     cost_tracker,
     shadow_enforcer,
-) -> PlatformAPI:
-    """PlatformAPI with shadow_enforcer wired for upgrade-evidence."""
+) -> PactAPI:
+    """PactAPI with shadow_enforcer wired for upgrade-evidence."""
     verification_stats = {
         VerificationLevel.AUTO_APPROVED: 35,
         VerificationLevel.FLAGGED: 14,
         VerificationLevel.HELD: 7,
         VerificationLevel.BLOCKED: 0,
     }
-    return PlatformAPI(
+    return PactAPI(
         registry=registry,
         approval_queue=approval_queue,
         cost_tracker=cost_tracker,
@@ -257,9 +257,9 @@ def api_with_shadow(
 
 
 @pytest.fixture()
-def api_minimal(registry, approval_queue, cost_tracker) -> PlatformAPI:
-    """PlatformAPI with minimal components (no shadow, no audit_chain)."""
-    return PlatformAPI(
+def api_minimal(registry, approval_queue, cost_tracker) -> PactAPI:
+    """PactAPI with minimal components (no shadow, no audit_chain)."""
+    return PactAPI(
         registry=registry,
         approval_queue=approval_queue,
         cost_tracker=cost_tracker,
@@ -303,7 +303,7 @@ class TestVerificationStatsEnumKeys:
             "HELD": 3,
             "BLOCKED": 1,
         }
-        api = PlatformAPI(
+        api = PactAPI(
             registry=reg,
             approval_queue=ApprovalQueue(),
             cost_tracker=CostTracker(),
@@ -331,7 +331,7 @@ class TestVerificationStatsEnumKeys:
             VerificationLevel.HELD: 3,
             VerificationLevel.BLOCKED: 1,
         }
-        api = PlatformAPI(
+        api = PactAPI(
             registry=reg,
             approval_queue=ApprovalQueue(),
             cost_tracker=CostTracker(),
@@ -346,7 +346,7 @@ class TestVerificationStatsEnumKeys:
         """_build_platform_api logs a warning about missing seed data."""
         import logging
 
-        from care_platform.use.api.server import _build_platform_api
+        from pact.use.api.server import _build_platform_api
 
         with caplog.at_level(logging.WARNING):
             api = _build_platform_api()
@@ -362,7 +362,7 @@ class TestVerificationStatsEnumKeys:
         assert api is not None
 
     def test_run_seeded_server_passes_verification_stats(self):
-        """run_seeded_server.py passes verification_stats to PlatformAPI.
+        """run_seeded_server.py passes verification_stats to PactAPI.
 
         This is a design test: the seed_demo return dict must contain
         'verification_stats' with VerificationLevel enum keys.
@@ -391,7 +391,7 @@ class TestVerificationStatsEnumKeys:
 
 
 class TestAuditChainDashboardTrends:
-    """AuditChain wired into PlatformAPI produces non-zero trend data."""
+    """AuditChain wired into PactAPI produces non-zero trend data."""
 
     def test_dashboard_trends_with_audit_chain(self, api_with_audit_chain):
         """dashboard_trends() returns non-zero data when AuditChain is provided."""
@@ -404,9 +404,9 @@ class TestAuditChainDashboardTrends:
 
         # Must have non-zero auto_approved (we seeded 5 per day)
         total_auto = sum(data["auto_approved"])
-        assert total_auto > 0, (
-            f"Expected non-zero auto_approved trend data, got {data['auto_approved']}"
-        )
+        assert (
+            total_auto > 0
+        ), f"Expected non-zero auto_approved trend data, got {data['auto_approved']}"
 
         # Must have non-zero flagged (we seeded 2 per day)
         total_flagged = sum(data["flagged"])
@@ -444,7 +444,7 @@ class TestAuditChainDashboardTrends:
         chain = build_audit_chain(audit_records)
 
         assert isinstance(chain, AuditChain)
-        assert chain.chain_id == "care-platform-main"
+        assert chain.chain_id == "pact-main"
         assert chain.length > 0
 
         # Verify the chain has anchors with various verification levels
@@ -462,9 +462,9 @@ class TestAuditChainDashboardTrends:
         seven_days_ago = now - timedelta(days=7)
 
         recent_anchors = [a for a in chain.anchors if a.timestamp >= seven_days_ago]
-        assert len(recent_anchors) > 0, (
-            "Expected audit chain to have anchors within the last 7 days for dashboard trend data"
-        )
+        assert (
+            len(recent_anchors) > 0
+        ), "Expected audit chain to have anchors within the last 7 days for dashboard trend data"
 
 
 # ===========================================================================
@@ -523,9 +523,9 @@ class TestUpgradeEvidenceEndpoint:
         }
         actual_fields = set(data.keys())
         missing = required_fields - actual_fields
-        assert not missing, (
-            f"upgrade-evidence response missing fields: {missing}. Got: {sorted(actual_fields)}"
-        )
+        assert (
+            not missing
+        ), f"upgrade-evidence response missing fields: {missing}. Got: {sorted(actual_fields)}"
 
     def test_upgrade_evidence_pass_rate_range(self, api_with_shadow):
         """shadow_enforcer_pass_rate is between 0.0 and 1.0."""
@@ -566,12 +566,12 @@ class TestUpgradeEvidenceHTTPEndpoint:
         """Create a FastAPI test client with seeded data, auth disabled."""
         from fastapi.testclient import TestClient
 
-        import care_platform.use.api.server as server_module
-        from care_platform.build.config.env import EnvConfig
-        from care_platform.use.api.server import create_app
+        import pact.use.api.server as server_module
+        from pact.build.config.env import EnvConfig
+        from pact.use.api.server import create_app
 
         # Disable auth for unit testing
-        dev_config = EnvConfig(care_dev_mode=True, care_api_token="")
+        dev_config = EnvConfig(pact_dev_mode=True, pact_api_token="")
 
         old_default = server_module._default_api
         server_module._default_api = None

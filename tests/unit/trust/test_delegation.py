@@ -4,7 +4,7 @@
 
 import pytest
 
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     AgentConfig,
     CommunicationConstraintConfig,
     ConstraintEnvelopeConfig,
@@ -14,9 +14,9 @@ from care_platform.build.config.schema import (
     OperationalConstraintConfig,
     TemporalConstraintConfig,
 )
-from care_platform.trust.delegation import ChainStatus, ChainWalkResult, DelegationManager
-from care_platform.trust.eatp_bridge import EATPBridge
-from care_platform.trust.genesis import GenesisManager
+from pact.trust.delegation import ChainStatus, ChainWalkResult, DelegationManager
+from pact.trust.eatp_bridge import EATPBridge
+from pact.trust.genesis import GenesisManager
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -546,7 +546,7 @@ class TestRT10_DP4_RevocationAutoSync:
         bridge,
     ):
         """When a RevocationManager is provided, create_delegation auto-registers."""
-        from care_platform.trust.revocation import RevocationManager
+        from pact.trust.revocation import RevocationManager
 
         rev_mgr = RevocationManager()
         dm = DelegationManager(bridge=bridge, revocation_manager=rev_mgr)
@@ -587,7 +587,7 @@ class TestRT10_DP4_RevocationAutoSync:
         bridge,
     ):
         """Chained delegations register both links in the revocation tree."""
-        from care_platform.trust.revocation import RevocationManager
+        from pact.trust.revocation import RevocationManager
 
         rev_mgr = RevocationManager()
         dm = DelegationManager(bridge=bridge, revocation_manager=rev_mgr)

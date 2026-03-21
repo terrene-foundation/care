@@ -4,9 +4,9 @@
 
 import pytest
 
-from care_platform.build.config.schema import GenesisConfig
-from care_platform.trust.eatp_bridge import EATPBridge
-from care_platform.trust.genesis import GenesisManager
+from pact.build.config.schema import GenesisConfig
+from pact.trust.eatp_bridge import EATPBridge
+from pact.trust.genesis import GenesisManager
 
 # ---------------------------------------------------------------------------
 # Fixtures

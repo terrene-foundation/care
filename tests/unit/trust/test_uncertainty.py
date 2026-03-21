@@ -4,8 +4,8 @@
 
 import pytest
 
-from care_platform.build.config.schema import VerificationLevel
-from care_platform.trust.uncertainty import (
+from pact.build.config.schema import VerificationLevel
+from pact.trust.uncertainty import (
     ActionMetadata,
     UncertaintyClassifier,
     UncertaintyLevel,

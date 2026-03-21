@@ -14,8 +14,8 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
-from care_platform.build.config.env import EnvConfig
-from care_platform.use.api.server import SecurityHeadersMiddleware, create_app
+from pact.build.config.env import EnvConfig
+from pact.use.api.server import SecurityHeadersMiddleware, create_app
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -25,17 +25,17 @@ from care_platform.use.api.server import SecurityHeadersMiddleware, create_app
 @pytest.fixture()
 def dev_config():
     """EnvConfig in dev mode (no API token required)."""
-    return EnvConfig(care_dev_mode=True, care_api_token="")
+    return EnvConfig(pact_dev_mode=True, pact_api_token="")
 
 
 @pytest.fixture()
 def strict_rate_config():
     """EnvConfig with very low rate limits for testing."""
     return EnvConfig(
-        care_dev_mode=True,
-        care_api_token="",
-        care_rate_limit_get="2/minute",
-        care_rate_limit_post="1/minute",
+        pact_dev_mode=True,
+        pact_api_token="",
+        pact_rate_limit_get="2/minute",
+        pact_rate_limit_post="1/minute",
     )
 
 
@@ -165,18 +165,18 @@ class TestRateLimiting:
 
     def test_default_rate_limit_values(self, dev_config):
         """Default rate limits should be 60/minute GET, 10/minute POST."""
-        assert dev_config.care_rate_limit_get == "60/minute"
-        assert dev_config.care_rate_limit_post == "10/minute"
+        assert dev_config.pact_rate_limit_get == "60/minute"
+        assert dev_config.pact_rate_limit_post == "10/minute"
 
     def test_custom_rate_limit_values(self):
         """Custom rate limit values should be respected."""
         cfg = EnvConfig(
-            care_dev_mode=True,
-            care_rate_limit_get="100/minute",
-            care_rate_limit_post="20/minute",
+            pact_dev_mode=True,
+            pact_rate_limit_get="100/minute",
+            pact_rate_limit_post="20/minute",
         )
-        assert cfg.care_rate_limit_get == "100/minute"
-        assert cfg.care_rate_limit_post == "20/minute"
+        assert cfg.pact_rate_limit_get == "100/minute"
+        assert cfg.pact_rate_limit_post == "20/minute"
 
     def test_post_endpoint_rate_limited(self, strict_rate_config):
         """POST endpoints should have the POST rate limit applied."""

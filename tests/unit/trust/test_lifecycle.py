@@ -4,7 +4,7 @@
 
 import pytest
 
-from care_platform.trust.lifecycle import (
+from pact.trust.lifecycle import (
     InvalidTransitionError,
     TrustChainState,
     TrustChainStateMachine,

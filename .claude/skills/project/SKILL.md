@@ -1,6 +1,6 @@
-# CARE Platform Project Skills
+# PACT Project Skills
 
-Skills specific to the CARE Platform — the Terrene Foundation's open-source governed operational model.
+Skills specific to the PACT — the Terrene Foundation's open-source governed operational model.
 
 ## Available Skills
 
@@ -27,4 +27,4 @@ Skills specific to the CARE Platform — the Terrene Foundation's open-source go
 - `agents/project/care-trust-specialist.md` — Trust layer specialist
 - `agents/project/care-dashboard-specialist.md` — Dashboard specialist
 - `docs/architecture/fail-closed-contract.md` — Fail-closed requirement
-- `workspaces/care-platform/decisions.yml` — All architectural decisions
+- `workspaces/pact/decisions.yml` — All architectural decisions

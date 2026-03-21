@@ -13,17 +13,17 @@ Validates that:
 
 import pytest
 
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     ConstraintEnvelopeConfig,
     OperationalConstraintConfig,
     VerificationGradientConfig,
     VerificationLevel,
 )
-from care_platform.trust.audit.anchor import AuditChain
-from care_platform.trust.constraint.enforcer import ConstraintEnforcer, EnforcerRequiredError
-from care_platform.trust.constraint.envelope import ConstraintEnvelope
-from care_platform.trust.constraint.gradient import GradientEngine
-from care_platform.trust.constraint.middleware import (
+from pact.trust.audit.anchor import AuditChain
+from pact.trust.constraint.enforcer import ConstraintEnforcer, EnforcerRequiredError
+from pact.trust.constraint.envelope import ConstraintEnvelope
+from pact.trust.constraint.gradient import GradientEngine
+from pact.trust.constraint.middleware import (
     ActionOutcome,
     MiddlewareResult,
     VerificationMiddleware,

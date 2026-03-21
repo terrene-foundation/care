@@ -144,7 +144,7 @@ class TestPassesCompliantCode:
 
 
 class TestLintRunsOnProject:
-    """Integration test: lint passes on the actual CARE Platform codebase."""
+    """Integration test: lint passes on the actual PACT codebase."""
 
     def test_all_trust_files_pass(self):
         """All trust layer files pass the fail-closed check."""

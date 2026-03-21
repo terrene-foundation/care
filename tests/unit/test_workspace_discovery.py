@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from care_platform.build.workspace.discovery import (
+from pact.build.workspace.discovery import (
     WorkspaceDiscovery,
     WorkspaceManifest,
 )
@@ -56,8 +56,8 @@ class TestWorkspaceManifest:
 
     def test_full_manifest(self):
         m = WorkspaceManifest(
-            id="care-platform",
-            description="The CARE Platform workspace",
+            id="pact",
+            description="The PACT workspace",
             knowledge_base_paths=["briefs/", "docs/"],
             team_id="platform-team",
             metadata={"priority": "high"},

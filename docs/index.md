@@ -1,10 +1,10 @@
-# CARE Platform
+# PACT
 
 **Governed operational model for running organizations with AI agents under EATP trust governance.**
 
-The CARE Platform is the Terrene Foundation's open-source (Apache 2.0) reference implementation of the [CARE specification](https://terrene.foundation). It operationalizes organizations as agent-orchestrated systems where every agent action is governed by cryptographic trust chains, constraint envelopes, and a verification gradient.
+The PACT is the Terrene Foundation's open-source (Apache 2.0) reference implementation of the [CARE specification](https://terrene.foundation). It operationalizes organizations as agent-orchestrated systems where every agent action is governed by cryptographic trust chains, constraint envelopes, and a verification gradient.
 
-## What CARE Platform Does
+## What PACT Does
 
 - **Trust governance**: Every agent action traces back to human authority through EATP trust chains
 - **Constraint envelopes**: Five-dimensional boundaries (financial, operational, temporal, data access, communication) limit what agents can do
@@ -15,8 +15,8 @@ The CARE Platform is the Terrene Foundation's open-source (Apache 2.0) reference
 ## Quick Start
 
 ```bash
-pip install care-platform
-care-platform org create --template media --name "My Team"
+pip install pact
+pact org create --template media --name "My Team"
 ```
 
 Or run the full platform with Docker:
@@ -38,7 +38,7 @@ docker compose up
 
 ## The Trinity
 
-CARE Platform implements three open standards published by the Terrene Foundation:
+PACT implements three open standards published by the Terrene Foundation:
 
 | Standard | Role                                                    | License   |
 | -------- | ------------------------------------------------------- | --------- |

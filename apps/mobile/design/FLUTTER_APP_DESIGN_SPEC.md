@@ -1,4 +1,4 @@
-# CARE Platform Flutter App -- UI/UX Design Specification
+# PACT Flutter App -- UI/UX Design Specification
 
 Copyright 2026 Terrene Foundation. Licensed under the Apache License, Version 2.0.
 
@@ -6,7 +6,7 @@ Copyright 2026 Terrene Foundation. Licensed under the Apache License, Version 2.
 
 ## Executive Summary
 
-This document is the complete UI/UX design specification for the CARE Platform Flutter app, covering phone, tablet, and desktop form factors. The app provides the same governance dashboard experience as the existing web app (18 pages across 12 navigation sections) but optimized for native interaction on each platform.
+This document is the complete UI/UX design specification for the PACT Flutter app, covering phone, tablet, and desktop form factors. The app provides the same governance dashboard experience as the existing web app (18 pages across 12 navigation sections) but optimized for native interaction on each platform.
 
 **Top-level design decisions:**
 
@@ -517,7 +517,7 @@ Use Flutter's built-in Material 3 theming via `ThemeData` with `useMaterial3: tr
 Port the CARE semantic colors from the web Tailwind config directly to Dart constants.
 
 ```dart
-/// CARE Platform Color Palette
+/// PACT Color Palette
 /// Ported from apps/web/tailwind.config.js for cross-platform consistency.
 abstract final class CareColors {
   // -- Platform Brand --
@@ -577,7 +577,7 @@ abstract final class CareColors {
 Use the same font hierarchy as the web app but adapted for Flutter's text theme.
 
 ```dart
-/// CARE Platform Typography
+/// PACT Typography
 /// Based on Inter for body text, JetBrains Mono for hashes/IDs.
 abstract final class CareTypography {
   static const String fontFamily     = 'Inter';
@@ -687,7 +687,7 @@ abstract final class CareTypography {
 ### 4.4 Spacing Scale
 
 ```dart
-/// CARE Platform Spacing Scale
+/// PACT Spacing Scale
 /// 4px base unit, consistent with Material 3.
 abstract final class CareSpacing {
   static const double xs   = 4;
@@ -721,7 +721,7 @@ abstract final class CareSpacing {
 ### 4.5 Elevation / Shadow System
 
 ```dart
-/// CARE Platform Elevation
+/// PACT Elevation
 /// Minimal shadows. Enterprise dashboards should feel solid, not floaty.
 abstract final class CareElevation {
   // Level 0: flat (most content)
@@ -773,7 +773,7 @@ abstract final class CareRadius {
 ### 4.7 Animation Timing
 
 ```dart
-/// CARE Platform Motion
+/// PACT Motion
 /// Purposeful, minimal animations. No gratuitous bounce or elastic.
 abstract final class CareMotion {
   // Durations
@@ -1059,7 +1059,7 @@ Available on all scrollable screens on phone and tablet. Uses `RefreshIndicator`
 
 ### 10.1 Login
 
-All form factors: centered card with CARE logo, operator name field, API token field, remember-me toggle, sign-in button. Footer: "CARE Platform v0.1.0 -- Terrene Foundation".
+All form factors: centered card with CARE logo, operator name field, API token field, remember-me toggle, sign-in button. Footer: "PACT v0.1.0 -- Terrene Foundation".
 
 Phone: card is full-width minus 32px margin. Tablet/Desktop: card is 400px max-width, centered.
 

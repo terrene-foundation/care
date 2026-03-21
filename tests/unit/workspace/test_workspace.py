@@ -4,8 +4,8 @@
 
 import pytest
 
-from care_platform.build.config.schema import WorkspaceConfig
-from care_platform.build.workspace.models import (
+from pact.build.config.schema import WorkspaceConfig
+from pact.build.workspace.models import (
     Workspace,
     WorkspacePhase,
     WorkspaceRegistry,

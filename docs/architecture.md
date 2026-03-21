@@ -1,12 +1,12 @@
-# CARE Platform Architecture
+# PACT Architecture
 
-This document describes the architecture of the CARE Platform -- the module structure, data flow, trust enforcement pipeline, and extension points.
+This document describes the architecture of the PACT -- the module structure, data flow, trust enforcement pipeline, and extension points.
 
 ---
 
 ## Architecture Layers
 
-The CARE Platform is organized into five architecture layers, each building on the one below:
+The PACT is organized into five architecture layers, each building on the one below:
 
 | Layer                | Modules                    | Responsibility                                                           |
 | -------------------- | -------------------------- | ------------------------------------------------------------------------ |
@@ -59,7 +59,7 @@ Key responsibilities:
 ## Module Structure
 
 ```
-care_platform/
+pact/
   __init__.py             Package root with public API exports
 
   config/
@@ -126,7 +126,7 @@ care_platform/
     dm_team.py            Domain-specific team template (Digital Marketing)
 
   cli/
-    (entry point)         Command-line interface (care-platform command)
+    (entry point)         Command-line interface (pact command)
 ```
 
 ---
@@ -252,10 +252,10 @@ All bridges require:
 
 ## Integration with EATP SDK
 
-The CARE Platform integrates with the EATP SDK (`eatp` package) through the EATPBridge (`trust/eatp_bridge.py`):
+The PACT integrates with the EATP SDK (`eatp` package) through the EATPBridge (`trust/eatp_bridge.py`):
 
 ```
-CARE Platform                    EATP SDK
+PACT                    EATP SDK
 --------------                   --------
 GenesisConfig        --->        TrustOperations.establish()
 AgentConfig          --->        TrustOperations.delegate()

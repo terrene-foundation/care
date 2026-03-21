@@ -20,14 +20,14 @@ from datetime import UTC, datetime
 
 import pytest
 
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     ConstraintEnvelopeConfig,
     FinancialConstraintConfig,
     OperationalConstraintConfig,
     VerificationGradientConfig,
     VerificationLevel,
 )
-from care_platform.build.workspace.bridge import (
+from pact.build.workspace.bridge import (
     _TERMINAL_STATES,
     Bridge,
     BridgeManager,
@@ -35,22 +35,22 @@ from care_platform.build.workspace.bridge import (
     BridgeStatus,
     BridgeType,
 )
-from care_platform.trust.audit.anchor import AuditChain
-from care_platform.trust.constraint.envelope import (
+from pact.trust.audit.anchor import AuditChain
+from pact.trust.constraint.envelope import (
     ConstraintEnvelope,
 )
-from care_platform.trust.constraint.gradient import GradientEngine
-from care_platform.trust.posture import TrustPosture
-from care_platform.trust.revocation import RevocationManager
-from care_platform.trust.store.store import MemoryStore
-from care_platform.use.execution.approval import ApprovalQueue
-from care_platform.use.execution.approver_auth import (
+from pact.trust.constraint.gradient import GradientEngine
+from pact.trust.posture import TrustPosture
+from pact.trust.revocation import RevocationManager
+from pact.trust.store.store import MemoryStore
+from pact.use.execution.approval import ApprovalQueue
+from pact.use.execution.approver_auth import (
     ApproverRegistry,
     AuthenticatedApprovalQueue,
     sign_decision,
 )
-from care_platform.use.execution.registry import AgentRegistry
-from care_platform.use.execution.runtime import (
+from pact.use.execution.registry import AgentRegistry
+from pact.use.execution.runtime import (
     ExecutionRuntime,
     Task,
     TaskStatus,

@@ -1,6 +1,6 @@
 # Quickstart Tutorial
 
-Get the CARE Platform running in under 5 minutes. Choose your path:
+Get the PACT running in under 5 minutes. Choose your path:
 
 ## Option A: Docker Compose (recommended)
 
@@ -52,7 +52,7 @@ You'll see:
 ### 1. Install the package
 
 ```bash
-pip install care-platform
+pip install pact
 ```
 
 Or for development:
@@ -95,19 +95,19 @@ curl -H "Authorization: Bearer demo" http://localhost:8000/api/v1/shadow/dm-team
 
 ```bash
 # List available templates
-care-platform org list-templates
+pact org list-templates
 
 # Create from a template
-care-platform org create --template media --name "My Media Team"
+pact org create --template media --name "My Media Team"
 
 # Validate an organization
-care-platform org validate
+pact org validate
 ```
 
 ### 2. Check platform status
 
 ```bash
-care-platform status
+pact status
 ```
 
 ---

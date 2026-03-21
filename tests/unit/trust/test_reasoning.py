@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from care_platform.trust.reasoning import (
+from pact.trust.reasoning import (
     ConfidentialityLevel,
     ReasoningTrace,
     ReasoningTraceStore,

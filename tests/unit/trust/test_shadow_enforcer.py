@@ -6,7 +6,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     ConstraintEnvelopeConfig,
     FinancialConstraintConfig,
     GradientRuleConfig,
@@ -15,10 +15,10 @@ from care_platform.build.config.schema import (
     VerificationGradientConfig,
     VerificationLevel,
 )
-from care_platform.trust.constraint.envelope import ConstraintEnvelope
-from care_platform.trust.constraint.gradient import GradientEngine
-from care_platform.trust.posture import UPGRADE_REQUIREMENTS
-from care_platform.trust.shadow_enforcer import (
+from pact.trust.constraint.envelope import ConstraintEnvelope
+from pact.trust.constraint.gradient import GradientEngine
+from pact.trust.posture import UPGRADE_REQUIREMENTS
+from pact.trust.shadow_enforcer import (
     ShadowEnforcer,
     ShadowMetrics,
     ShadowReport,
@@ -344,7 +344,7 @@ class TestPostureEvidenceConversion:
     """to_posture_evidence() must correctly map shadow metrics to PostureEvidence."""
 
     def test_conversion_returns_posture_evidence(self):
-        from care_platform.trust.posture import PostureEvidence
+        from pact.trust.posture import PostureEvidence
 
         gradient = _make_gradient(default_level=VerificationLevel.AUTO_APPROVED)
         enforcer = _make_enforcer(gradient=gradient)
@@ -403,7 +403,7 @@ class TestPostureEvidenceConversion:
 
     def test_evidence_compatible_with_upgrade_requirements(self):
         """PostureEvidence fields match what UPGRADE_REQUIREMENTS expects."""
-        from care_platform.build.config.schema import TrustPostureLevel
+        from pact.build.config.schema import TrustPostureLevel
 
         # Verify requirements exist for SHARED_PLANNING (first upgrade target)
         assert TrustPostureLevel.SHARED_PLANNING in UPGRADE_REQUIREMENTS

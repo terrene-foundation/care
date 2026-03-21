@@ -3,9 +3,9 @@ requires = ["setuptools>=65.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "care-platform"
+name = "pact"
 version = "0.1.0"
-description = "CARE Platform — Governed operational model for running organizations with AI agents under EATP trust governance"
+description = "PACT — Reference implementation of Principled Architecture for Constrained Trust under EATP trust governance"
 authors = [
     {name = "Terrene Foundation", email = "info@terrene.foundation"}
 ]
@@ -44,7 +44,7 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "structlog>=23.1.0",
     "pyyaml>=6.0",
-    # EATP SDK (trust protocol — core to CARE Platform, always required)
+    # EATP SDK (trust protocol — core to PACT, always required)
     "eatp>=0.1.0",
     # Trust Plane (EATP reference implementation)
     "trust-plane>=0.2.0",
@@ -52,7 +52,7 @@ dependencies = [
 
 [project.optional-dependencies]
 # Kailash SDK frameworks — not imported in source yet, install when needed
-# (install with: pip install care-platform[kailash])
+# (install with: pip install pact[kailash])
 kailash = [
     "kailash>=0.12.5",
     "kailash-nexus>=1.4.2",
@@ -60,17 +60,17 @@ kailash = [
     "kailash-kaizen>=1.2.5",
 ]
 # Firebase Admin SDK for SSO token verification
-# (install with: pip install care-platform[firebase])
+# (install with: pip install pact[firebase])
 firebase = [
     "firebase-admin>=6.0",
 ]
-# PostgreSQL support (install with: pip install care-platform[postgres])
+# PostgreSQL support (install with: pip install pact[postgres])
 postgres = [
     "psycopg2-binary>=2.9.0",
 ]
 # All optional dependencies
 all = [
-    "care-platform[kailash,firebase,postgres]",
+    "pact[kailash,firebase,postgres]",
 ]
 dev = [
     # Testing (pytest>=7.2.0 removes vulnerable py dependency)
@@ -91,12 +91,12 @@ dev = [
 ]
 
 [project.scripts]
-care-platform = "care_platform.build.cli:main"
+pact = "pact.build.cli:main"
 
 [project.urls]
-"Homepage" = "https://github.com/terrene-foundation/care"
-"Bug Tracker" = "https://github.com/terrene-foundation/care/issues"
-"Documentation" = "https://terrene.dev/care"
+"Homepage" = "https://github.com/terrene-foundation/pact"
+"Bug Tracker" = "https://github.com/terrene-foundation/pact/issues"
+"Documentation" = "https://terrene.dev/pact"
 
 [tool.setuptools.packages.find]
 where = ["src"]

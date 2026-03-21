@@ -3,9 +3,9 @@ Copyright 2026 Terrene Foundation
 Licensed under the Apache License, Version 2.0
 -->
 
-# CARE Platform Operator Guide
+# PACT Operator Guide
 
-This guide covers running the CARE Platform in a containerized environment using Docker Compose.
+This guide covers running the PACT in a containerized environment using Docker Compose.
 
 ---
 
@@ -58,7 +58,7 @@ docker compose up
 This starts three services in dependency order:
 
 1. `db` — PostgreSQL 16 (waits until healthy)
-2. `api` — CARE Platform FastAPI server on port 8000 (waits until db is healthy)
+2. `api` — PACT FastAPI server on port 8000 (waits until db is healthy)
 3. `web` — Next.js frontend on port 3000 (waits until api is healthy)
 
 To run in the background:
@@ -72,7 +72,7 @@ docker compose up -d
 ```bash
 # API health check
 curl http://localhost:8000/health
-# Expected: {"status":"healthy","service":"care-platform"}
+# Expected: {"status":"healthy","service":"pact"}
 
 # Frontend
 open http://localhost:3000
@@ -94,7 +94,7 @@ docker compose down -v        # stop containers and delete database volume
 
 | Service | Port | Description                             |
 | ------- | ---- | --------------------------------------- |
-| `db`    | 5432 | PostgreSQL 16 — CARE Platform database  |
+| `db`    | 5432 | PostgreSQL 16 — PACT database  |
 | `api`   | 8000 | FastAPI server — REST API and WebSocket |
 | `web`   | 3000 | Next.js frontend — operator dashboard   |
 
@@ -129,18 +129,18 @@ ANTHROPIC_MODEL=claude-sonnet-4-6
 While the containers are running:
 
 ```bash
-docker compose exec db psql -U care -d care_platform
+docker compose exec db psql -U care -d pact
 ```
 
 From your host machine (requires psql installed locally):
 
 ```bash
-psql postgresql://care:your-password@localhost:5432/care_platform
+psql postgresql://care:your-password@localhost:5432/pact
 ```
 
 ### Running database migrations
 
-The CARE Platform uses Alembic for database migrations. Run migrations after starting the services:
+The PACT uses Alembic for database migrations. Run migrations after starting the services:
 
 ```bash
 docker compose exec api python -m alembic upgrade head
@@ -157,7 +157,7 @@ docker compose exec api python -m alembic current
 Create a database backup with pg_dump:
 
 ```bash
-docker compose exec db pg_dump -U care care_platform > backup_$(date +%Y%m%d_%H%M%S).sql
+docker compose exec db pg_dump -U care pact > backup_$(date +%Y%m%d_%H%M%S).sql
 ```
 
 Store the backup file in a secure, off-container location. Do not commit backup files to the repository.
@@ -171,7 +171,7 @@ To restore from a backup:
 docker compose stop api web
 
 # Restore
-docker compose exec -T db psql -U care care_platform < backup_YYYYMMDD_HHMMSS.sql
+docker compose exec -T db psql -U care pact < backup_YYYYMMDD_HHMMSS.sql
 
 # Restart
 docker compose start api web
@@ -194,7 +194,7 @@ docker compose up -d
 
 | Endpoint      | Service | Description                                              |
 | ------------- | ------- | -------------------------------------------------------- |
-| `GET /health` | api     | Returns `{"status":"healthy","service":"care-platform"}` |
+| `GET /health` | api     | Returns `{"status":"healthy","service":"pact"}` |
 | `GET /`       | web     | Returns the Next.js page (200 = healthy)                 |
 
 These endpoints are used by Docker Compose health checks and can be wired into external monitoring tools.
@@ -290,7 +290,7 @@ docker compose up --build       # build and start in one step
 
 ## Security Checklist
 
-Before exposing the CARE Platform to external traffic:
+Before exposing the PACT to external traffic:
 
 - [ ] `CARE_API_TOKEN` is set to a cryptographically random token (at least 32 bytes)
 - [ ] `CARE_DEV_MODE` is `false` or absent

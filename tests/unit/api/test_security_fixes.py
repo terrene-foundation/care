@@ -11,16 +11,16 @@ from __future__ import annotations
 
 import pytest
 
-from care_platform.build.config.schema import TrustPostureLevel, VerificationLevel
-from care_platform.build.workspace.bridge import BridgeManager
-from care_platform.trust.revocation import RevocationManager
-from care_platform.trust.shadow_enforcer_live import ShadowEnforcerLive
-from care_platform.trust.store.cost_tracking import CostTracker
-from care_platform.use.api.endpoints import PlatformAPI
-from care_platform.use.api.events import EventBus
-from care_platform.use.api.shutdown import ShutdownManager
-from care_platform.use.execution.approval import ApprovalQueue
-from care_platform.use.execution.registry import AgentRegistry
+from pact.build.config.schema import TrustPostureLevel, VerificationLevel
+from pact.build.workspace.bridge import BridgeManager
+from pact.trust.revocation import RevocationManager
+from pact.trust.shadow_enforcer_live import ShadowEnforcerLive
+from pact.trust.store.cost_tracking import CostTracker
+from pact.use.api.endpoints import PactAPI
+from pact.use.api.events import EventBus
+from pact.use.api.shutdown import ShutdownManager
+from pact.use.execution.approval import ApprovalQueue
+from pact.use.execution.registry import AgentRegistry
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -73,7 +73,7 @@ def bridge_manager():
 
 @pytest.fixture()
 def api(registry, bridge_manager):
-    return PlatformAPI(
+    return PactAPI(
         registry=registry,
         approval_queue=ApprovalQueue(),
         cost_tracker=CostTracker(),

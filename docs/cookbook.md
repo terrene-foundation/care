@@ -1,6 +1,6 @@
-# CARE Platform Cookbook
+# PACT Cookbook
 
-Working examples for common CARE Platform operations. Each recipe is self-contained
+Working examples for common PACT operations. Each recipe is self-contained
 and can be run directly. For the full runnable quickstart, see `examples/quickstart.py`.
 
 ---
@@ -10,8 +10,8 @@ and can be run directly. For the full runnable quickstart, see `examples/quickst
 Load a YAML configuration and inspect the resulting platform structure.
 
 ```python
-from care_platform import PlatformConfig
-from care_platform.build.config.schema import GenesisConfig
+from pact import PlatformConfig
+from pact.build.config.schema import GenesisConfig
 
 # Option A: Build configuration in Python
 config = PlatformConfig(
@@ -32,7 +32,7 @@ print(f"Constraint envelopes: {len(config.constraint_envelopes)}")
 ```python
 # Option B: Load from YAML file
 import yaml
-from care_platform import PlatformConfig
+from pact import PlatformConfig
 
 with open("examples/care-config.yaml") as f:
     raw = yaml.safe_load(f)
@@ -54,8 +54,8 @@ Each level has a constraint envelope, and each child envelope must be a monotoni
 tightening of the parent.
 
 ```python
-from care_platform import ConstraintEnvelope
-from care_platform.build.config.schema import (
+from pact import ConstraintEnvelope
+from pact.build.config.schema import (
     CommunicationConstraintConfig,
     ConstraintEnvelopeConfig,
     DataAccessConstraintConfig,
@@ -148,8 +148,8 @@ results.
 ```python
 from datetime import UTC, datetime
 
-from care_platform import ConstraintEnvelope, EvaluationResult
-from care_platform.build.config.schema import (
+from pact import ConstraintEnvelope, EvaluationResult
+from pact.build.config.schema import (
     CommunicationConstraintConfig,
     ConstraintEnvelopeConfig,
     DataAccessConstraintConfig,
@@ -215,8 +215,8 @@ Demonstrate the rule that child envelopes can never expand permissions beyond
 the parent.
 
 ```python
-from care_platform import ConstraintEnvelope
-from care_platform.build.config.schema import (
+from pact import ConstraintEnvelope
+from pact.build.config.schema import (
     CommunicationConstraintConfig,
     ConstraintEnvelopeConfig,
     FinancialConstraintConfig,
@@ -288,8 +288,8 @@ rate limits, and communication restrictions.
 Build an audit chain, append actions, then walk the chain to verify integrity.
 
 ```python
-from care_platform import AuditAnchor, AuditChain
-from care_platform.build.config.schema import VerificationLevel
+from pact import AuditAnchor, AuditChain
+from pact.build.config.schema import VerificationLevel
 
 # Create a new chain
 chain = AuditChain(chain_id="content-team-2026-03")
@@ -358,8 +358,8 @@ Record a complete audit trail for a work session, then export it for review.
 ```python
 from datetime import UTC, datetime
 
-from care_platform import AuditChain
-from care_platform.build.config.schema import VerificationLevel
+from pact import AuditChain
+from pact.build.config.schema import VerificationLevel
 
 chain = AuditChain(chain_id="dm-team-session-001")
 

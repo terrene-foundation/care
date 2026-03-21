@@ -18,7 +18,7 @@ With a solo founder operating 4+ agent teams, every HELD action requires human a
 1. Agents stall waiting for approval (operations grind to a halt)
 2. The founder rubber-stamps approvals to clear the queue (governance becomes theater)
 
-Both outcomes undermine the CARE Platform's core promise: meaningful human governance of AI agents.
+Both outcomes undermine the PACT's core promise: meaningful human governance of AI agents.
 
 ## Analysis
 
@@ -46,7 +46,7 @@ At current team scale (4 teams), the estimated 10-20 HELD items/week fits within
 
 #### 1. Approval Queue with Urgency and Batch Support
 
-**Location**: `care_platform/execution/approval.py`
+**Location**: `pact/execution/approval.py`
 **Tests**: `tests/unit/execution/test_approval.py`
 
 The `ApprovalQueue` implements:
@@ -58,7 +58,7 @@ The `ApprovalQueue` implements:
 
 #### 2. Trust Posture Model with DELEGATED Level
 
-**Location**: `care_platform/trust/posture.py`
+**Location**: `pact/trust/posture.py`
 
 The trust posture lifecycle provides the structural solution to the bottleneck:
 
@@ -73,7 +73,7 @@ As agents demonstrate trustworthiness (tracked by ShadowEnforcer metrics), their
 
 #### 3. ShadowEnforcer Evidence for Threshold Tuning
 
-**Location**: `care_platform/trust/shadow_enforcer.py`
+**Location**: `pact/trust/shadow_enforcer.py`
 
 The ShadowEnforcer provides empirical data on what percentage of actions would be HELD vs AUTO_APPROVED at different constraint thresholds. This allows the founder to:
 

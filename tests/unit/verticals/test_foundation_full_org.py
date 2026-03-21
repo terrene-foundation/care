@@ -6,7 +6,7 @@ Validates the complete Terrene Foundation organization generated via
 OrgGenerator with all 11 teams across 3 departments, cross-team bridges,
 monotonic constraint tightening at every level, and YAML round-trip fidelity.
 
-This is the dog-food test: the CARE Platform's own organizational structure
+This is the dog-food test: the PACT's own organizational structure
 run through the same machinery it provides to external users.
 """
 
@@ -15,9 +15,9 @@ from __future__ import annotations
 import pytest
 import yaml
 
-from care_platform.build.org.builder import OrgDefinition
-from care_platform.build.org.envelope_deriver import EnvelopeDeriver
-from care_platform.build.org.generator import OrgGenerator, OrgGeneratorConfig
+from pact.build.org.builder import OrgDefinition
+from pact.build.org.envelope_deriver import EnvelopeDeriver
+from pact.build.org.generator import OrgGenerator, OrgGeneratorConfig
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -27,7 +27,7 @@ from care_platform.build.org.generator import OrgGenerator, OrgGeneratorConfig
 @pytest.fixture(scope="module")
 def foundation_config() -> OrgGeneratorConfig:
     """The OrgGeneratorConfig for the full Terrene Foundation."""
-    from care_platform.build.verticals.foundation import FOUNDATION_ORG_CONFIG
+    from pact.build.verticals.foundation import FOUNDATION_ORG_CONFIG
 
     return FOUNDATION_ORG_CONFIG
 
@@ -42,7 +42,7 @@ def foundation_org(foundation_config: OrgGeneratorConfig) -> OrgDefinition:
 @pytest.fixture(scope="module")
 def bridge_definitions():
     """Cross-team bridge definitions for the Foundation org."""
-    from care_platform.build.verticals.foundation import FOUNDATION_BRIDGES
+    from pact.build.verticals.foundation import FOUNDATION_BRIDGES
 
     return FOUNDATION_BRIDGES
 
@@ -62,9 +62,9 @@ class TestTier1Teams:
         """All 5 Tier 1 teams must be present in the generated org."""
         team_names = {t.name for t in foundation_org.teams}
         for expected in TIER_1_TEAMS:
-            assert expected in team_names, (
-                f"Tier 1 team '{expected}' not found. Available teams: {sorted(team_names)}"
-            )
+            assert (
+                expected in team_names
+            ), f"Tier 1 team '{expected}' not found. Available teams: {sorted(team_names)}"
 
     def test_media_team_roles(self, foundation_org: OrgDefinition):
         """Media/DM team has content_creator, analyst, coordinator roles."""
@@ -97,9 +97,9 @@ class TestTier1Teams:
         team = _find_team_by_name(foundation_org, "Partnerships")
         agent_ids = set(team.agents)
         agents = [a for a in foundation_org.agents if a.id in agent_ids]
-        assert len(agents) >= 4, (
-            f"Partnerships team should have at least 4 agents, got {len(agents)}"
-        )
+        assert (
+            len(agents) >= 4
+        ), f"Partnerships team should have at least 4 agents, got {len(agents)}"
 
     def test_website_team_roles(self, foundation_org: OrgDefinition):
         """Website team has website_manager, content_creator, developer, coordinator roles."""
@@ -125,9 +125,9 @@ class TestTier2Teams:
         """All 3 Tier 2 teams must be present in the generated org."""
         team_names = {t.name for t in foundation_org.teams}
         for expected in TIER_2_TEAMS:
-            assert expected in team_names, (
-                f"Tier 2 team '{expected}' not found. Available teams: {sorted(team_names)}"
-            )
+            assert (
+                expected in team_names
+            ), f"Tier 2 team '{expected}' not found. Available teams: {sorted(team_names)}"
 
     def test_community_team_roles(self, foundation_org: OrgDefinition):
         """Community team has community_manager, content_creator, coordinator roles."""
@@ -141,9 +141,9 @@ class TestTier2Teams:
         team = _find_team_by_name(foundation_org, "Developer Relations")
         agent_ids = set(team.agents)
         agents = [a for a in foundation_org.agents if a.id in agent_ids]
-        assert len(agents) >= 4, (
-            f"Developer Relations team should have at least 4 agents, got {len(agents)}"
-        )
+        assert (
+            len(agents) >= 4
+        ), f"Developer Relations team should have at least 4 agents, got {len(agents)}"
 
     def test_finance_team_roles(self, foundation_org: OrgDefinition):
         """Finance team has finance_manager, analyst, coordinator roles."""
@@ -168,18 +168,18 @@ class TestTier3Teams:
         """All 3 Tier 3 teams must be present in the generated org."""
         team_names = {t.name for t in foundation_org.teams}
         for expected in TIER_3_TEAMS:
-            assert expected in team_names, (
-                f"Tier 3 team '{expected}' not found. Available teams: {sorted(team_names)}"
-            )
+            assert (
+                expected in team_names
+            ), f"Tier 3 team '{expected}' not found. Available teams: {sorted(team_names)}"
 
     def test_certification_team_roles(self, foundation_org: OrgDefinition):
         """Certification team has reviewer, standards_author, coordinator roles."""
         team = _find_team_by_name(foundation_org, "Certification")
         agent_ids = set(team.agents)
         agents = [a for a in foundation_org.agents if a.id in agent_ids]
-        assert len(agents) >= 4, (
-            f"Certification team should have at least 4 agents, got {len(agents)}"
-        )
+        assert (
+            len(agents) >= 4
+        ), f"Certification team should have at least 4 agents, got {len(agents)}"
 
     def test_training_team_roles(self, foundation_org: OrgDefinition):
         """Training team has trainer, content_creator, coordinator roles."""
@@ -222,9 +222,9 @@ class TestDepartmentGroupings:
         """Departments are named Operations, Standards & Governance, Growth."""
         dept_names = {d.name for d in foundation_org.departments}
         for expected in EXPECTED_DEPARTMENTS:
-            assert expected in dept_names, (
-                f"Department '{expected}' not found. Available departments: {sorted(dept_names)}"
-            )
+            assert (
+                expected in dept_names
+            ), f"Department '{expected}' not found. Available departments: {sorted(dept_names)}"
 
     def test_operations_department_teams(self, foundation_org: OrgDefinition):
         """Operations department contains Media/DM, Website, Community."""
@@ -257,9 +257,9 @@ class TestDepartmentGroupings:
         agent_ids = {a.id for a in foundation_org.agents}
         for dept in foundation_org.departments:
             assert dept.head_agent_id is not None, f"Department '{dept.name}' has no head_agent_id"
-            assert dept.head_agent_id in agent_ids, (
-                f"Department '{dept.name}' head '{dept.head_agent_id}' not found in org agents"
-            )
+            assert (
+                dept.head_agent_id in agent_ids
+            ), f"Department '{dept.name}' head '{dept.head_agent_id}' not found in org agents"
 
     def test_each_department_has_envelope(self, foundation_org: OrgDefinition):
         """Every department has a constraint envelope."""
@@ -277,33 +277,33 @@ class TestCrossTeamBridges:
 
     def test_bridges_defined(self, bridge_definitions):
         """At least 5 standing bridges are defined."""
-        assert len(bridge_definitions) >= 5, (
-            f"Expected at least 5 bridge definitions, got {len(bridge_definitions)}"
-        )
+        assert (
+            len(bridge_definitions) >= 5
+        ), f"Expected at least 5 bridge definitions, got {len(bridge_definitions)}"
 
     def test_standards_governance_bridge(self, bridge_definitions):
         """Standing bridge exists between Standards and Governance."""
-        assert _has_bridge(bridge_definitions, "Standards", "Governance"), (
-            "Missing bridge: Standards <-> Governance"
-        )
+        assert _has_bridge(
+            bridge_definitions, "Standards", "Governance"
+        ), "Missing bridge: Standards <-> Governance"
 
     def test_media_community_bridge(self, bridge_definitions):
         """Standing bridge exists between Media/DM and Community."""
-        assert _has_bridge(bridge_definitions, "Media/DM", "Community"), (
-            "Missing bridge: Media/DM <-> Community"
-        )
+        assert _has_bridge(
+            bridge_definitions, "Media/DM", "Community"
+        ), "Missing bridge: Media/DM <-> Community"
 
     def test_devrel_standards_bridge(self, bridge_definitions):
         """Standing bridge exists between Developer Relations and Standards."""
-        assert _has_bridge(bridge_definitions, "Developer Relations", "Standards"), (
-            "Missing bridge: Developer Relations <-> Standards"
-        )
+        assert _has_bridge(
+            bridge_definitions, "Developer Relations", "Standards"
+        ), "Missing bridge: Developer Relations <-> Standards"
 
     def test_partnerships_governance_bridge(self, bridge_definitions):
         """Standing bridge exists between Partnerships and Governance."""
-        assert _has_bridge(bridge_definitions, "Partnerships", "Governance"), (
-            "Missing bridge: Partnerships <-> Governance"
-        )
+        assert _has_bridge(
+            bridge_definitions, "Partnerships", "Governance"
+        ), "Missing bridge: Partnerships <-> Governance"
 
     def test_finance_bridge_exists(self, bridge_definitions):
         """Finance has at least one bridge (budget oversight)."""
@@ -315,9 +315,9 @@ class TestCrossTeamBridges:
     def test_all_bridges_are_standing_type(self, bridge_definitions):
         """All defined bridges are Standing type."""
         for b in bridge_definitions:
-            assert b["type"] == "Standing", (
-                f"Bridge {b['source']} <-> {b['target']} is '{b['type']}', expected 'Standing'"
-            )
+            assert (
+                b["type"] == "Standing"
+            ), f"Bridge {b['source']} <-> {b['target']} is '{b['type']}', expected 'Standing'"
 
     def test_all_bridges_have_purpose(self, bridge_definitions):
         """Every bridge has a non-empty purpose."""
@@ -380,9 +380,9 @@ class TestFoundationOrgValidation:
         """Each team has a designated team lead."""
         for team in foundation_org.teams:
             assert team.team_lead is not None, f"Team '{team.name}' has no team_lead"
-            assert team.team_lead in team.agents, (
-                f"Team '{team.name}' lead '{team.team_lead}' not in team agents: {team.agents}"
-            )
+            assert (
+                team.team_lead in team.agents
+            ), f"Team '{team.name}' lead '{team.team_lead}' not in team agents: {team.agents}"
 
     def test_validate_org_detailed_zero_errors(self, foundation_org: OrgDefinition):
         """validate_org_detailed() returns zero ERROR-severity findings."""
@@ -424,9 +424,9 @@ class TestMonotonicTightening:
 
         for dept in foundation_org.departments:
             assert dept.envelope is not None, f"Department '{dept.name}' has no envelope"
-            assert deriver.validate_tightening(org_env, dept.envelope), (
-                f"Department '{dept.name}' envelope is NOT tighter than org envelope"
-            )
+            assert deriver.validate_tightening(
+                org_env, dept.envelope
+            ), f"Department '{dept.name}' envelope is NOT tighter than org envelope"
 
     def test_team_envelopes_within_hierarchy(self, foundation_org: OrgDefinition):
         """Every team's lead envelope is within the org envelope constraints.
@@ -451,9 +451,9 @@ class TestMonotonicTightening:
                 continue
             lead_actions = set(lead_env.operational.allowed_actions)
             extra = lead_actions - org_actions
-            assert not extra, (
-                f"Team '{team.name}' lead has actions {sorted(extra)} not in org envelope"
-            )
+            assert (
+                not extra
+            ), f"Team '{team.name}' lead has actions {sorted(extra)} not in org envelope"
 
     def test_agent_envelopes_within_lead(self, foundation_org: OrgDefinition):
         """Every non-lead, non-coordinator agent's allowed_actions are a
@@ -532,12 +532,7 @@ class TestYAMLTemplates:
         from pathlib import Path
 
         builtin_dir = (
-            Path(__file__).resolve().parents[3]
-            / "src"
-            / "care_platform"
-            / "build"
-            / "templates"
-            / "builtin"
+            Path(__file__).resolve().parents[3] / "src" / "pact" / "build" / "templates" / "builtin"
         )
         assert builtin_dir.exists(), f"Builtin templates directory not found: {builtin_dir}"
 
@@ -546,12 +541,7 @@ class TestYAMLTemplates:
         from pathlib import Path
 
         builtin_dir = (
-            Path(__file__).resolve().parents[3]
-            / "src"
-            / "care_platform"
-            / "build"
-            / "templates"
-            / "builtin"
+            Path(__file__).resolve().parents[3] / "src" / "pact" / "build" / "templates" / "builtin"
         )
         for name in self.TEMPLATE_NAMES:
             yaml_path = builtin_dir / f"{name}.yaml"
@@ -562,12 +552,7 @@ class TestYAMLTemplates:
         from pathlib import Path
 
         builtin_dir = (
-            Path(__file__).resolve().parents[3]
-            / "src"
-            / "care_platform"
-            / "build"
-            / "templates"
-            / "builtin"
+            Path(__file__).resolve().parents[3] / "src" / "pact" / "build" / "templates" / "builtin"
         )
         for name in self.TEMPLATE_NAMES:
             yaml_path = builtin_dir / f"{name}.yaml"
@@ -582,12 +567,7 @@ class TestYAMLTemplates:
         from pathlib import Path
 
         builtin_dir = (
-            Path(__file__).resolve().parents[3]
-            / "src"
-            / "care_platform"
-            / "build"
-            / "templates"
-            / "builtin"
+            Path(__file__).resolve().parents[3] / "src" / "pact" / "build" / "templates" / "builtin"
         )
         required_fields = {"name", "agents", "envelopes", "team"}
         for name in self.TEMPLATE_NAMES:
@@ -603,12 +583,7 @@ class TestYAMLTemplates:
         from pathlib import Path
 
         builtin_dir = (
-            Path(__file__).resolve().parents[3]
-            / "src"
-            / "care_platform"
-            / "build"
-            / "templates"
-            / "builtin"
+            Path(__file__).resolve().parents[3] / "src" / "pact" / "build" / "templates" / "builtin"
         )
         for name in self.TEMPLATE_NAMES:
             yaml_path = builtin_dir / f"{name}.yaml"
@@ -621,24 +596,19 @@ class TestYAMLTemplates:
         """Each YAML template can be loaded via TemplateRegistry.load_from_yaml()."""
         from pathlib import Path
 
-        from care_platform.build.templates.registry import TemplateRegistry
+        from pact.build.templates.registry import TemplateRegistry
 
         builtin_dir = (
-            Path(__file__).resolve().parents[3]
-            / "src"
-            / "care_platform"
-            / "build"
-            / "templates"
-            / "builtin"
+            Path(__file__).resolve().parents[3] / "src" / "pact" / "build" / "templates" / "builtin"
         )
         for name in self.TEMPLATE_NAMES:
             yaml_path = builtin_dir / f"{name}.yaml"
             if not yaml_path.exists():
                 pytest.skip(f"{name}.yaml not found")
             template = TemplateRegistry.load_from_yaml(yaml_path)
-            assert template.name == name, (
-                f"Template loaded from '{name}.yaml' has name '{template.name}', expected '{name}'"
-            )
+            assert (
+                template.name == name
+            ), f"Template loaded from '{name}.yaml' has name '{template.name}', expected '{name}'"
 
 
 # ---------------------------------------------------------------------------
@@ -669,9 +639,9 @@ class TestYAMLRoundTrip:
         reloaded_org = generator.generate(reloaded_config)
         results = reloaded_org.validate_org_detailed()
         errors = [r for r in results if r.is_error]
-        assert not errors, (
-            f"Re-generated org has {len(errors)} validation errors after YAML round-trip"
-        )
+        assert (
+            not errors
+        ), f"Re-generated org has {len(errors)} validation errors after YAML round-trip"
 
 
 # ---------------------------------------------------------------------------
@@ -680,13 +650,13 @@ class TestYAMLRoundTrip:
 
 
 class TestPlatformBootstrapCompatibility:
-    """The Foundation org can be converted to PlatformConfig for bootstrap."""
+    """The Foundation org can be converted to PactConfig for bootstrap."""
 
     def test_org_to_platform_config_has_all_data(self, foundation_org: OrgDefinition):
-        """The org can produce a PlatformConfig with all agents, teams, envelopes."""
-        from care_platform.build.config.schema import GenesisConfig, PlatformConfig
+        """The org can produce a PactConfig with all agents, teams, envelopes."""
+        from pact.build.config.schema import GenesisConfig, PactConfig
 
-        platform_config = PlatformConfig(
+        platform_config = PactConfig(
             name=foundation_org.name,
             genesis=GenesisConfig(
                 authority=foundation_org.authority_id,
@@ -723,9 +693,9 @@ def _assert_department_teams(org: OrgDefinition, dept_name: str, expected_team_n
         if d.name == dept_name:
             dept = d
             break
-    assert dept is not None, (
-        f"Department '{dept_name}' not found. Available: {[d.name for d in org.departments]}"
-    )
+    assert (
+        dept is not None
+    ), f"Department '{dept_name}' not found. Available: {[d.name for d in org.departments]}"
 
     # Map team IDs to names
     team_name_map = {t.id: t.name for t in org.teams}

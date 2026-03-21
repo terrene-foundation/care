@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CARE Platform — TRUST/BUILD/USE codebase restructure.
+PACT — TRUST/BUILD/USE codebase restructure.
 
 Moves modules into three top-level packages reflecting the Fractal Dual Plane:
   trust/ — governance primitives (L1 Trust Plane)
@@ -21,30 +21,30 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / "src" / "care_platform"
+SRC = ROOT / "src" / "pact"
 
 # ── Import rewrite mapping ──────────────────────────────────────────────
 # Order matters: longer prefixes first to avoid partial matches
 IMPORT_MAP = [
     # Modules moving INTO trust/
-    ("care_platform.trust.constraint", "care_platform.trust.constraint"),
-    ("care_platform.trust.audit", "care_platform.trust.audit"),
-    ("care_platform.trust.auth", "care_platform.trust.auth"),
-    ("care_platform.trust.store", "care_platform.trust.store"),
-    ("care_platform.trust.store_isolation", "care_platform.trust.store_isolation"),
-    ("care_platform.trust.resilience", "care_platform.trust.resilience"),
+    ("pact.trust.constraint", "pact.trust.constraint"),
+    ("pact.trust.audit", "pact.trust.audit"),
+    ("pact.trust.auth", "pact.trust.auth"),
+    ("pact.trust.store", "pact.trust.store"),
+    ("pact.trust.store_isolation", "pact.trust.store_isolation"),
+    ("pact.trust.resilience", "pact.trust.resilience"),
     # Modules moving INTO build/
-    ("care_platform.build.org", "care_platform.build.org"),
-    ("care_platform.build.templates", "care_platform.build.templates"),
-    ("care_platform.build.verticals", "care_platform.build.verticals"),
-    ("care_platform.build.workspace", "care_platform.build.workspace"),
-    ("care_platform.build.config", "care_platform.build.config"),
-    ("care_platform.build.bootstrap", "care_platform.build.bootstrap"),
-    ("care_platform.build.cli", "care_platform.build.cli"),
+    ("pact.build.org", "pact.build.org"),
+    ("pact.build.templates", "pact.build.templates"),
+    ("pact.build.verticals", "pact.build.verticals"),
+    ("pact.build.workspace", "pact.build.workspace"),
+    ("pact.build.config", "pact.build.config"),
+    ("pact.build.bootstrap", "pact.build.bootstrap"),
+    ("pact.build.cli", "pact.build.cli"),
     # Modules moving INTO use/
-    ("care_platform.use.api", "care_platform.use.api"),
-    ("care_platform.use.execution", "care_platform.use.execution"),
-    ("care_platform.use.observability", "care_platform.use.observability"),
+    ("pact.use.api", "pact.use.api"),
+    ("pact.use.execution", "pact.use.execution"),
+    ("pact.use.observability", "pact.use.observability"),
 ]
 
 # Sort by length of old path (longest first) to avoid partial replacement
@@ -209,8 +209,8 @@ def rewrite_imports(dry_run=False):
         changes = 0
 
         for old_prefix, new_prefix in IMPORT_MAP:
-            # Pattern: from care_platform.X... import ... or import care_platform.X...
-            # Also matches string references like "care_platform.X.Y"
+            # Pattern: from pact.X... import ... or import pact.X...
+            # Also matches string references like "pact.X.Y"
             # Use word boundary to avoid partial matches
             old_escaped = re.escape(old_prefix)
 
@@ -236,7 +236,7 @@ def rewrite_imports(dry_run=False):
 
 
 def update_main_init():
-    """Update the main care_platform/__init__.py with new import paths."""
+    """Update the main pact/__init__.py with new import paths."""
     init_path = SRC / "__init__.py"
     content = init_path.read_text()
 
@@ -246,20 +246,20 @@ def update_main_init():
     # Update the docstring
     content = content.replace(
         """Architecture:
-    care_platform.trust       — EATP trust layer (genesis, delegation, verification)
-    care_platform.trust.constraint  — Constraint envelope evaluation (5 dimensions)
-    care_platform.use.execution   — Agent execution plane (Kaizen-based runtime)
-    care_platform.trust.audit       — Audit anchor chain (tamper-evident records)
-    care_platform.build.workspace   — Workspace-as-knowledge-base management
-    care_platform.build.config      — Platform configuration and agent definitions""",
+    pact.trust       — EATP trust layer (genesis, delegation, verification)
+    pact.trust.constraint  — Constraint envelope evaluation (5 dimensions)
+    pact.use.execution   — Agent execution plane (Kaizen-based runtime)
+    pact.trust.audit       — Audit anchor chain (tamper-evident records)
+    pact.build.workspace   — Workspace-as-knowledge-base management
+    pact.build.config      — Platform configuration and agent definitions""",
         """Architecture (Fractal Dual Plane — TRUST / BUILD / USE):
-    care_platform.trust       — TRUST plane: governance primitives (EATP, constraints, audit)
-    care_platform.build       — BUILD plane: define organizations (builder, templates, verticals)
-    care_platform.use         — USE plane: run & observe (API, execution, observability)""",
+    pact.trust       — TRUST plane: governance primitives (EATP, constraints, audit)
+    pact.build       — BUILD plane: define organizations (builder, templates, verticals)
+    pact.use         — USE plane: run & observe (API, execution, observability)""",
     )
 
     init_path.write_text(content)
-    print("Updated care_platform/__init__.py")
+    print("Updated pact/__init__.py")
 
 
 def update_pyproject():
@@ -267,7 +267,7 @@ def update_pyproject():
     pyproject = ROOT / "pyproject.toml"
     content = pyproject.read_text()
     content = content.replace(
-        'care-platform = "care_platform.build.cli:main"', 'care-platform = "care_platform.build.cli:main"'
+        'pact = "pact.build.cli:main"', 'pact = "pact.build.cli:main"'
     )
     pyproject.write_text(content)
     print("Updated pyproject.toml CLI entry point")
@@ -275,7 +275,7 @@ def update_pyproject():
 
 def main():
     print("=" * 60)
-    print("CARE Platform — TRUST/BUILD/USE Restructure")
+    print("PACT — TRUST/BUILD/USE Restructure")
     print("=" * 60)
 
     dry_run = "--dry-run" in sys.argv
@@ -298,7 +298,7 @@ def main():
     print("\nStep 4: Rewriting imports...")
     rewrite_imports()
 
-    print("\nStep 5: Updating care_platform/__init__.py...")
+    print("\nStep 5: Updating pact/__init__.py...")
     update_main_init()
 
     print("\nStep 6: Updating pyproject.toml...")

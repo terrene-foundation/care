@@ -14,22 +14,22 @@ Tests cover:
 
 import pytest
 
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     TrustPostureLevel,
     VerificationGradientConfig,
     VerificationLevel,
 )
-from care_platform.trust.audit.anchor import AuditChain
-from care_platform.trust.constraint.gradient import GradientEngine
-from care_platform.trust.posture import TrustPosture
-from care_platform.trust.store.store import MemoryStore
-from care_platform.use.execution.approval import ApprovalQueue
-from care_platform.use.execution.llm_backend import (
+from pact.trust.audit.anchor import AuditChain
+from pact.trust.constraint.gradient import GradientEngine
+from pact.trust.posture import TrustPosture
+from pact.trust.store.store import MemoryStore
+from pact.use.execution.approval import ApprovalQueue
+from pact.use.execution.llm_backend import (
     BackendRouter,
     StubBackend,
 )
-from care_platform.use.execution.posture_enforcer import PostureEnforcer
-from care_platform.use.execution.registry import AgentRegistry
+from pact.use.execution.posture_enforcer import PostureEnforcer
+from pact.use.execution.registry import AgentRegistry
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -371,21 +371,21 @@ class TestShadowEnforcerLiveMode:
 
     def test_live_mode_disabled_by_default(self):
         """ShadowEnforcer live mode should be disabled by default."""
-        from care_platform.trust.shadow_enforcer_live import ShadowEnforcerLive
+        from pact.trust.shadow_enforcer_live import ShadowEnforcerLive
 
         enforcer = ShadowEnforcerLive()
         assert enforcer.is_enabled is False
 
     def test_live_mode_enabled_via_env(self, monkeypatch):
-        """Setting CARE_SHADOW_ENFORCER_LIVE=true should enable live mode."""
-        from care_platform.trust.shadow_enforcer_live import ShadowEnforcerLive
+        """Setting PACT_SHADOW_ENFORCER_LIVE=true should enable live mode."""
+        from pact.trust.shadow_enforcer_live import ShadowEnforcerLive
 
         enforcer = ShadowEnforcerLive(enabled=True)
         assert enforcer.is_enabled is True
 
     def test_live_mode_records_agreement(self):
         """Live mode should record agreement between real and shadow decisions."""
-        from care_platform.trust.shadow_enforcer_live import ShadowEnforcerLive
+        from pact.trust.shadow_enforcer_live import ShadowEnforcerLive
 
         enforcer = ShadowEnforcerLive(enabled=True)
 
@@ -403,7 +403,7 @@ class TestShadowEnforcerLiveMode:
 
     def test_live_mode_records_divergence(self):
         """Live mode should record divergences between real and shadow decisions."""
-        from care_platform.trust.shadow_enforcer_live import ShadowEnforcerLive
+        from pact.trust.shadow_enforcer_live import ShadowEnforcerLive
 
         enforcer = ShadowEnforcerLive(enabled=True)
 
@@ -422,7 +422,7 @@ class TestShadowEnforcerLiveMode:
 
     def test_live_mode_per_posture_metrics(self):
         """Live mode should collect metrics per posture level."""
-        from care_platform.trust.shadow_enforcer_live import ShadowEnforcerLive
+        from pact.trust.shadow_enforcer_live import ShadowEnforcerLive
 
         enforcer = ShadowEnforcerLive(enabled=True)
 
@@ -449,7 +449,7 @@ class TestShadowEnforcerLiveMode:
 
     def test_no_overhead_when_disabled(self):
         """When disabled, recording should be a no-op with no overhead."""
-        from care_platform.trust.shadow_enforcer_live import ShadowEnforcerLive
+        from pact.trust.shadow_enforcer_live import ShadowEnforcerLive
 
         enforcer = ShadowEnforcerLive(enabled=False)
 
@@ -467,7 +467,7 @@ class TestShadowEnforcerLiveMode:
 
     def test_never_blocks_or_delays(self):
         """Live mode should never block, delay, or alter execution."""
-        from care_platform.trust.shadow_enforcer_live import ShadowEnforcerLive
+        from pact.trust.shadow_enforcer_live import ShadowEnforcerLive
 
         enforcer = ShadowEnforcerLive(enabled=True)
 

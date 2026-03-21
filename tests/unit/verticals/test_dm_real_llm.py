@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import pytest
 
-from care_platform.build.verticals.dm_runner import DMTeamRunner
+from pact.build.verticals.dm_runner import DMTeamRunner
 
 
 class TestRealLLMBackendConfiguration:

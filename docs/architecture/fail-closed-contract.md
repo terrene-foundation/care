@@ -2,7 +2,7 @@
 
 ## Requirement
 
-Every error path in the CARE Platform's trust and constraint layers must **deny, block, or restrict** — never silently allow. This is the fail-closed contract.
+Every error path in the PACT's trust and constraint layers must **deny, block, or restrict** — never silently allow. This is the fail-closed contract.
 
 ## What Fail-Closed Means
 
@@ -19,10 +19,10 @@ Every error path in the CARE Platform's trust and constraint layers must **deny,
 
 All `.py` files under:
 
-- `src/care_platform/trust/`
-- `src/care_platform/constraint/`
-- `src/care_platform/audit/`
-- `src/care_platform/persistence/`
+- `src/pact/trust/`
+- `src/pact/constraint/`
+- `src/pact/audit/`
+- `src/pact/persistence/`
 
 ## Exemptions
 

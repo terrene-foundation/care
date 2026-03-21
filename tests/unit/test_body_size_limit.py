@@ -3,7 +3,7 @@
 """Unit tests for L6: Request body size limit middleware.
 
 Validates that requests with bodies larger than the configured limit
-(default 1MB, configurable via CARE_MAX_BODY_SIZE) are rejected with
+(default 1MB, configurable via PACT_MAX_BODY_SIZE) are rejected with
 413 Payload Too Large.
 """
 
@@ -12,9 +12,9 @@ from __future__ import annotations
 import httpx
 import pytest
 
-import care_platform.use.api.server as server_module
-from care_platform.build.config.env import EnvConfig
-from care_platform.use.api.server import create_app
+import pact.use.api.server as server_module
+from pact.build.config.env import EnvConfig
+from pact.use.api.server import create_app
 
 
 @pytest.fixture(autouse=True)
@@ -29,7 +29,7 @@ def _reset_default_api():
 @pytest.fixture()
 def dev_config() -> EnvConfig:
     """EnvConfig in dev mode (auth disabled)."""
-    return EnvConfig(care_dev_mode=True, care_api_token="")
+    return EnvConfig(pact_dev_mode=True, pact_api_token="")
 
 
 @pytest.fixture()
@@ -105,13 +105,13 @@ class TestBodySizeLimit:
 
 
 class TestBodySizeLimitConfigurable:
-    """L6: Body size limit is configurable via CARE_MAX_BODY_SIZE env var."""
+    """L6: Body size limit is configurable via PACT_MAX_BODY_SIZE env var."""
 
     @pytest.mark.asyncio
     async def test_custom_limit_via_env(self, monkeypatch):
-        """When CARE_MAX_BODY_SIZE is set, the limit should change."""
-        monkeypatch.setenv("CARE_MAX_BODY_SIZE", "500")
-        cfg = EnvConfig(care_dev_mode=True, care_api_token="")
+        """When PACT_MAX_BODY_SIZE is set, the limit should change."""
+        monkeypatch.setenv("PACT_MAX_BODY_SIZE", "500")
+        cfg = EnvConfig(pact_dev_mode=True, pact_api_token="")
         application = create_app(env_config=cfg)
 
         transport = httpx.ASGITransport(app=application)

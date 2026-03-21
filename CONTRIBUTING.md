@@ -1,8 +1,8 @@
-# Contributing to the CARE Platform
+# Contributing to the PACT
 
-Thank you for your interest in contributing to the CARE Platform. This guide covers everything you need to set up your development environment, understand the contribution process, and submit changes.
+Thank you for your interest in contributing to the PACT. This guide covers everything you need to set up your development environment, understand the contribution process, and submit changes.
 
-The CARE Platform is owned by the Terrene Foundation and licensed under Apache 2.0. All contributions are welcome from anyone -- the Foundation operates under a uniform contributor framework with no special access or advantage for any contributor.
+The PACT is owned by the Terrene Foundation and licensed under Apache 2.0. All contributions are welcome from anyone -- the Foundation operates under a uniform contributor framework with no special access or advantage for any contributor.
 
 ---
 
@@ -48,13 +48,13 @@ Edit `.env` with your API keys. At minimum, configure one LLM provider. The root
 pytest
 
 # Run with coverage
-pytest --cov=care_platform
+pytest --cov=pact
 
 # Lint
 ruff check .
 
 # Type check
-mypy care_platform/
+mypy pact/
 ```
 
 All 875+ tests should pass. If any fail, check that your dependencies installed correctly and your `.env` is configured.
@@ -64,7 +64,7 @@ All 875+ tests should pass. If any fail, check that your dependencies installed 
 ## Project Structure
 
 ```
-care_platform/          Main package
+pact/          Main package
   trust/                EATP trust layer (genesis, delegation, posture, scoring)
   constraint/           Constraint envelopes and verification gradient
   execution/            Agent runtime (teams, sessions, approval queues)
@@ -98,7 +98,7 @@ pytest tests/test_trust_posture.py
 pytest -k "test_delegation"
 
 # Run with coverage report
-pytest --cov=care_platform --cov-report=term-missing
+pytest --cov=pact --cov-report=term-missing
 ```
 
 ### Test Requirements
@@ -138,7 +138,7 @@ ruff check --fix .
 The project uses **mypy** for type checking:
 
 ```bash
-mypy care_platform/
+mypy pact/
 ```
 
 ### Conventions
@@ -220,7 +220,7 @@ pytest
 ruff check .
 
 # Type check
-mypy care_platform/
+mypy pact/
 ```
 
 ### 4. Submit a Pull Request
@@ -262,7 +262,7 @@ All PRs require review before merging. Reviewers will check:
 
 ## Standards Alignment
 
-The CARE Platform is the reference implementation of the CARE, EATP, and CO specifications. Contributions must not violate these standards:
+The PACT is the reference implementation of the CARE, EATP, and CO specifications. Contributions must not violate these standards:
 
 - **CARE**: Dual Plane Model (Trust Plane + Execution Plane), constraint envelopes with five dimensions, monotonic tightening
 - **EATP**: Five-element trust lineage chains, verification gradient, trust postures

@@ -1,6 +1,6 @@
-# Getting Started with the CARE Platform
+# Getting Started with the PACT
 
-This guide walks you through setting up the CARE Platform from scratch -- from
+This guide walks you through setting up the PACT from scratch -- from
 installation to running your first governed agent team with trust verification and
 audit trails.
 
@@ -17,7 +17,7 @@ python3 --version
 # Python 3.11.x or later
 ```
 
-## 1. Install the CARE Platform
+## 1. Install the PACT
 
 Clone the repository and install in editable mode:
 
@@ -27,7 +27,7 @@ cd care
 pip install -e .
 ```
 
-This installs the `care_platform` package along with all dependencies (Kailash SDK,
+This installs the `pact` package along with all dependencies (Kailash SDK,
 EATP SDK, cryptography libraries, and CLI tools).
 
 For development (testing, linting, type checking):
@@ -53,12 +53,12 @@ ANTHROPIC_API_KEY=sk-ant-your-key-here
 OPENAI_API_KEY=sk-your-key-here
 ```
 
-The CARE Platform reads all API keys and model names from `.env` -- nothing is
+The PACT reads all API keys and model names from `.env` -- nothing is
 hardcoded. The root `conftest.py` auto-loads this file for testing as well.
 
 ## 3. Define Your Organization in YAML
 
-Every CARE Platform deployment starts with a YAML configuration that describes your
+Every PACT deployment starts with a YAML configuration that describes your
 organization structure: the genesis authority (root of trust), constraint envelopes,
 agents, teams, and workspaces.
 
@@ -85,7 +85,7 @@ who has ultimate authority over agent delegation. In code, this maps to
 `PlatformConfig.genesis`:
 
 ```python
-from care_platform import PlatformConfig
+from pact import PlatformConfig
 
 config = PlatformConfig(
     name="My Organization",
@@ -121,8 +121,8 @@ Here is an example that defines an agent who can collect metrics and generate
 reports, but cannot publish externally:
 
 ```python
-from care_platform import ConstraintEnvelope, EvaluationResult
-from care_platform.build.config.schema import (
+from pact import ConstraintEnvelope, EvaluationResult
+from pact.build.config.schema import (
     CommunicationConstraintConfig,
     ConstraintEnvelopeConfig,
     DataAccessConstraintConfig,
@@ -222,9 +222,9 @@ Calculate a trust score that summarizes how well an agent's trust chain is
 established:
 
 ```python
-from care_platform import TrustScore, calculate_trust_score
-from care_platform.build.config.schema import TrustPostureLevel
-from care_platform.trust.scoring import TrustFactors
+from pact import TrustScore, calculate_trust_score
+from pact.build.config.schema import TrustPostureLevel
+from pact.trust.scoring import TrustFactors
 
 factors = TrustFactors(
     has_genesis=True,
@@ -259,8 +259,8 @@ Every agent action should produce an audit anchor -- a tamper-evident record tha
 chains to the previous record for integrity verification:
 
 ```python
-from care_platform import AuditChain
-from care_platform.build.config.schema import VerificationLevel
+from pact import AuditChain
+from pact.build.config.schema import VerificationLevel
 
 chain = AuditChain(chain_id="analytics-team-chain")
 
@@ -332,4 +332,4 @@ problem and what type of issue was detected.
 
 ## License
 
-The CARE Platform is Apache 2.0 licensed, owned by the Terrene Foundation.
+The PACT is Apache 2.0 licensed, owned by the Terrene Foundation.

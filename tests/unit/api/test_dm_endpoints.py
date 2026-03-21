@@ -12,21 +12,21 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
-from care_platform.build.config.env import EnvConfig
-from care_platform.build.verticals.dm_runner import DMTeamRunner
-from care_platform.trust.store.cost_tracking import CostTracker
-from care_platform.use.api.endpoints import PlatformAPI
-from care_platform.use.api.server import create_app
-from care_platform.use.execution.registry import AgentRegistry
+from pact.build.config.env import EnvConfig
+from pact.build.verticals.dm_runner import DMTeamRunner
+from pact.trust.store.cost_tracking import CostTracker
+from pact.use.api.endpoints import PactAPI
+from pact.use.api.server import create_app
+from pact.use.execution.registry import AgentRegistry
 
 
 def _make_dev_env() -> EnvConfig:
     """Create a dev-mode env config with auth disabled."""
     return EnvConfig(
-        care_api_token="",
-        care_dev_mode=True,
-        care_api_host="127.0.0.1",
-        care_api_port=8000,
+        pact_api_token="",
+        pact_dev_mode=True,
+        pact_api_host="127.0.0.1",
+        pact_api_port=8000,
     )
 
 
@@ -34,7 +34,7 @@ def _make_test_app() -> TestClient:
     """Create a test FastAPI app with DM runner endpoints wired."""
     runner = DMTeamRunner()
 
-    # Build a PlatformAPI with the runner's registry and approval queue
+    # Build a PactAPI with the runner's registry and approval queue
     registry = AgentRegistry()
     for agent_id in runner.registered_agents:
         record = runner.get_agent_record(agent_id)
@@ -51,7 +51,7 @@ def _make_test_app() -> TestClient:
             except ValueError:
                 pass  # Already registered
 
-    api = PlatformAPI(
+    api = PactAPI(
         registry=registry,
         approval_queue=runner.approval_queue,
         cost_tracker=CostTracker(),

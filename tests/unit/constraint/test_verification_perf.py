@@ -6,17 +6,17 @@ import time
 
 import pytest
 
-from care_platform.build.config.schema import TrustPostureLevel
-from care_platform.trust.constraint.cache import (
+from pact.build.config.schema import TrustPostureLevel
+from pact.trust.constraint.cache import (
     CachedVerification,
     VerificationCache,
 )
-from care_platform.trust.constraint.circuit_breaker import (
+from pact.trust.constraint.circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerOpen,
     CircuitState,
 )
-from care_platform.trust.constraint.verification_level import (
+from pact.trust.constraint.verification_level import (
     VerificationThoroughness,
     select_verification_level,
 )

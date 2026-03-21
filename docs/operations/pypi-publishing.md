@@ -1,13 +1,13 @@
 # PyPI Trusted Publisher Setup
 
-The CARE Platform uses PyPI trusted publishing (OIDC) to publish packages to PyPI and TestPyPI without long-lived API tokens. The GitHub Actions workflow at `.github/workflows/publish.yml` handles the entire build-and-publish pipeline.
+The PACT uses PyPI trusted publishing (OIDC) to publish packages to PyPI and TestPyPI without long-lived API tokens. The GitHub Actions workflow at `.github/workflows/publish.yml` handles the entire build-and-publish pipeline.
 
 ---
 
 ## Prerequisites
 
 - Repository: `terrene-foundation/care` on GitHub
-- PyPI account with access to the `care-platform` project
+- PyPI account with access to the `pact` project
 - GitHub repository admin access (for environment creation)
 
 ---
@@ -20,7 +20,7 @@ Trusted publishing uses OpenID Connect (OIDC) so that GitHub Actions can authent
 
 1. Go to [https://pypi.org/manage/account/publishing/](https://pypi.org/manage/account/publishing/)
 2. Under **Add a new pending publisher** (for first-time setup) or on the project's publishing settings:
-   - **PyPI project name**: `care-platform`
+   - **PyPI project name**: `pact`
    - **Owner**: `terrene-foundation`
    - **Repository name**: `care`
    - **Workflow name**: `publish.yml`
@@ -79,7 +79,7 @@ This triggers the publish workflow, which:
 1. Builds the sdist and wheel (`python -m build`)
 2. Validates the package (`twine check dist/*`)
 3. Publishes to PyPI via `pypa/gh-action-pypi-publish@release/v1`
-4. Builds and pushes a Docker container image to `ghcr.io/terrene-foundation/care-platform`
+4. Builds and pushes a Docker container image to `ghcr.io/terrene-foundation/pact`
 
 The `pypi` environment's required reviewers (if configured) must approve before the publish step runs.
 
@@ -93,12 +93,12 @@ To test the publishing pipeline without affecting production:
 4. Set **Publish target** to `testpypi`
 5. Click **Run workflow**
 
-This builds the package and publishes to TestPyPI. You can verify the result at `https://test.pypi.org/project/care-platform/`.
+This builds the package and publishes to TestPyPI. You can verify the result at `https://test.pypi.org/project/pact/`.
 
 To install from TestPyPI for verification:
 
 ```bash
-pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ care-platform
+pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ pact
 ```
 
 The `--extra-index-url` flag ensures that dependencies not on TestPyPI are still resolved from production PyPI.
@@ -134,7 +134,7 @@ permissions:
 The OIDC publisher on PyPI/TestPyPI must match exactly:
 
 - Owner: `terrene-foundation` (case-sensitive)
-- Repository: `care` (not `care-platform`)
+- Repository: `care` (not `pact`)
 - Workflow: `publish.yml` (not the full path)
 - Environment: `pypi` or `testpypi` (must match the GitHub environment name)
 

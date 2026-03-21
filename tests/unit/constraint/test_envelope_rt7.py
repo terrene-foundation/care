@@ -8,12 +8,12 @@ RT7-09: is_tighter_than must validate temporal and data_access dimensions.
 
 from datetime import UTC, datetime, timedelta
 
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     ConstraintEnvelopeConfig,
     DataAccessConstraintConfig,
     TemporalConstraintConfig,
 )
-from care_platform.trust.constraint.envelope import (
+from pact.trust.constraint.envelope import (
     ConstraintEnvelope,
     select_active_envelope,
 )

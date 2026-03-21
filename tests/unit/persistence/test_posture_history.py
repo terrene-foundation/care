@@ -6,8 +6,8 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from care_platform.trust.reasoning import ReasoningTrace
-from care_platform.trust.store.posture_history import (
+from pact.trust.reasoning import ReasoningTrace
+from pact.trust.store.posture_history import (
     EligibilityResult,
     PostureChangeRecord,
     PostureChangeTrigger,

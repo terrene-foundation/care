@@ -6,7 +6,7 @@ module.exports = {
   ],
   theme: {
     extend: {
-      // CARE Platform semantic colors
+      // PACT semantic colors
       colors: {
         // Verification gradient levels
         "gradient-auto": {

@@ -4,17 +4,17 @@
 
 import pytest
 
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     GradientRuleConfig,
     VerificationGradientConfig,
     VerificationLevel,
 )
-from care_platform.trust.constraint.envelope import (
+from pact.trust.constraint.envelope import (
     DimensionEvaluation,
     EnvelopeEvaluation,
     EvaluationResult,
 )
-from care_platform.trust.constraint.gradient import GradientEngine
+from pact.trust.constraint.gradient import GradientEngine
 
 # ---------------------------------------------------------------------------
 # Fixtures

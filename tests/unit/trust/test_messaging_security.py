@@ -15,7 +15,7 @@ from collections import OrderedDict
 from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
-from care_platform.trust.messaging import (
+from pact.trust.messaging import (
     AgentMessage,
     MessageChannel,
     MessageType,
@@ -127,7 +127,7 @@ class TestTimingSafeComparison:
             message_type=MessageType.REQUEST,
             payload={"data": "test"},
         )
-        with patch("care_platform.trust.messaging.hmac.compare_digest", return_value=True) as mock:
+        with patch("pact.trust.messaging.hmac.compare_digest", return_value=True) as mock:
             result = msg.verify_authenticity()
             assert mock.called, "hmac.compare_digest should be used for hash comparison"
             assert result is True

@@ -14,9 +14,9 @@ from __future__ import annotations
 
 import pytest
 
-from care_platform.build.config.schema import VerificationLevel
-from care_platform.build.verticals.dm_prompts import DM_AGENT_PROMPTS, get_system_prompt
-from care_platform.build.verticals.dm_runner import DMTeamRunner
+from pact.build.config.schema import VerificationLevel
+from pact.build.verticals.dm_prompts import DM_AGENT_PROMPTS, get_system_prompt
+from pact.build.verticals.dm_runner import DMTeamRunner
 
 # ---------------------------------------------------------------------------
 # Task 5049: DMTeamRunner orchestrator

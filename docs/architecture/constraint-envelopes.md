@@ -1,6 +1,6 @@
 # Constraint Envelopes
 
-A constraint envelope defines the five-dimensional boundary within which an agent may act. Every agent in the CARE Platform is assigned a constraint envelope that governs its Financial, Operational, Temporal, Data Access, and Communication dimensions. The envelope is frozen after construction, signed with Ed25519, and enforced at runtime via the [Verification Gradient](verification-gradient.md).
+A constraint envelope defines the five-dimensional boundary within which an agent may act. Every agent in the PACT is assigned a constraint envelope that governs its Financial, Operational, Temporal, Data Access, and Communication dimensions. The envelope is frozen after construction, signed with Ed25519, and enforced at runtime via the [Verification Gradient](verification-gradient.md).
 
 ---
 

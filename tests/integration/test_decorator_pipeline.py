@@ -9,7 +9,7 @@ end-to-end with real EATP SDK components (no mocks).
 
 import pytest
 
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     AgentConfig,
     ConstraintEnvelopeConfig,
     DataAccessConstraintConfig,
@@ -17,13 +17,13 @@ from care_platform.build.config.schema import (
     GenesisConfig,
     OperationalConstraintConfig,
 )
-from care_platform.trust.decorators import (
+from pact.trust.decorators import (
     CareTrustOpsProvider,
     care_audited,
     care_shadow,
     care_verified,
 )
-from care_platform.trust.eatp_bridge import EATPBridge
+from pact.trust.eatp_bridge import EATPBridge
 
 # ---------------------------------------------------------------------------
 # Fixtures — full EATP trust chain setup

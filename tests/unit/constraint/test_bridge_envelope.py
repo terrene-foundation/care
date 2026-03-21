@@ -4,7 +4,7 @@
 and bridge tightening validation (M32 — Constraint Intersection).
 """
 
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     CommunicationConstraintConfig,
     ConstraintEnvelopeConfig,
     DataAccessConstraintConfig,
@@ -12,8 +12,8 @@ from care_platform.build.config.schema import (
     OperationalConstraintConfig,
     TemporalConstraintConfig,
 )
-from care_platform.build.workspace.bridge import BridgePermission
-from care_platform.trust.constraint.bridge_envelope import (
+from pact.build.workspace.bridge import BridgePermission
+from pact.trust.constraint.bridge_envelope import (
     BridgeSharingPolicy,
     FieldSharingRule,
     SharingMode,

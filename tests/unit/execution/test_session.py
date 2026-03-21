@@ -10,8 +10,8 @@ from datetime import UTC, datetime
 
 import pytest
 
-from care_platform.use.execution.session import (
-    PlatformSession,
+from pact.use.execution.session import (
+    PactSession,
     SessionCheckpoint,
     SessionManager,
     SessionState,
@@ -53,11 +53,11 @@ class TestSessionCheckpoint:
         assert cp.notes == "Mid-sprint checkpoint"
 
 
-class TestPlatformSession:
-    """Tests for the PlatformSession model."""
+class TestPactSession:
+    """Tests for the PactSession model."""
 
     def test_defaults(self):
-        session = PlatformSession()
+        session = PactSession()
         assert session.session_id.startswith("sess-")
         assert session.state == SessionState.ACTIVE
         assert session.ended_at is None
@@ -66,7 +66,7 @@ class TestPlatformSession:
 
     def test_started_at_is_set(self):
         before = datetime.now(UTC)
-        session = PlatformSession()
+        session = PactSession()
         after = datetime.now(UTC)
         assert before <= session.started_at <= after
 
@@ -77,7 +77,7 @@ class TestSessionManagerStart:
     def test_start_session_creates_active_session(self):
         mgr = SessionManager()
         session = mgr.start_session()
-        assert isinstance(session, PlatformSession)
+        assert isinstance(session, PactSession)
         assert session.state == SessionState.ACTIVE
         assert mgr.current_session is session
 

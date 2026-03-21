@@ -1,4 +1,4 @@
-# CARE Platform
+# PACT
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
@@ -6,15 +6,15 @@
 
 **Governed operational model for running organizations with AI agents under EATP trust governance, CO methodology, and CARE philosophy.**
 
-The CARE Platform is the Terrene Foundation's reference implementation of the CARE specification -- an open-source framework for organizations that want to deploy AI agents with cryptographic trust enforcement, constraint governance, and tamper-evident audit trails.
+The PACT is the Terrene Foundation's reference implementation of the CARE specification -- an open-source framework for organizations that want to deploy AI agents with cryptographic trust enforcement, constraint governance, and tamper-evident audit trails.
 
-> **What it is NOT**: A generic agent orchestrator competing with LangChain or CrewAI. The CARE Platform is _governed orchestration_ -- an opinionated framework where every agent action passes through a trust verification pipeline before execution.
+> **What it is NOT**: A generic agent orchestrator competing with LangChain or CrewAI. The PACT is _governed orchestration_ -- an opinionated framework where every agent action passes through a trust verification pipeline before execution.
 
 ---
 
 ## The Trinity
 
-The CARE Platform implements three open specifications published by the Terrene Foundation:
+The PACT implements three open specifications published by the Terrene Foundation:
 
 | Standard | Full Name                                      | Type        | License   |
 | -------- | ---------------------------------------------- | ----------- | --------- |
@@ -79,10 +79,10 @@ Every agent's authority traces back to a cryptographically signed root of trust:
 
 ## Architecture
 
-The CARE Platform operates on two planes, following the CARE Dual Plane Model:
+The PACT operates on two planes, following the CARE Dual Plane Model:
 
 ```
- Trust Plane (care_platform.trust)
+ Trust Plane (pact.trust)
  +---------------------------------------------------------+
  | Genesis -> Delegation -> Envelope -> Attestation -> Audit|
  | Verification Gradient | Trust Postures | Trust Scoring   |
@@ -90,7 +90,7 @@ The CARE Platform operates on two planes, following the CARE Dual Plane Model:
                           |
                     verify/enforce
                           |
- Execution Plane (care_platform.use.execution)
+ Execution Plane (pact.use.execution)
  +---------------------------------------------------------+
  | Agent Teams | Workspaces | Session Management            |
  | Cross-Functional Bridges | Approval Queues               |
@@ -100,7 +100,7 @@ The CARE Platform operates on two planes, following the CARE Dual Plane Model:
 ### Package Structure
 
 ```
-src/care_platform/
+src/pact/
 ├── trust/       — TRUST plane (governance primitives)
 │   ├── constraint/     Constraint envelope evaluation and verification gradient engine
 │   ├── audit/          Tamper-evident audit anchor chains
@@ -129,7 +129,7 @@ src/care_platform/
 ### Installation
 
 ```bash
-pip install care-platform
+pip install pact
 ```
 
 Or for development:
@@ -153,7 +153,7 @@ cp .env.example .env
 Create a platform configuration (YAML or Python):
 
 ```python
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     PlatformConfig,
     GenesisConfig,
     AgentConfig,
@@ -214,9 +214,9 @@ config = PlatformConfig(
 
 ```python
 import asyncio
-from care_platform.trust.eatp_bridge import EATPBridge
-from care_platform.trust.genesis import GenesisManager
-from care_platform.trust.delegation import DelegationManager
+from pact.trust.eatp_bridge import EATPBridge
+from pact.trust.genesis import GenesisManager
+from pact.trust.delegation import DelegationManager
 
 async def main():
     # 1. Initialize the EATP bridge
@@ -261,7 +261,7 @@ asyncio.run(main())
 
 ## Built On
 
-The CARE Platform is built on the **Kailash Python SDK**, the Foundation's open-source toolkit:
+The PACT is built on the **Kailash Python SDK**, the Foundation's open-source toolkit:
 
 | Framework    | Purpose                                    | Install                        |
 | ------------ | ------------------------------------------ | ------------------------------ |
@@ -298,7 +298,7 @@ pytest
 ruff check .
 
 # Type check
-mypy care_platform/
+mypy pact/
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contributor guide.
@@ -320,7 +320,7 @@ Copyright 2026 Terrene Foundation
 
 Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for details.
 
-The CARE Platform is Foundation-owned, Apache 2.0 licensed, and irrevocably open. The Foundation has no structural relationship with any commercial entity. Anyone can build commercial implementations on top of the Foundation's open standards and SDKs.
+The PACT is Foundation-owned, Apache 2.0 licensed, and irrevocably open. The Foundation has no structural relationship with any commercial entity. Anyone can build commercial implementations on top of the Foundation's open standards and SDKs.
 
 **Specifications** (CARE, EATP, CO): CC BY 4.0
-**Code** (CARE Platform, Kailash SDK, EATP SDK): Apache 2.0
+**Code** (PACT, Kailash SDK, EATP SDK): Apache 2.0

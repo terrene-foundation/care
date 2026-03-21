@@ -2,7 +2,7 @@
 # Licensed under the Apache License, Version 2.0
 """Unit tests for ShadowEnforcer API endpoints (M13 — tasks 5005-5008).
 
-Tests the PlatformAPI shadow_metrics() and shadow_report() methods,
+Tests the PactAPI shadow_metrics() and shadow_report() methods,
 the FastAPI route wiring, and the seed script shadow data generation.
 """
 
@@ -10,20 +10,20 @@ from __future__ import annotations
 
 import pytest
 
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     ConstraintEnvelopeConfig,
     FinancialConstraintConfig,
     OperationalConstraintConfig,
     VerificationGradientConfig,
     VerificationLevel,
 )
-from care_platform.trust.constraint.envelope import ConstraintEnvelope
-from care_platform.trust.constraint.gradient import GradientEngine
-from care_platform.trust.shadow_enforcer import ShadowEnforcer
-from care_platform.trust.store.cost_tracking import CostTracker
-from care_platform.use.api.endpoints import ApiResponse, PlatformAPI
-from care_platform.use.execution.approval import ApprovalQueue
-from care_platform.use.execution.registry import AgentRegistry
+from pact.trust.constraint.envelope import ConstraintEnvelope
+from pact.trust.constraint.gradient import GradientEngine
+from pact.trust.shadow_enforcer import ShadowEnforcer
+from pact.trust.store.cost_tracking import CostTracker
+from pact.use.api.endpoints import ApiResponse, PactAPI
+from pact.use.execution.approval import ApprovalQueue
+from pact.use.execution.registry import AgentRegistry
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -65,9 +65,9 @@ def _make_shadow_enforcer(
     )
 
 
-def _make_platform_api(shadow_enforcer: ShadowEnforcer | None = None, **kwargs) -> PlatformAPI:
-    """Create a PlatformAPI instance with a ShadowEnforcer attached."""
-    return PlatformAPI(
+def _make_platform_api(shadow_enforcer: ShadowEnforcer | None = None, **kwargs) -> PactAPI:
+    """Create a PactAPI instance with a ShadowEnforcer attached."""
+    return PactAPI(
         registry=kwargs.get("registry", AgentRegistry()),
         approval_queue=kwargs.get("approval_queue", ApprovalQueue()),
         cost_tracker=kwargs.get("cost_tracker", CostTracker()),
@@ -76,22 +76,22 @@ def _make_platform_api(shadow_enforcer: ShadowEnforcer | None = None, **kwargs) 
 
 
 # ---------------------------------------------------------------------------
-# Task 5007: PlatformAPI accepts shadow_enforcer parameter
+# Task 5007: PactAPI accepts shadow_enforcer parameter
 # ---------------------------------------------------------------------------
 
 
-class TestPlatformAPIShadowEnforcerParam:
-    """PlatformAPI.__init__() accepts and stores a shadow_enforcer parameter."""
+class TestPactAPIShadowEnforcerParam:
+    """PactAPI.__init__() accepts and stores a shadow_enforcer parameter."""
 
     def test_shadow_enforcer_stored_on_instance(self):
-        """PlatformAPI stores the shadow_enforcer when provided."""
+        """PactAPI stores the shadow_enforcer when provided."""
         enforcer = _make_shadow_enforcer()
         api = _make_platform_api(shadow_enforcer=enforcer)
         assert api._shadow_enforcer is enforcer
 
     def test_shadow_enforcer_defaults_to_none(self):
-        """PlatformAPI does not require shadow_enforcer (backward compat)."""
-        api = PlatformAPI(
+        """PactAPI does not require shadow_enforcer (backward compat)."""
+        api = PactAPI(
             registry=AgentRegistry(),
             approval_queue=ApprovalQueue(),
             cost_tracker=CostTracker(),
@@ -100,7 +100,7 @@ class TestPlatformAPIShadowEnforcerParam:
 
     def test_existing_params_still_work(self):
         """Adding shadow_enforcer does not break existing constructor calls."""
-        api = PlatformAPI(
+        api = PactAPI(
             registry=AgentRegistry(),
             approval_queue=ApprovalQueue(),
             cost_tracker=CostTracker(),
@@ -117,7 +117,7 @@ class TestPlatformAPIShadowEnforcerParam:
 
 
 class TestShadowMetricsEndpoint:
-    """PlatformAPI.shadow_metrics() returns agent shadow metrics."""
+    """PactAPI.shadow_metrics() returns agent shadow metrics."""
 
     def test_returns_error_when_shadow_enforcer_not_configured(self):
         """When no ShadowEnforcer is provided, return a clear error."""
@@ -186,7 +186,7 @@ class TestShadowMetricsEndpoint:
 
 
 class TestShadowReportEndpoint:
-    """PlatformAPI.shadow_report() returns posture upgrade reports."""
+    """PactAPI.shadow_report() returns posture upgrade reports."""
 
     def test_returns_error_when_shadow_enforcer_not_configured(self):
         """When no ShadowEnforcer is provided, return a clear error."""
@@ -263,15 +263,15 @@ class TestShadowRouteWiring:
         """Create a test client with ShadowEnforcer wired in."""
         from fastapi.testclient import TestClient
 
-        from care_platform.build.config.env import EnvConfig
-        from care_platform.use.api.server import create_app
+        from pact.build.config.env import EnvConfig
+        from pact.use.api.server import create_app
 
         enforcer = _make_shadow_enforcer()
         # Pre-populate some evaluations
         for i in range(5):
             enforcer.evaluate(f"action_{i}", "test-agent")
 
-        platform_api = PlatformAPI(
+        platform_api = PactAPI(
             registry=AgentRegistry(),
             approval_queue=ApprovalQueue(),
             cost_tracker=CostTracker(),
@@ -279,7 +279,7 @@ class TestShadowRouteWiring:
         )
 
         # Use dev mode (no auth required) for testing
-        cfg = EnvConfig(care_dev_mode=True)
+        cfg = EnvConfig(pact_dev_mode=True)
         app = create_app(platform_api=platform_api, env_config=cfg)
         return TestClient(app)
 

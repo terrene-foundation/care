@@ -4,7 +4,7 @@
 
 Validates that:
 - .github/workflows/publish.yml includes a container build+push job
-- The job builds and pushes to ghcr.io/terrene-foundation/care-platform
+- The job builds and pushes to ghcr.io/terrene-foundation/pact
 - Tags include the version number and 'latest'
 - Uses GitHub Container Registry (ghcr.io)
 - The job runs on release events
@@ -62,10 +62,10 @@ class TestContainerRegistryJob:
         )
 
     def test_image_name_correct(self):
-        """The container image must be tagged as ghcr.io/terrene-foundation/care-platform."""
+        """The container image must be tagged as ghcr.io/terrene-foundation/pact."""
         content = PUBLISH_WORKFLOW.read_text()
-        assert "terrene-foundation/care-platform" in content, (
-            "Container image must be named terrene-foundation/care-platform"
+        assert "terrene-foundation/pact" in content, (
+            "Container image must be named terrene-foundation/pact"
         )
 
     def test_tags_include_latest(self):

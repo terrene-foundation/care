@@ -1,4 +1,4 @@
-# CARE Platform Flutter App -- Requirements Analysis
+# PACT Flutter App -- Requirements Analysis
 
 ## Executive Summary
 
@@ -17,7 +17,7 @@ The following existing artifacts define the scope:
 | Artifact                          | Location                                                                   | What it defines                                           |
 | --------------------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------- |
 | REST API (30+ endpoints)          | `/Users/esperie/repos/terrene/care/docs/rest-api.md`                       | All backend endpoints                                     |
-| TypeScript data models (28 types) | `/Users/esperie/repos/terrene/care/apps/web/types/care-platform.ts`        | Every data shape                                          |
+| TypeScript data models (28 types) | `/Users/esperie/repos/terrene/care/apps/web/types/pact.ts`        | Every data shape                                          |
 | API client (35 methods)           | `/Users/esperie/repos/terrene/care/apps/web/lib/api.ts`                    | Client method signatures, error classes, WebSocket client |
 | Auth context                      | `/Users/esperie/repos/terrene/care/apps/web/lib/auth-context.tsx`          | Auth flow, token storage, user roles                      |
 | Notification context              | `/Users/esperie/repos/terrene/care/apps/web/lib/notification-context.tsx`  | Event-to-notification mapping, priority levels            |
@@ -35,7 +35,7 @@ Proposed
 
 ### Context
 
-The CARE Platform has an existing web dashboard (Next.js, 18 pages) and a complete REST API (30+ endpoints plus WebSocket). A Flutter app is needed to provide the same governance oversight capabilities across iOS, iPadOS, Android, Android tablet, macOS desktop, and Windows desktop. A placeholder Flutter project already exists at `apps/mobile/`.
+The PACT has an existing web dashboard (Next.js, 18 pages) and a complete REST API (30+ endpoints plus WebSocket). A Flutter app is needed to provide the same governance oversight capabilities across iOS, iPadOS, Android, Android tablet, macOS desktop, and Windows desktop. A placeholder Flutter project already exists at `apps/mobile/`.
 
 The app is a dashboard client -- it reads and writes data through the existing API. There is no offline-first requirement. The primary users are governance officers who need to approve/reject held actions, monitor agent postures, and review trust chains on the go.
 
@@ -143,7 +143,7 @@ Everything needed before any screen can be built. All subsequent milestones depe
 **Dependencies**: F-01
 
 **What to do**:
-Port every type from `apps/web/types/care-platform.ts` to Dart using `freezed` + `json_serializable`. The complete type inventory:
+Port every type from `apps/web/types/pact.ts` to Dart using `freezed` + `json_serializable`. The complete type inventory:
 
 **Enums** (8):
 | TypeScript | Dart enum |
@@ -456,7 +456,7 @@ The screens that provide the most value to governance officers. These are the on
 **What to do**:
 Port `apps/web/app/login/page.tsx`. The screen must include:
 
-- CARE Platform branding (blue icon, title, tagline)
+- PACT branding (blue icon, title, tagline)
 - Operator name text field (with validation)
 - API token text field (obscured, with validation)
 - "Remember me" checkbox (default on)
@@ -466,7 +466,7 @@ Port `apps/web/app/login/page.tsx`. The screen must include:
 
 **Platform considerations**: On desktop, center the login card. On phones, full-width with padding.
 
-**Acceptance criteria**: Login works against a running CARE Platform backend. Invalid token shows an error. Credentials persist when "remember me" is checked.
+**Acceptance criteria**: Login works against a running PACT backend. Invalid token shows an error. Credentials persist when "remember me" is checked.
 
 ---
 
@@ -924,12 +924,12 @@ Display in the app bar (top right on tablet/desktop, in the app bar subtitle on 
 
 **What to do**:
 
-- Server URL configuration (for connecting to different CARE Platform instances)
+- Server URL configuration (for connecting to different PACT instances)
 - Theme toggle (Light / Dark / System)
 - Current user display (name, role)
 - Logout button
 - App version display
-- "About" section: CARE Platform v0.1.0, Terrene Foundation
+- "About" section: PACT v0.1.0, Terrene Foundation
 
 **Acceptance criteria**: All settings work. Logout clears credentials and returns to login.
 

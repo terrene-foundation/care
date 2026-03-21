@@ -2,7 +2,7 @@
 # Licensed under the Apache License, Version 2.0
 """Tests for Organization Builder CLI commands (Task 705).
 
-Tests the `care-platform org` subcommand group with:
+Tests the `pact org` subcommand group with:
 - org create --template <name> --name <name>
 - org validate --config <file>
 - org list-templates
@@ -11,7 +11,7 @@ Tests the `care-platform org` subcommand group with:
 import pytest
 from click.testing import CliRunner
 
-from care_platform.build.cli import main
+from pact.build.cli import main
 
 # ---------------------------------------------------------------------------
 # Fixtures

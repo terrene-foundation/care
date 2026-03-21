@@ -7,14 +7,14 @@ each with properly scoped EATP constraint envelopes and a verification gradient
 aligned to the trust model research.
 """
 
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     AgentConfig,
     ConstraintEnvelopeConfig,
     TeamConfig,
     VerificationGradientConfig,
     VerificationLevel,
 )
-from care_platform.build.verticals.dm_team import (
+from pact.build.verticals.dm_team import (
     DM_ANALYTICS,
     DM_ANALYTICS_ENVELOPE,
     DM_COMMUNITY_ENVELOPE,

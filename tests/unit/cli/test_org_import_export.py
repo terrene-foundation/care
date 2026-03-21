@@ -3,11 +3,11 @@
 """Tests for Organization Import/Export and CLI commands (M21: Tasks 5041-5045, 5040b).
 
 Tests the following CLI commands:
-- care-platform org export --org-id <id> --output <file.yaml>
-- care-platform org import --file <org.yaml>
-- care-platform org diff <file1> <file2>
-- care-platform org deploy --file <org.yaml>
-- care-platform org status
+- pact org export --org-id <id> --output <file.yaml>
+- pact org import --file <org.yaml>
+- pact org diff <file1> <file2>
+- pact org deploy --file <org.yaml>
+- pact org status
 
 And the example YAML config generation (5040b).
 """
@@ -19,8 +19,8 @@ import pytest
 import yaml
 from click.testing import CliRunner
 
-from care_platform.build.cli import main
-from care_platform.build.org.builder import OrgDefinition, OrgTemplate
+from pact.build.cli import main
+from pact.build.org.builder import OrgDefinition, OrgTemplate
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -129,7 +129,7 @@ def invalid_org_yaml(tmp_path) -> Path:
 
 
 class TestOrgExport:
-    """Tests for 'care-platform org export --org-id <id> --output <file>'."""
+    """Tests for 'pact org export --org-id <id> --output <file>'."""
 
     def test_export_command_registered(self, runner):
         """The 'export' subcommand is registered under 'org'."""
@@ -241,7 +241,7 @@ class TestOrgExport:
 
 
 class TestOrgImport:
-    """Tests for 'care-platform org import --file <file>'."""
+    """Tests for 'pact org import --file <file>'."""
 
     def test_import_command_registered(self, runner):
         """The 'import' subcommand is registered under 'org' as 'import-file'."""
@@ -321,7 +321,7 @@ class TestOrgImport:
 
 
 class TestOrgDiff:
-    """Tests for 'care-platform org diff <file1> <file2>'."""
+    """Tests for 'pact org diff <file1> <file2>'."""
 
     def test_diff_command_registered(self, runner):
         """The 'diff' subcommand is registered under 'org'."""
@@ -401,7 +401,7 @@ class TestOrgDiff:
 
 
 class TestOrgDeploy:
-    """Tests for 'care-platform org deploy --file <file>'."""
+    """Tests for 'pact org deploy --file <file>'."""
 
     def test_deploy_command_registered(self, runner):
         """The 'deploy' subcommand is registered under 'org'."""
@@ -464,7 +464,7 @@ class TestOrgDeploy:
 
 
 class TestOrgStatus:
-    """Tests for 'care-platform org status'."""
+    """Tests for 'pact org status'."""
 
     def test_status_command_registered(self, runner):
         """The 'status' subcommand is registered under 'org'."""

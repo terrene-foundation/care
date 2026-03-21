@@ -3,7 +3,7 @@
 """Tests for WebSocket authentication (M22-2201 / RT10-A4).
 
 Validates that:
-- WebSocket requires bearer token when CARE_API_TOKEN is set
+- WebSocket requires bearer token when PACT_API_TOKEN is set
 - Token can be provided via query parameter (?token=...)
 - Invalid/missing token causes close with code 4001
 - Dev mode with no token allows unauthenticated connections
@@ -16,8 +16,8 @@ import pytest
 from fastapi.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
-from care_platform.build.config.env import EnvConfig
-from care_platform.use.api.server import create_app
+from pact.build.config.env import EnvConfig
+from pact.use.api.server import create_app
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -28,9 +28,9 @@ from care_platform.use.api.server import create_app
 def env_config_with_token():
     """EnvConfig with a known API token (production mode)."""
     return EnvConfig(
-        care_api_token="test-secret-token-42",
-        care_dev_mode=False,
-        care_max_ws_subscribers=5,
+        pact_api_token="test-secret-token-42",
+        pact_dev_mode=False,
+        pact_max_ws_subscribers=5,
     )
 
 
@@ -38,9 +38,9 @@ def env_config_with_token():
 def env_config_dev_mode_no_token():
     """EnvConfig in dev mode with no API token."""
     return EnvConfig(
-        care_api_token="",
-        care_dev_mode=True,
-        care_max_ws_subscribers=5,
+        pact_api_token="",
+        pact_dev_mode=True,
+        pact_max_ws_subscribers=5,
     )
 
 
@@ -48,9 +48,9 @@ def env_config_dev_mode_no_token():
 def env_config_dev_mode_with_token():
     """EnvConfig in dev mode with an API token."""
     return EnvConfig(
-        care_api_token="dev-token-99",
-        care_dev_mode=True,
-        care_max_ws_subscribers=5,
+        pact_api_token="dev-token-99",
+        pact_dev_mode=True,
+        pact_max_ws_subscribers=5,
     )
 
 
@@ -78,7 +78,7 @@ def app_dev_with_token(env_config_dev_mode_with_token):
 
 
 class TestWebSocketAuthRequired:
-    """When CARE_API_TOKEN is set, WebSocket requires authentication."""
+    """When PACT_API_TOKEN is set, WebSocket requires authentication."""
 
     def test_websocket_rejects_no_token(self, app_with_token):
         """WebSocket connection without token should be rejected with 4001."""
@@ -151,9 +151,9 @@ class TestWebSocketAuthWithSubscriberLimit:
     def test_subscriber_limit_still_enforced(self, env_config_with_token):
         """Max subscriber limit still works with authenticated connections."""
         config = EnvConfig(
-            care_api_token="test-secret-token-42",
-            care_dev_mode=False,
-            care_max_ws_subscribers=1,
+            pact_api_token="test-secret-token-42",
+            pact_dev_mode=False,
+            pact_max_ws_subscribers=1,
         )
         app = create_app(env_config=config)
         client = TestClient(app)

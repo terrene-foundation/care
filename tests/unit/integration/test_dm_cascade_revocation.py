@@ -18,11 +18,11 @@ DM team hierarchy:
       -> dm-seo-specialist
 """
 
-from care_platform.build.config.schema import VerificationLevel
-from care_platform.trust.audit.pipeline import AuditPipeline
-from care_platform.trust.credentials import CredentialManager
-from care_platform.trust.revocation import RevocationManager, RevocationRecord
-from care_platform.use.execution.approval import ApprovalQueue, UrgencyLevel
+from pact.build.config.schema import VerificationLevel
+from pact.trust.audit.pipeline import AuditPipeline
+from pact.trust.credentials import CredentialManager
+from pact.trust.revocation import RevocationManager, RevocationRecord
+from pact.use.execution.approval import ApprovalQueue, UrgencyLevel
 
 # ---------------------------------------------------------------------------
 # DM team agent IDs

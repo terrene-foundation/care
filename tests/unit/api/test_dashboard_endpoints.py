@@ -2,7 +2,7 @@
 # Licensed under the Apache License, Version 2.0
 """Tests for M18 dashboard API endpoints.
 
-Tests the new dashboard-oriented handler methods on PlatformAPI:
+Tests the new dashboard-oriented handler methods on PactAPI:
 - list_trust_chains / get_trust_chain_detail
 - get_envelope
 - list_workspaces
@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import pytest
 
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     CommunicationConstraintConfig,
     ConstraintEnvelopeConfig,
     DataAccessConstraintConfig,
@@ -24,22 +24,22 @@ from care_platform.build.config.schema import (
     VerificationLevel,
     WorkspaceConfig,
 )
-from care_platform.build.workspace.bridge import (
+from pact.build.workspace.bridge import (
     BridgeManager,
     BridgePermission,
 )
-from care_platform.build.workspace.models import (
+from pact.build.workspace.models import (
     Workspace,
     WorkspacePhase,
     WorkspaceRegistry,
 )
-from care_platform.trust.constraint.envelope import ConstraintEnvelope
-from care_platform.trust.store.cost_tracking import CostTracker
-from care_platform.use.api.endpoints import (
-    PlatformAPI,
+from pact.trust.constraint.envelope import ConstraintEnvelope
+from pact.trust.store.cost_tracking import CostTracker
+from pact.use.api.endpoints import (
+    PactAPI,
 )
-from care_platform.use.execution.approval import ApprovalQueue, UrgencyLevel
-from care_platform.use.execution.registry import AgentRegistry
+from pact.use.execution.approval import ApprovalQueue, UrgencyLevel
+from pact.use.execution.registry import AgentRegistry
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -229,8 +229,8 @@ def api(
     envelope_registry,
     verification_stats,
 ):
-    """PlatformAPI wired with all dashboard components."""
-    return PlatformAPI(
+    """PactAPI wired with all dashboard components."""
+    return PactAPI(
         registry=registry,
         approval_queue=approval_queue,
         cost_tracker=cost_tracker,
@@ -278,7 +278,7 @@ class TestListTrustChains:
     ):
         """list_trust_chains() returns empty list when no agents registered."""
         empty_reg = AgentRegistry()
-        api = PlatformAPI(
+        api = PactAPI(
             registry=empty_reg,
             approval_queue=approval_queue,
             cost_tracker=cost_tracker,
@@ -430,7 +430,7 @@ class TestListWorkspaces:
         verification_stats,
     ):
         """list_workspaces() returns empty list when no workspaces registered."""
-        api = PlatformAPI(
+        api = PactAPI(
             registry=registry,
             approval_queue=approval_queue,
             cost_tracker=cost_tracker,
@@ -490,7 +490,7 @@ class TestListBridges:
         verification_stats,
     ):
         """list_bridges() returns empty list when no bridges exist."""
-        api = PlatformAPI(
+        api = PactAPI(
             registry=registry,
             approval_queue=approval_queue,
             cost_tracker=cost_tracker,
@@ -537,7 +537,7 @@ class TestVerificationStats:
         envelope_registry,
     ):
         """verification_stats_report() returns zeros when no stats provided."""
-        api = PlatformAPI(
+        api = PactAPI(
             registry=registry,
             approval_queue=approval_queue,
             cost_tracker=cost_tracker,
@@ -556,16 +556,16 @@ class TestVerificationStats:
 
 
 # ---------------------------------------------------------------------------
-# Test: PlatformAPI backward compatibility
+# Test: PactAPI backward compatibility
 # ---------------------------------------------------------------------------
 
 
-class TestPlatformAPIBackwardCompat:
-    """PlatformAPI still works with only the original Phase 1 components."""
+class TestPactAPIBackwardCompat:
+    """PactAPI still works with only the original Phase 1 components."""
 
     def test_phase1_only_construction(self, registry, approval_queue, cost_tracker):
-        """PlatformAPI works with just registry, approval_queue, cost_tracker."""
-        api = PlatformAPI(
+        """PactAPI works with just registry, approval_queue, cost_tracker."""
+        api = PactAPI(
             registry=registry,
             approval_queue=approval_queue,
             cost_tracker=cost_tracker,
@@ -578,7 +578,7 @@ class TestPlatformAPIBackwardCompat:
         self, registry, approval_queue, cost_tracker
     ):
         """Dashboard endpoints return errors when optional components not provided."""
-        api = PlatformAPI(
+        api = PactAPI(
             registry=registry,
             approval_queue=approval_queue,
             cost_tracker=cost_tracker,

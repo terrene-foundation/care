@@ -1,6 +1,6 @@
 # REST API Reference
 
-The CARE Platform exposes a REST API for dashboard integration and programmatic access. All endpoints require Bearer token authentication unless noted otherwise.
+The PACT exposes a REST API for dashboard integration and programmatic access. All endpoints require Bearer token authentication unless noted otherwise.
 
 ## Authentication
 
@@ -29,7 +29,7 @@ No authentication required. Returns service status and component health.
 ```json
 {
   "status": "healthy",
-  "service": "care-platform",
+  "service": "pact",
   "version": "0.1.0",
   "components": {
     "api": "ok",

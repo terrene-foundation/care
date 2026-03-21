@@ -9,15 +9,15 @@
 
 ## Finding
 
-The original red team finding noted that ShadowEnforcer was referenced throughout analysis documents but never fully defined in the CARE Platform context. It was described as an EATP concept requiring SDK Phase 2+.
+The original red team finding noted that ShadowEnforcer was referenced throughout analysis documents but never fully defined in the PACT context. It was described as an EATP concept requiring SDK Phase 2+.
 
 ## Resolution
 
-The ShadowEnforcer is now fully implemented in the CARE Platform codebase with comprehensive tests.
+The ShadowEnforcer is now fully implemented in the PACT codebase with comprehensive tests.
 
 ### Implementation
 
-**Location**: `care_platform/trust/shadow_enforcer.py`
+**Location**: `pact/trust/shadow_enforcer.py`
 **Tests**: `tests/unit/trust/test_shadow_enforcer.py`
 
 The ShadowEnforcer provides parallel trust evaluation that observes without enforcing. It runs verification gradient evaluation alongside normal agent operations, collecting metrics that provide empirical evidence for trust posture upgrades.

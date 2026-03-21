@@ -78,9 +78,9 @@ Your analysis should always include:
 4. **Decision Points** (bullets)
    - Questions requiring stakeholder input
 
-## CARE Platform Context
+## PACT Context
 
-When analyzing CARE Platform decisions, apply the Fractal Dual Plane framework:
+When analyzing PACT decisions, apply the Fractal Dual Plane framework:
 
 - **Which level?** L1 (org), L2 (project), L3 (developer), L4 (invocation)
 - **Which plane?** Trust Plane (who, constraints) or Execution Plane (what, within bounds)

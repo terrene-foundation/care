@@ -6,7 +6,7 @@ from datetime import UTC, datetime, timedelta
 
 from freezegun import freeze_time
 
-from care_platform.trust.credentials import CredentialManager, VerificationToken
+from pact.trust.credentials import CredentialManager, VerificationToken
 
 
 class TestVerificationTokenIssue:

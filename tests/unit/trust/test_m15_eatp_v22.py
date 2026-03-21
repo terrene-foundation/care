@@ -17,17 +17,17 @@ import json
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     ConstraintEnvelopeConfig,
     DataAccessConstraintConfig,
     FinancialConstraintConfig,
     OperationalConstraintConfig,
 )
-from care_platform.trust.constraint.envelope import (
+from pact.trust.constraint.envelope import (
     ConstraintEnvelope,
     EvaluationResult,
 )
-from care_platform.trust.reasoning import (
+from pact.trust.reasoning import (
     ConfidentialityLevel,
     ReasoningTrace,
 )
@@ -191,7 +191,7 @@ class TestSDJWT:
 
     def test_create_sd_jwt_from_delegation_record(self):
         """Create an SD-JWT from a delegation-like record with classified fields."""
-        from care_platform.trust.sd_jwt import SDJWTBuilder
+        from pact.trust.sd_jwt import SDJWTBuilder
 
         record = {
             "delegation_id": "del-001",
@@ -219,7 +219,7 @@ class TestSDJWT:
 
     def test_disclose_at_public_level(self):
         """PUBLIC viewer should see only PUBLIC fields; others are hashes."""
-        from care_platform.trust.sd_jwt import SDJWTBuilder
+        from pact.trust.sd_jwt import SDJWTBuilder
 
         record = {
             "delegation_id": "del-001",
@@ -247,7 +247,7 @@ class TestSDJWT:
 
     def test_disclose_at_secret_level(self):
         """SECRET viewer should see PUBLIC, RESTRICTED, CONFIDENTIAL, and SECRET fields."""
-        from care_platform.trust.sd_jwt import SDJWTBuilder
+        from pact.trust.sd_jwt import SDJWTBuilder
 
         record = {
             "public_field": "public-value",
@@ -279,7 +279,7 @@ class TestSDJWT:
 
     def test_disclose_at_top_secret_shows_all(self):
         """TOP_SECRET viewer should see all fields disclosed."""
-        from care_platform.trust.sd_jwt import SDJWTBuilder
+        from pact.trust.sd_jwt import SDJWTBuilder
 
         record = {
             "public_field": "pub",
@@ -299,7 +299,7 @@ class TestSDJWT:
 
     def test_undisclosed_fields_are_sha256_hashes(self):
         """Undisclosed fields should be the SHA-256 hash of salt+field_name+value."""
-        from care_platform.trust.sd_jwt import SDJWTBuilder
+        from pact.trust.sd_jwt import SDJWTBuilder
 
         record = {"secret_data": "my-secret"}
         field_classifications = {"secret_data": ConfidentialityLevel.SECRET}
@@ -316,7 +316,7 @@ class TestSDJWT:
 
     def test_sd_jwt_verify_integrity(self):
         """SD-JWT should be verifiable for integrity."""
-        from care_platform.trust.sd_jwt import SDJWTBuilder
+        from pact.trust.sd_jwt import SDJWTBuilder
 
         record = {"field_a": "value_a", "field_b": "value_b"}
         field_classifications = {
@@ -331,7 +331,7 @@ class TestSDJWT:
 
     def test_sd_jwt_tampered_fails_integrity(self):
         """Tampering with issuer claims should fail integrity check."""
-        from care_platform.trust.sd_jwt import SDJWTBuilder
+        from pact.trust.sd_jwt import SDJWTBuilder
 
         record = {"field_a": "value_a"}
         field_classifications = {"field_a": ConfidentialityLevel.PUBLIC}
@@ -487,7 +487,7 @@ class TestJCSCanonical:
 
     def test_canonical_hash_deterministic(self):
         """canonical_hash should produce the same output for the same data."""
-        from care_platform.trust.jcs import canonical_hash
+        from pact.trust.jcs import canonical_hash
 
         data = {"b": 2, "a": 1, "c": [3, 2, 1]}
         h1 = canonical_hash(data)
@@ -496,7 +496,7 @@ class TestJCSCanonical:
 
     def test_canonical_hash_key_order_independent(self):
         """canonical_hash should produce the same output regardless of key insertion order."""
-        from care_platform.trust.jcs import canonical_hash
+        from pact.trust.jcs import canonical_hash
 
         data1 = {"z": 1, "a": 2, "m": 3}
         data2 = {"a": 2, "m": 3, "z": 1}
@@ -504,7 +504,7 @@ class TestJCSCanonical:
 
     def test_canonical_hash_is_sha256(self):
         """canonical_hash should return a 64-character hex SHA-256 digest."""
-        from care_platform.trust.jcs import canonical_hash
+        from pact.trust.jcs import canonical_hash
 
         h = canonical_hash({"test": "value"})
         assert len(h) == 64
@@ -512,7 +512,7 @@ class TestJCSCanonical:
 
     def test_canonical_serialize_produces_rfc8785_output(self):
         """canonical_serialize should produce RFC 8785 compliant JSON."""
-        from care_platform.trust.jcs import canonical_serialize
+        from pact.trust.jcs import canonical_serialize
 
         data = {"b": 2, "a": 1}
         serialized = canonical_serialize(data)
@@ -523,7 +523,7 @@ class TestJCSCanonical:
 
     def test_signed_envelope_uses_canonical_version(self):
         """SignedEnvelope should include canonical_version field."""
-        from care_platform.trust.constraint.signing import SignedEnvelope
+        from pact.trust.constraint.signing import SignedEnvelope
 
         config = ConstraintEnvelopeConfig(
             id="test-env",
@@ -540,7 +540,7 @@ class TestJCSCanonical:
 
     def test_existing_signature_verification_still_works(self):
         """Existing signature tests should still pass after JCS migration."""
-        from care_platform.trust.constraint.signing import SignedEnvelope
+        from pact.trust.constraint.signing import SignedEnvelope
 
         config = ConstraintEnvelopeConfig(
             id="test-env",
@@ -604,7 +604,7 @@ class TestDualBinding:
 
     def test_dual_binding_creates_bindings(self):
         """DualBinding should create both parent and genesis bindings."""
-        from care_platform.trust.dual_binding import DualBinding
+        from pact.trust.dual_binding import DualBinding
 
         binding = DualBinding.create(
             trace_hash="trace-hash-abc",
@@ -617,7 +617,7 @@ class TestDualBinding:
 
     def test_dual_binding_verify_parent(self):
         """DualBinding should verify against the correct parent record."""
-        from care_platform.trust.dual_binding import DualBinding
+        from pact.trust.dual_binding import DualBinding
 
         binding = DualBinding.create(
             trace_hash="trace-hash-abc",
@@ -629,7 +629,7 @@ class TestDualBinding:
 
     def test_dual_binding_verify_genesis(self):
         """DualBinding should verify against the correct genesis record."""
-        from care_platform.trust.dual_binding import DualBinding
+        from pact.trust.dual_binding import DualBinding
 
         binding = DualBinding.create(
             trace_hash="trace-hash-abc",
@@ -641,7 +641,7 @@ class TestDualBinding:
 
     def test_trace_bound_to_genesis_a_fails_against_genesis_b(self):
         """A trace bound to genesis A should fail verification against genesis B."""
-        from care_platform.trust.dual_binding import DualBinding
+        from pact.trust.dual_binding import DualBinding
 
         binding = DualBinding.create(
             trace_hash="trace-001",
@@ -655,7 +655,7 @@ class TestDualBinding:
 
     def test_trace_bound_to_delegation_d1_fails_against_d2(self):
         """A trace bound to delegation D1 should fail verification against D2."""
-        from care_platform.trust.dual_binding import DualBinding
+        from pact.trust.dual_binding import DualBinding
 
         binding = DualBinding.create(
             trace_hash="trace-002",
@@ -667,7 +667,7 @@ class TestDualBinding:
 
     def test_dual_binding_compute_hash(self):
         """DualBinding should compute a combined hash of both bindings."""
-        from care_platform.trust.dual_binding import DualBinding
+        from pact.trust.dual_binding import DualBinding
 
         binding = DualBinding.create(
             trace_hash="trace-003",
@@ -710,7 +710,7 @@ class TestM15Integration:
 
     def test_confidentiality_clearance_with_sd_jwt(self):
         """SD-JWT should respect the envelope's confidentiality clearance."""
-        from care_platform.trust.sd_jwt import SDJWTBuilder
+        from pact.trust.sd_jwt import SDJWTBuilder
 
         record = {
             "public_data": "hello",
@@ -735,7 +735,7 @@ class TestM15Integration:
 
     def test_jcs_hash_consistency_across_modules(self):
         """JCS canonical hash should be consistent when used across different modules."""
-        from care_platform.trust.jcs import canonical_hash
+        from pact.trust.jcs import canonical_hash
 
         data = {"key": "value", "nested": {"a": 1}}
         hash1 = canonical_hash(data)
@@ -744,7 +744,7 @@ class TestM15Integration:
 
     def test_dual_binding_with_reasoning_trace(self):
         """A reasoning trace with dual binding should be fully verifiable."""
-        from care_platform.trust.dual_binding import DualBinding
+        from pact.trust.dual_binding import DualBinding
 
         trace = ReasoningTrace(
             parent_record_type="delegation",

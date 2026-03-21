@@ -6,9 +6,9 @@ These rules apply to ALL files in this repository — code, documentation, confi
 
 ## MUST Rules
 
-### 1. CARE Platform Is a Standalone Foundation Product
+### 1. PACT Is a Standalone Foundation Product
 
-CARE Platform is owned by the Terrene Foundation (Singapore CLG). It is an independent open-source product. All design decisions must be made on CARE Platform's own merits — what is best for its users and the open-source community.
+PACT is owned by the Terrene Foundation (Singapore CLG). It is an independent open-source product. All design decisions must be made on PACT's own merits — what is best for its users and the open-source community.
 
 ### 2. No Commercial References
 
@@ -20,13 +20,13 @@ MUST NOT reference, discuss, compare with, or design against any commercial or p
 - Market positioning or competitive differentiation (not a concern of this project)
 - Commercial deployment models (managed hosting, enterprise pricing, SaaS)
 
-**Why**: CARE Platform is Foundation-owned and irrevocably open. It has no structural relationship with any commercial entity. Introducing commercial references — even for comparison — creates implicit coupling and suggests a relationship that does not exist.
+**Why**: PACT is Foundation-owned and irrevocably open. It has no structural relationship with any commercial entity. Introducing commercial references — even for comparison — creates implicit coupling and suggests a relationship that does not exist.
 
-**How to apply**: If you find yourself writing "unlike X" or "the open-source version of Y" or "differentiates from Z" — stop. Describe what CARE Platform does on its own terms. If a feature is good for CARE Platform users, build it. If it isn't, don't. The existence or non-existence of any other product is irrelevant.
+**How to apply**: If you find yourself writing "unlike X" or "the open-source version of Y" or "differentiates from Z" — stop. Describe what PACT does on its own terms. If a feature is good for PACT users, build it. If it isn't, don't. The existence or non-existence of any other product is irrelevant.
 
 ### 3. Foundation-Only Dependencies
 
-CARE Platform MUST depend only on:
+PACT MUST depend only on:
 
 - **Terrene Foundation open-source packages**: Kailash Python SDK (Core, DataFlow, Nexus, Kaizen), EATP SDK, trust-plane
 - **Standard open-source libraries**: From PyPI, with OSI-approved licenses
@@ -36,22 +36,22 @@ MUST NOT depend on, import from, or interface with any proprietary SDK, runtime,
 
 ### 4. No "Open-Source Version Of" Language
 
-MUST NOT describe CARE Platform as:
+MUST NOT describe PACT as:
 
 - "The open-source version of [anything]"
 - "The open-source counterpart to [anything]"
 - "The community edition of [anything]"
 
-CARE Platform IS the product. It is not a derivative, counterpart, or edition of something else.
+PACT IS the product. It is not a derivative, counterpart, or edition of something else.
 
-**Correct**: "CARE Platform is the Terrene Foundation's open-source governed operational model."
-**Incorrect**: "CARE Platform is the open-source version of [product name]."
+**Correct**: "PACT is the Terrene Foundation's open-source governed operational model."
+**Incorrect**: "PACT is the open-source version of [product name]."
 
-### 5. Design for CARE Platform Users
+### 5. Design for PACT Users
 
 All feature decisions, architectural choices, and roadmap priorities must be driven by:
 
-- What CARE Platform users need
+- What PACT users need
 - What the CARE, EATP, and CO standards require
 - What the open-source community contributes
 
@@ -86,4 +86,4 @@ MUST NOT:
 
 ## Clarification
 
-Third parties — anyone, anywhere — may build commercial products on top of CARE Platform and Foundation standards. That is the intended open-source model. But CARE Platform itself has zero knowledge of, zero dependency on, and zero design consideration for any such product. If someone builds on CARE Platform, they adapt to CARE Platform — not the other way around.
+Third parties — anyone, anywhere — may build commercial products on top of PACT and Foundation standards. That is the intended open-source model. But PACT itself has zero knowledge of, zero dependency on, and zero design consideration for any such product. If someone builds on PACT, they adapt to PACT — not the other way around.

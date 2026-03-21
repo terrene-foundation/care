@@ -4,7 +4,7 @@
 
 import pytest
 
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     AgentConfig,
     ConstraintEnvelopeConfig,
     DataAccessConstraintConfig,
@@ -12,7 +12,7 @@ from care_platform.build.config.schema import (
     GenesisConfig,
     OperationalConstraintConfig,
 )
-from care_platform.trust.decorators import (
+from pact.trust.decorators import (
     CareTrustOpsProvider,
     _extract_agent_id,
     _resolve_param_index,
@@ -21,7 +21,7 @@ from care_platform.trust.decorators import (
     care_shadow,
     care_verified,
 )
-from care_platform.trust.eatp_bridge import EATPBridge
+from pact.trust.eatp_bridge import EATPBridge
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -378,7 +378,7 @@ class TestCareShadow:
         mock_care_shadow.evaluate.assert_called_once_with(action="read_data", agent_id="agent-001")
 
     async def test_shadow_failsafe_on_care_shadow_error(self, provider):
-        """CARE ShadowEnforcer errors don't block execution."""
+        """PACT ShadowEnforcer errors don't block execution."""
         from unittest.mock import MagicMock
 
         mock_care_shadow = MagicMock()

@@ -12,7 +12,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from care_platform.use.execution.approval import (
+from pact.use.execution.approval import (
     ApprovalQueue,
     QueueOverflowError,
 )

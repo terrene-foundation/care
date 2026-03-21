@@ -3,20 +3,20 @@
 """Tests for M36 bridge management API endpoints.
 
 Tests the bridge CRUD, approval, lifecycle, and audit handler methods
-on PlatformAPI — same pattern as test_dashboard_endpoints.py.
+on PactAPI — same pattern as test_dashboard_endpoints.py.
 """
 
 from __future__ import annotations
 
 import pytest
 
-from care_platform.build.workspace.bridge import BridgeManager
-from care_platform.trust.store.cost_tracking import CostTracker
-from care_platform.use.api.endpoints import (
-    PlatformAPI,
+from pact.build.workspace.bridge import BridgeManager
+from pact.trust.store.cost_tracking import CostTracker
+from pact.use.api.endpoints import (
+    PactAPI,
 )
-from care_platform.use.execution.approval import ApprovalQueue
-from care_platform.use.execution.registry import AgentRegistry
+from pact.use.execution.approval import ApprovalQueue
+from pact.use.execution.registry import AgentRegistry
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -84,8 +84,8 @@ def bridge_manager():
 
 @pytest.fixture()
 def api(registry, approval_queue, cost_tracker, bridge_manager):
-    """PlatformAPI wired with bridge manager."""
-    return PlatformAPI(
+    """PactAPI wired with bridge manager."""
+    return PactAPI(
         registry=registry,
         approval_queue=approval_queue,
         cost_tracker=cost_tracker,
@@ -637,7 +637,7 @@ class TestBridgeAPIBackwardCompat:
 
     def test_create_bridge_no_manager(self, registry, approval_queue, cost_tracker):
         """create_bridge returns error when no bridge_manager."""
-        api = PlatformAPI(
+        api = PactAPI(
             registry=registry,
             approval_queue=approval_queue,
             cost_tracker=cost_tracker,
@@ -655,7 +655,7 @@ class TestBridgeAPIBackwardCompat:
 
     def test_get_bridge_no_manager(self, registry, approval_queue, cost_tracker):
         """get_bridge returns error when no bridge_manager."""
-        api = PlatformAPI(
+        api = PactAPI(
             registry=registry,
             approval_queue=approval_queue,
             cost_tracker=cost_tracker,
@@ -666,7 +666,7 @@ class TestBridgeAPIBackwardCompat:
 
     def test_list_bridges_by_team_no_manager(self, registry, approval_queue, cost_tracker):
         """list_bridges_by_team returns error when no bridge_manager."""
-        api = PlatformAPI(
+        api = PactAPI(
             registry=registry,
             approval_queue=approval_queue,
             cost_tracker=cost_tracker,
@@ -677,7 +677,7 @@ class TestBridgeAPIBackwardCompat:
 
     def test_bridge_audit_no_manager(self, registry, approval_queue, cost_tracker):
         """bridge_audit returns error when no bridge_manager."""
-        api = PlatformAPI(
+        api = PactAPI(
             registry=registry,
             approval_queue=approval_queue,
             cost_tracker=cost_tracker,

@@ -3,15 +3,15 @@ Copyright 2026 Terrene Foundation
 Licensed under the Apache License, Version 2.0
 -->
 
-# CARE Platform Environment Configuration
+# PACT Environment Configuration
 
-All CARE Platform configuration is supplied through environment variables. The `.env` file at the repository root is loaded automatically by both the Python server and the Docker Compose setup.
+All PACT configuration is supplied through environment variables. The `.env` file at the repository root is loaded automatically by both the Python server and the Docker Compose setup.
 
 ---
 
 ## How Configuration Is Loaded
 
-1. At startup, `care_platform.build.config.env.load_env_config()` is called.
+1. At startup, `pact.build.config.env.load_env_config()` is called.
 2. It searches for a `.env` file starting from the current working directory, walking up to three parent directories.
 3. Variables already present in the process environment take precedence over `.env` values.
 4. In Docker Compose, `env_file: .env` injects the file into the container environment before the process starts.
@@ -30,7 +30,7 @@ All CARE Platform configuration is supplied through environment variables. The `
 
 In Docker Compose, `DATABASE_URL` is set automatically to point at the `db` service container. You only need to set `POSTGRES_PASSWORD` in your `.env` file.
 
-### CARE Platform API
+### PACT API
 
 | Variable                  | Required | Default                                       | Description                                                                   |
 | ------------------------- | -------- | --------------------------------------------- | ----------------------------------------------------------------------------- |

@@ -1,10 +1,10 @@
 # Copyright 2026 Terrene Foundation
 # Licensed under the Apache License, Version 2.0
-"""Tests for EATP Bridge — connects CARE Platform models to EATP SDK operations."""
+"""Tests for EATP Bridge — connects PACT models to EATP SDK operations."""
 
 import pytest
 
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     AgentConfig,
     CommunicationConstraintConfig,
     ConstraintEnvelopeConfig,
@@ -14,7 +14,7 @@ from care_platform.build.config.schema import (
     OperationalConstraintConfig,
     TemporalConstraintConfig,
 )
-from care_platform.trust.eatp_bridge import EATPBridge
+from pact.trust.eatp_bridge import EATPBridge
 
 # ---------------------------------------------------------------------------
 # Fixtures

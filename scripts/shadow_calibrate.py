@@ -24,7 +24,7 @@ from __future__ import annotations
 import argparse
 import json
 
-from care_platform.build.verticals.dm_runner import DMTeamRunner
+from pact.build.verticals.dm_runner import DMTeamRunner
 
 
 def main() -> None:

@@ -2,7 +2,7 @@
 # Licensed under the Apache License, Version 2.0
 #
 # Full Foundation organization definition (generated from OrgTemplate.foundation_template())
-# This file can be imported via: care-platform org import-file --file foundation-org.yaml
+# This file can be imported via: pact org import-file --file foundation-org.yaml
 #
 org_id: terrene-foundation
 name: Terrene Foundation

@@ -6,9 +6,9 @@ integrity verification, export filtering, and team timelines.
 
 from datetime import UTC, datetime, timedelta
 
-from care_platform.build.config.schema import VerificationLevel
-from care_platform.trust.audit.anchor import AuditChain
-from care_platform.trust.audit.pipeline import ActionRecord, AuditPipeline
+from pact.build.config.schema import VerificationLevel
+from pact.trust.audit.anchor import AuditChain
+from pact.trust.audit.pipeline import ActionRecord, AuditPipeline
 
 
 class TestActionRecord:

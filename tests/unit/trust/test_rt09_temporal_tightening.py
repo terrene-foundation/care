@@ -16,13 +16,13 @@ Tests:
 
 import pytest
 
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     ConstraintEnvelopeConfig,
     TemporalConstraintConfig,
 )
-from care_platform.trust.constraint.envelope import _is_time_window_tighter
-from care_platform.trust.delegation import DelegationManager
-from care_platform.trust.eatp_bridge import EATPBridge
+from pact.trust.constraint.envelope import _is_time_window_tighter
+from pact.trust.delegation import DelegationManager
+from pact.trust.eatp_bridge import EATPBridge
 
 # ---------------------------------------------------------------------------
 # Fixtures

@@ -11,7 +11,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from care_platform.trust.credentials import CredentialManager
+from pact.trust.credentials import CredentialManager
 
 
 class TestTokenRotation:

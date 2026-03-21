@@ -13,7 +13,7 @@ EATP v2.2 defines interoperability token exchange formats for integration with e
 
 ## Risk/Impact
 
-**Low for Phase 1**. The CARE Platform's initial scope is single-organization governance. Token exchange is only needed when:
+**Low for Phase 1**. The PACT's initial scope is single-organization governance. Token exchange is only needed when:
 
 - Enterprises want to integrate CARE-governed agents with their existing IAM systems
 - Multiple organizations need to establish cross-boundary trust for agent delegation
@@ -27,7 +27,7 @@ EATP v2.2 defines interoperability token exchange formats for integration with e
 
 | Format                                            | Priority | Use Case                                     | Rationale                                                                                                                                                  |
 | ------------------------------------------------- | -------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **JWT** (JSON Web Tokens)                         | High     | API authentication, service-to-service trust | Most widely adopted. Every enterprise IAM system supports JWT. Needed for CARE Platform API integration.                                                   |
+| **JWT** (JSON Web Tokens)                         | High     | API authentication, service-to-service trust | Most widely adopted. Every enterprise IAM system supports JWT. Needed for PACT API integration.                                                   |
 | **W3C Verifiable Credentials**                    | High     | Regulatory compliance, government interop    | Growing adoption in government and regulated industries. Regulatory alignment. Supports selective disclosure.                                              |
 | **SD-JWT** (Selective Disclosure JWT)             | Medium   | Privacy-preserving credential exchange       | Allows sharing only the claims needed for a specific verification. Important for multi-org scenarios where full constraint envelopes should not be shared. |
 | **UCAN** (User Controlled Authorization Networks) | Medium   | Decentralized delegation chains              | Natural fit for EATP delegation chains. Content-addressed, no central authority needed. Aligns with EATP's design philosophy.                              |
@@ -99,7 +99,7 @@ This pattern extends EATP's single-org delegation model to multi-org scenarios w
 | Phase                     | What                             | Why                                                                                                                                      |
 | ------------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | **Phase 1** (current)     | No token exchange needed         | Single-organization deployment. EATP trust chain is self-contained.                                                                      |
-| **Phase 2** (10 Members)  | JWT exchange for API integration | Enables CARE Platform API to accept JWT-authenticated requests. Enables CARE-governed agents to call external APIs with JWT credentials. |
+| **Phase 2** (10 Members)  | JWT exchange for API integration | Enables PACT API to accept JWT-authenticated requests. Enables CARE-governed agents to call external APIs with JWT credentials. |
 | **Phase 2+**              | W3C VC for audit export          | Enables exporting audit anchors as Verifiable Credentials for regulatory compliance and external verification.                           |
 | **Phase 3** (30+ Members) | Full token exchange suite        | SD-JWT for privacy-preserving multi-org delegation. UCAN for decentralized delegation chains. DID for persistent agent identity.         |
 

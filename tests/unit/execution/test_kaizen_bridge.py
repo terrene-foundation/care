@@ -17,22 +17,22 @@ import threading
 
 import pytest
 
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     VerificationGradientConfig,
     VerificationLevel,
 )
-from care_platform.trust.audit.anchor import AuditChain
-from care_platform.trust.constraint.gradient import GradientEngine
-from care_platform.trust.store.store import MemoryStore
-from care_platform.use.execution.approval import ApprovalQueue
-from care_platform.use.execution.kaizen_bridge import KaizenBridge
-from care_platform.use.execution.lifecycle import TaskLifecycle, TaskLifecycleState
-from care_platform.use.execution.llm_backend import (
+from pact.trust.audit.anchor import AuditChain
+from pact.trust.constraint.gradient import GradientEngine
+from pact.trust.store.store import MemoryStore
+from pact.use.execution.approval import ApprovalQueue
+from pact.use.execution.kaizen_bridge import KaizenBridge
+from pact.use.execution.lifecycle import TaskLifecycle, TaskLifecycleState
+from pact.use.execution.llm_backend import (
     BackendRouter,
     StubBackend,
 )
-from care_platform.use.execution.registry import AgentRegistry
-from care_platform.use.execution.runtime import (
+from pact.use.execution.registry import AgentRegistry
+from pact.use.execution.runtime import (
     ExecutionRuntime,
     Task,
 )
@@ -549,7 +549,7 @@ class TestPromptInjectionHardening:
         messages = stub_backend.call_history[0].messages
         # System prompt is intact (first message)
         assert messages[0]["role"] == "system"
-        assert "CARE Platform" in messages[0]["content"]
+        assert "PACT" in messages[0]["content"]
         # Malicious content is in user message, delimited
         assert "BEGIN UNTRUSTED TASK INPUT" in messages[1]["content"]
         assert malicious_action in messages[1]["content"]

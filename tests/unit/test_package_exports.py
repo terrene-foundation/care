@@ -1,126 +1,131 @@
 # Copyright 2026 Terrene Foundation
 # Licensed under the Apache License, Version 2.0
-"""Tests for care_platform top-level package exports (Task 113).
+"""Tests for pact top-level package exports (Task 113).
 
-Validates that all key public types are importable directly from care_platform.
+Validates that all key public types are importable directly from pact.
 """
 
 
 class TestConfigExports:
-    """All config types must be importable from care_platform."""
+    """All config types must be importable from pact."""
 
-    def test_platform_config(self):
-        from care_platform import PlatformConfig
+    def test_pact_config(self):
+        from pact import PactConfig
+
+        assert PactConfig is not None
+
+    def test_platform_config_backward_compat(self):
+        from pact import PlatformConfig
 
         assert PlatformConfig is not None
 
     def test_agent_config(self):
-        from care_platform import AgentConfig
+        from pact import AgentConfig
 
         assert AgentConfig is not None
 
     def test_team_config(self):
-        from care_platform import TeamConfig
+        from pact import TeamConfig
 
         assert TeamConfig is not None
 
     def test_workspace_config(self):
-        from care_platform import WorkspaceConfig
+        from pact import WorkspaceConfig
 
         assert WorkspaceConfig is not None
 
     def test_constraint_envelope_config(self):
-        from care_platform import ConstraintEnvelopeConfig
+        from pact import ConstraintEnvelopeConfig
 
         assert ConstraintEnvelopeConfig is not None
 
 
 class TestConstraintExports:
-    """Constraint types must be importable from care_platform."""
+    """Constraint types must be importable from pact."""
 
     def test_constraint_envelope(self):
-        from care_platform import ConstraintEnvelope
+        from pact import ConstraintEnvelope
 
         assert ConstraintEnvelope is not None
 
     def test_gradient_engine(self):
-        from care_platform import GradientEngine
+        from pact import GradientEngine
 
         assert GradientEngine is not None
 
     def test_evaluation_result(self):
-        from care_platform import EvaluationResult
+        from pact import EvaluationResult
 
         assert EvaluationResult is not None
 
 
 class TestTrustExports:
-    """Trust types must be importable from care_platform."""
+    """Trust types must be importable from pact."""
 
     def test_trust_posture(self):
-        from care_platform import TrustPosture
+        from pact import TrustPosture
 
         assert TrustPosture is not None
 
     def test_capability_attestation(self):
-        from care_platform import CapabilityAttestation
+        from pact import CapabilityAttestation
 
         assert CapabilityAttestation is not None
 
     def test_trust_score(self):
-        from care_platform import TrustScore
+        from pact import TrustScore
 
         assert TrustScore is not None
 
     def test_calculate_trust_score(self):
-        from care_platform import calculate_trust_score
+        from pact import calculate_trust_score
 
         assert callable(calculate_trust_score)
 
 
 class TestAuditExports:
-    """Audit types must be importable from care_platform."""
+    """Audit types must be importable from pact."""
 
     def test_audit_anchor(self):
-        from care_platform import AuditAnchor
+        from pact import AuditAnchor
 
         assert AuditAnchor is not None
 
     def test_audit_chain(self):
-        from care_platform import AuditChain
+        from pact import AuditChain
 
         assert AuditChain is not None
 
 
 class TestWorkspaceExports:
-    """Workspace types must be importable from care_platform."""
+    """Workspace types must be importable from pact."""
 
     def test_workspace(self):
-        from care_platform import Workspace
+        from pact import Workspace
 
         assert Workspace is not None
 
     def test_workspace_phase(self):
-        from care_platform import WorkspacePhase
+        from pact import WorkspacePhase
 
         assert WorkspacePhase is not None
 
     def test_workspace_registry(self):
-        from care_platform import WorkspaceRegistry
+        from pact import WorkspaceRegistry
 
         assert WorkspaceRegistry is not None
 
 
 class TestExecutionExports:
-    """Execution types must be importable from care_platform."""
+    """Execution types must be importable from pact."""
 
     def test_agent_definition(self):
-        from care_platform import AgentDefinition
+        from pact import AgentDefinition
 
         assert AgentDefinition is not None
 
     def test_team_definition(self):
-        from care_platform import TeamDefinition
+        from pact import TeamDefinition
 
         assert TeamDefinition is not None
 
@@ -129,14 +134,15 @@ class TestAllExportsConsistent:
     """Verify __all__ is defined and consistent."""
 
     def test_all_defined(self):
-        import care_platform
+        import pact
 
-        assert hasattr(care_platform, "__all__")
+        assert hasattr(pact, "__all__")
 
     def test_all_contains_key_types(self):
-        import care_platform
+        import pact
 
         expected = [
+            "PactConfig",
             "PlatformConfig",
             "AgentConfig",
             "TeamConfig",
@@ -158,10 +164,10 @@ class TestAllExportsConsistent:
             "TeamDefinition",
         ]
         for name in expected:
-            assert name in care_platform.__all__, f"{name} not in __all__"
+            assert name in pact.__all__, f"{name} not in __all__"
 
     def test_all_entries_are_importable(self):
-        import care_platform
+        import pact
 
-        for name in care_platform.__all__:
-            assert hasattr(care_platform, name), f"{name} in __all__ but not importable"
+        for name in pact.__all__:
+            assert hasattr(pact, name), f"{name} in __all__ but not importable"

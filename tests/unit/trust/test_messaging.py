@@ -5,7 +5,7 @@
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
-from care_platform.trust.messaging import (
+from pact.trust.messaging import (
     AgentMessage,
     MessageChannel,
     MessageRouter,

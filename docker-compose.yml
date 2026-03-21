@@ -1,7 +1,7 @@
 # Copyright 2026 Terrene Foundation
 # Licensed under the Apache License, Version 2.0
 #
-# CARE Platform — Docker Compose service definitions
+# PACT — Docker Compose service definitions
 #
 # Quick start:
 #   cp .env.example .env        # configure environment
@@ -12,7 +12,7 @@
 #
 # Services:
 #   db   — PostgreSQL 16 database with persistent volume
-#   api  — CARE Platform FastAPI server (port 8000)
+#   api  — PACT FastAPI server (port 8000)
 #   web  — Next.js frontend (port 3000)
 
 services:
@@ -21,7 +21,7 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: care_platform
+      POSTGRES_DB: pact
       POSTGRES_USER: care
       # RT11-H1 / RT13: POSTGRES_PASSWORD must be set in .env — no default.
       # Copy .env.example to .env and set a strong password before running.
@@ -35,7 +35,7 @@ services:
     networks:
       - care_net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U care -d care_platform"]
+      test: ["CMD-SHELL", "pg_isready -U care -d pact"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -51,7 +51,7 @@ services:
       - .env
     environment:
       # Override DATABASE_URL to point at the db container
-      DATABASE_URL: postgresql://care:${POSTGRES_PASSWORD}@db:5432/care_platform
+      DATABASE_URL: postgresql://care:${POSTGRES_PASSWORD}@db:5432/pact
       # Allow CORS from the web container and local development
       CARE_CORS_ORIGINS: "http://localhost:3000,http://web:3000"
       # Bind to all interfaces inside the container
