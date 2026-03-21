@@ -3,9 +3,9 @@ requires = ["setuptools>=65.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pact"
-version = "0.1.0"
-description = "PACT — Reference implementation of Principled Architecture for Constrained Trust under EATP trust governance"
+name = "kailash-pact"
+version = "0.2.0"
+description = "PACT — Principled Architecture for Constrained Trust: D/T/R governance, operating envelopes, knowledge clearance, and verification gradient for AI-agent organizations"
 authors = [
     {name = "Terrene Foundation", email = "info@terrene.foundation"}
 ]
@@ -51,26 +51,27 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Kailash SDK frameworks — not imported in source yet, install when needed
-# (install with: pip install pact[kailash])
+# Kailash SDK frameworks (install with: pip install kailash-pact[kailash])
 kailash = [
-    "kailash>=0.12.5",
-    "kailash-nexus>=1.4.2",
-    "kailash-dataflow>=0.12.4",
-    "kailash-kaizen>=1.2.5",
+    "kailash>=1.0.0",
+    "eatp>=0.1.0",
+]
+# Kaizen agent framework (install with: pip install kailash-pact[kaizen])
+kaizen = [
+    "kailash-kaizen>=1.0.0",
 ]
 # Firebase Admin SDK for SSO token verification
-# (install with: pip install pact[firebase])
+# (install with: pip install kailash-pact[firebase])
 firebase = [
     "firebase-admin>=6.0",
 ]
-# PostgreSQL support (install with: pip install pact[postgres])
+# PostgreSQL support (install with: pip install kailash-pact[postgres])
 postgres = [
-    "psycopg2-binary>=2.9.0",
+    "psycopg[binary]>=3.0",
 ]
 # All optional dependencies
 all = [
-    "pact[kailash,firebase,postgres]",
+    "kailash-pact[kailash,kaizen,firebase,postgres]",
 ]
 dev = [
     # Testing (pytest>=7.2.0 removes vulnerable py dependency)
@@ -81,7 +82,7 @@ dev = [
     # HTTP client for integration tests
     "httpx>=0.25.0",
     # PostgreSQL for tests
-    "psycopg2-binary>=2.9.0",
+    "psycopg[binary]>=3.0",
     # Linting & Formatting
     "ruff>=0.1.0",
     "mypy>=1.0",
@@ -91,7 +92,7 @@ dev = [
 ]
 
 [project.scripts]
-pact = "pact.build.cli:main"
+kailash-pact = "pact.governance.cli:main"
 
 [project.urls]
 "Homepage" = "https://github.com/terrene-foundation/pact"

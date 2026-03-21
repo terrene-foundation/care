@@ -20,7 +20,7 @@ import click
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["cli"]
+__all__ = ["cli", "main"]
 
 
 def _green(text: str) -> str:
@@ -170,6 +170,11 @@ def validate(yaml_path: str, verbose: bool) -> None:
         )
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """Entry point for the ``kailash-pact`` console script."""
     logging.basicConfig(level=logging.WARNING)
     cli()
+
+
+if __name__ == "__main__":
+    main()
