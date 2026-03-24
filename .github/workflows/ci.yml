@@ -31,14 +31,14 @@ jobs:
           pip install -e ".[dev]"
 
       - name: Ruff lint
-        run: ruff check src/pact/ tests/
+        run: ruff check src/pact_platform/ tests/
 
       - name: Ruff format check
-        run: ruff format --check src/pact/ tests/
+        run: ruff format --check src/pact_platform/ tests/
 
       - name: Mypy type check
         # 124 pre-existing type errors tracked for cleanup; non-blocking for now
-        run: mypy src/pact/ --ignore-missing-imports || true
+        run: mypy src/pact_platform/ --ignore-missing-imports || true
 
       - name: Security audit (pip-audit)
         # pact is editable install; audit only its dependencies
@@ -66,7 +66,7 @@ jobs:
       - name: Run tests with coverage
         run: |
           pytest tests/unit/ \
-            --cov=src/pact \
+            --cov=src/pact_platform \
             --cov-report=term-missing \
             --cov-report=xml:coverage.xml \
             --cov-fail-under=85 \

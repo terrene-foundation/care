@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://img.shields.io/badge/tests-2198%20passed-green.svg)]()
+[![Tests](https://img.shields.io/badge/tests-1838%20passed-green.svg)]()
 
 **Human judgment surface for governed AI operations.**
 
@@ -101,7 +101,6 @@ Services:
 
 - **api** — FastAPI server (port 8000)
 - **web** — Next.js dashboard (port 3000)
-- **mobile** — Flutter web (port 8080)
 
 ## Development
 
@@ -109,7 +108,7 @@ Services:
 git clone https://github.com/terrene-foundation/pact.git
 cd pact
 pip install -e ".[all,dev]"
-pytest  # 2198 tests
+pytest  # 1838 tests
 ```
 
 ## License
