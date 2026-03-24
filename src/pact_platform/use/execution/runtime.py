@@ -66,6 +66,13 @@ RevocationManager = Any  # was: pact_platform.trust.revocation.RevocationManager
 
 logger = logging.getLogger(__name__)
 
+# LC-1 / LC-3: Maximum number of agents tracked in cumulative spend and
+# action-timestamp dicts.  Prevents unbounded memory growth.
+_MAX_TRACKED_AGENTS: int = 10_000
+
+# LC-3: Rolling window for rate-limit enforcement (24 hours in seconds).
+_RATE_LIMIT_WINDOW_SECONDS: float = 86_400.0
+
 
 class TaskStatus(str, Enum):
     """Lifecycle status of a submitted task."""
@@ -214,6 +221,14 @@ class ExecutionRuntime:
         # Set to 0 to disable periodic refresh (manual refresh_from_store() still works).
         self._refresh_interval: float = 0.0
         self._last_refresh_time: float = time.monotonic()
+
+        # LC-1: Cumulative budget tracking per agent (agent_id -> total USD spent).
+        # Bounded to MAX_TRACKED_AGENTS entries to prevent OOM.
+        self._cumulative_spend: dict[str, float] = {}
+
+        # LC-3: Rate limit enforcement — per-agent action timestamps (UTC epoch seconds).
+        # Used to count actions in rolling 24-hour windows.
+        self._action_timestamps: dict[str, list[float]] = {}
 
     @classmethod
     def from_store(
@@ -587,6 +602,13 @@ class ExecutionRuntime:
                     task.metadata["bridge_source_team"] = task.team_id
                     task.metadata["bridge_target_team"] = agent.team_id
 
+        # LC-3: Rate-limit enforcement — check rolling 24-hour action count.
+        # Applied before governance verification so governance engine also sees
+        # the action_count_today in its context (injected in _run_governance_verification).
+        rate_limit_result = self._check_rate_limit(task, agent)
+        if rate_limit_result is not None:
+            return rate_limit_result
+
         # TODO-7022: GovernanceEngine verification path.
         # When governance_engine is provided AND we have a role address for the
         # agent, use governance_engine.verify_action() instead of the standalone
@@ -698,6 +720,35 @@ class ExecutionRuntime:
                 task.result = TaskResult(output="executed")
             with self._lock:
                 task.status = TaskStatus.COMPLETED
+                # LC-1: Accumulate spend after successful execution.
+                import math as _math_exec
+
+                raw_cost = task.metadata.get("cost_usd") or task.metadata.get("cost") or 0.0
+                try:
+                    action_cost = float(raw_cost)
+                except (TypeError, ValueError):
+                    action_cost = 0.0
+                if not _math_exec.isfinite(action_cost) or action_cost < 0:
+                    action_cost = 0.0
+                _aid = agent.agent_id
+                if (
+                    len(self._cumulative_spend) >= _MAX_TRACKED_AGENTS
+                    and _aid not in self._cumulative_spend
+                ):
+                    _oldest = next(iter(self._cumulative_spend))
+                    del self._cumulative_spend[_oldest]
+                self._cumulative_spend[_aid] = self._cumulative_spend.get(_aid, 0.0) + action_cost
+                # LC-3: Record action timestamp for rate-limit window tracking.
+                _now_ts = time.monotonic()
+                if (
+                    len(self._action_timestamps) >= _MAX_TRACKED_AGENTS
+                    and _aid not in self._action_timestamps
+                ):
+                    _oldest_ts = next(iter(self._action_timestamps))
+                    del self._action_timestamps[_oldest_ts]
+                if _aid not in self._action_timestamps:
+                    self._action_timestamps[_aid] = []
+                self._action_timestamps[_aid].append(_now_ts)
         except Exception as exc:
             logger.error(
                 "Task execution failed: task_id='%s' error='%s'",
@@ -1006,6 +1057,98 @@ class ExecutionRuntime:
 
         return level
 
+    def _check_rate_limit(
+        self,
+        task: Task,
+        agent: AgentRecord,
+    ) -> Task | None:
+        """LC-3: Enforce per-agent rate limits from the governance envelope.
+
+        Reads ``max_actions_per_day`` from the agent's envelope (via the
+        governance engine adapter) and compares against the rolling 24-hour
+        action count stored in ``self._action_timestamps``.
+
+        Returns:
+            The BLOCKED task if the rate limit is exceeded, or None if the
+            action is within limits (execution should continue).
+        """
+        if self._governance_engine is None:
+            return None
+
+        role_address = self._agent_role_addresses.get(agent.agent_id)
+        if role_address is None:
+            # No role address — rate limit cannot be resolved; fail-closed is
+            # handled by the governance engine path that follows this check.
+            return None
+
+        try:
+            import math as _math_rl
+
+            envelope_config = self._governance_engine.compute_envelope(role_address)
+            if envelope_config is None:
+                return None
+
+            envelope_dict = envelope_config.model_dump()
+            operational = envelope_dict.get("operational", {}) or {}
+            max_per_day = operational.get("max_actions_per_day")
+            if max_per_day is None:
+                return None
+
+            max_per_day_f = float(max_per_day)
+            if not _math_rl.isfinite(max_per_day_f) or max_per_day_f <= 0:
+                return None
+
+            with self._lock:
+                _now_rl = time.monotonic()
+                _cutoff_rl = _now_rl - _RATE_LIMIT_WINDOW_SECONDS
+                _ts_list_rl = self._action_timestamps.get(agent.agent_id, [])
+                # Prune stale timestamps while we hold the lock
+                fresh = [ts for ts in _ts_list_rl if ts >= _cutoff_rl]
+                self._action_timestamps[agent.agent_id] = fresh
+                count_today = len(fresh)
+
+            if count_today >= int(max_per_day_f):
+                logger.warning(
+                    "LC-3: Rate limit exceeded for agent '%s' role '%s': "
+                    "%d/%d actions in last 24h — blocking task '%s'",
+                    agent.agent_id,
+                    role_address,
+                    count_today,
+                    int(max_per_day_f),
+                    task.task_id,
+                )
+                with self._lock:
+                    task.status = TaskStatus.BLOCKED
+                    task.verification_level = VerificationLevel.BLOCKED
+                    task.result = TaskResult(
+                        error=(
+                            f"Rate limit exceeded: {count_today}/{int(max_per_day_f)} "
+                            f"actions in last 24h"
+                        )
+                    )
+                    task.completed_at = datetime.now(UTC)
+                self._record_audit(task, VerificationLevel.BLOCKED)
+                return task
+
+        except Exception as exc:
+            # Fail-closed: error resolving rate limit -> BLOCKED
+            logger.error(
+                "LC-3: Rate limit check failed for agent '%s' task '%s': %s "
+                "— fail-closed to BLOCKED",
+                agent.agent_id,
+                task.task_id,
+                exc,
+            )
+            with self._lock:
+                task.status = TaskStatus.BLOCKED
+                task.verification_level = VerificationLevel.BLOCKED
+                task.result = TaskResult(error=f"Rate limit check error (fail-closed): {exc}")
+                task.completed_at = datetime.now(UTC)
+            self._record_audit(task, VerificationLevel.BLOCKED)
+            return task
+
+        return None
+
     def _run_governance_verification(
         self,
         task: Task,
@@ -1039,6 +1182,21 @@ class ExecutionRuntime:
                 context["cost"] = float(cost)
             task_id_val = task.metadata.get("task_id") or task.task_id
             context["task_id"] = task_id_val
+
+            # LC-1: Inject cumulative spend so GovernanceEngine can enforce
+            # per-agent budget caps across multiple actions.
+            # LC-3: Inject rolling 24-hour action count for governance engine.
+            import math as _math
+
+            with self._lock:
+                raw_spend = self._cumulative_spend.get(agent.agent_id, 0.0)
+                _now_gov = time.monotonic()
+                _cutoff_gov = _now_gov - _RATE_LIMIT_WINDOW_SECONDS
+                _ts_list_gov = self._action_timestamps.get(agent.agent_id, [])
+                action_count_today = sum(1 for ts in _ts_list_gov if ts >= _cutoff_gov)
+            cumulative_spend = raw_spend if _math.isfinite(raw_spend) else 0.0
+            context["cumulative_spend_usd"] = cumulative_spend
+            context["action_count_today"] = action_count_today
 
             # Call governance engine verify_action
             verdict = self._governance_engine.verify_action(
