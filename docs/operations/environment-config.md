@@ -25,7 +25,7 @@ All PACT configuration is supplied through environment variables. The `.env` fil
 | Variable            | Required         | Default             | Description                                                                           |
 | ------------------- | ---------------- | ------------------- | ------------------------------------------------------------------------------------- |
 | `DATABASE_URL`      | Yes (production) | `""`                | PostgreSQL connection URL. Format: `postgresql://user:pass@host:5432/dbname`          |
-| `POSTGRES_PASSWORD` | Yes (Docker)     | `care_dev_password` | Password for the PostgreSQL container. Used by Docker Compose to create the database. |
+| `POSTGRES_PASSWORD` | Yes (Docker)     | `pact_dev_password` | Password for the PostgreSQL container. Used by Docker Compose to create the database. |
 | `REDIS_URL`         | No               | `""`                | Redis connection URL. Format: `redis://host:6379/0`. Not required for core operation. |
 
 In Docker Compose, `DATABASE_URL` is set automatically to point at the `db` service container. You only need to set `POSTGRES_PASSWORD` in your `.env` file.
@@ -34,14 +34,14 @@ In Docker Compose, `DATABASE_URL` is set automatically to point at the `db` serv
 
 | Variable                  | Required | Default                                       | Description                                                                   |
 | ------------------------- | -------- | --------------------------------------------- | ----------------------------------------------------------------------------- |
-| `CARE_API_TOKEN`          | Yes\*    | `""`                                          | Bearer token for API authentication. Required unless `CARE_DEV_MODE=true`.    |
-| `CARE_API_HOST`           | No       | `0.0.0.0`                                     | Host the API server binds to. Do not change in containers.                    |
-| `CARE_API_PORT`           | No       | `8000`                                        | Port the API server listens on.                                               |
-| `CARE_CORS_ORIGINS`       | No       | `http://localhost:3000,http://localhost:3001` | Comma-separated list of allowed CORS origins.                                 |
-| `CARE_MAX_WS_SUBSCRIBERS` | No       | `50`                                          | Maximum concurrent WebSocket connections.                                     |
-| `CARE_DEV_MODE`           | No       | `false`                                       | When `true`, allows an empty `CARE_API_TOKEN`. Use only in local development. |
+| `PACT_API_TOKEN`          | Yes\*    | `""`                                          | Bearer token for API authentication. Required unless `PACT_DEV_MODE=true`.    |
+| `PACT_API_HOST`           | No       | `0.0.0.0`                                     | Host the API server binds to. Do not change in containers.                    |
+| `PACT_API_PORT`           | No       | `8000`                                        | Port the API server listens on.                                               |
+| `PACT_CORS_ORIGINS`       | No       | `http://localhost:3000,http://localhost:3001` | Comma-separated list of allowed CORS origins.                                 |
+| `PACT_MAX_WS_SUBSCRIBERS` | No       | `50`                                          | Maximum concurrent WebSocket connections.                                     |
+| `PACT_DEV_MODE`           | No       | `false`                                       | When `true`, allows an empty `PACT_API_TOKEN`. Use only in local development. |
 
-\*`CARE_API_TOKEN` is required unless `CARE_DEV_MODE=true`. The server will refuse to start without it in production mode.
+\*`PACT_API_TOKEN` is required unless `PACT_DEV_MODE=true`. The server will refuse to start without it in production mode.
 
 ### LLM Providers
 
@@ -100,7 +100,7 @@ Minimal configuration for running locally with Docker Compose.
 
 ```env
 # .env — local development
-CARE_DEV_MODE=true
+PACT_DEV_MODE=true
 POSTGRES_PASSWORD=local_dev_only
 
 # Use one LLM provider
@@ -112,7 +112,7 @@ DEBUG=true
 LOG_LEVEL=DEBUG
 ```
 
-No `CARE_API_TOKEN` is needed when `CARE_DEV_MODE=true`.
+No `PACT_API_TOKEN` is needed when `PACT_DEV_MODE=true`.
 
 ### Staging
 
@@ -120,9 +120,9 @@ No `CARE_API_TOKEN` is needed when `CARE_DEV_MODE=true`.
 # .env — staging
 POSTGRES_PASSWORD=staging-strong-password-here
 
-CARE_API_TOKEN=staging-token-generate-with-openssl
-CARE_CORS_ORIGINS=https://staging.your-domain.com
-CARE_DEV_MODE=false
+PACT_API_TOKEN=staging-token-generate-with-openssl
+PACT_CORS_ORIGINS=https://staging.your-domain.com
+PACT_DEV_MODE=false
 
 ANTHROPIC_API_KEY=sk-ant-your-key-here
 ANTHROPIC_MODEL=claude-sonnet-4-6
@@ -140,10 +140,10 @@ EATP_GENESIS_AUTHORITY=terrene.foundation
 # .env — production (values injected from secrets manager, not stored in file)
 POSTGRES_PASSWORD=<from-secrets-manager>
 
-CARE_API_TOKEN=<from-secrets-manager>
-CARE_CORS_ORIGINS=https://your-domain.com
-CARE_DEV_MODE=false
-CARE_MAX_WS_SUBSCRIBERS=100
+PACT_API_TOKEN=<from-secrets-manager>
+PACT_CORS_ORIGINS=https://your-domain.com
+PACT_DEV_MODE=false
+PACT_MAX_WS_SUBSCRIBERS=100
 
 ANTHROPIC_API_KEY=<from-secrets-manager>
 ANTHROPIC_MODEL=claude-sonnet-4-6
@@ -173,11 +173,11 @@ In production, do not store the `.env` file on disk. Inject secrets through your
 openssl rand -base64 48
 ```
 
-Paste the output as the value of `CARE_API_TOKEN`.
+Paste the output as the value of `PACT_API_TOKEN`.
 
 ### Database password strength
 
-Use a password of at least 24 random characters. The default `care_dev_password` is intentionally weak and must be changed before any networked deployment.
+Use a password of at least 24 random characters. The default `pact_dev_password` is intentionally weak and must be changed before any networked deployment.
 
 ```bash
 # Generate a strong database password
@@ -195,15 +195,15 @@ LLM provider API keys should be rotated periodically. To rotate a key:
 
 ### CORS configuration
 
-In production, `CARE_CORS_ORIGINS` must list only the exact origins from which your frontend is served. Wildcard (`*`) is not accepted by the server — each origin must be explicit.
+In production, `PACT_CORS_ORIGINS` must list only the exact origins from which your frontend is served. Wildcard (`*`) is not accepted by the server — each origin must be explicit.
 
 ```env
-CARE_CORS_ORIGINS=https://app.your-domain.com,https://admin.your-domain.com
+PACT_CORS_ORIGINS=https://app.your-domain.com,https://admin.your-domain.com
 ```
 
 ### Protecting the database port
 
-The `docker-compose.yml` exposes port 5432 to the host for local development tooling. In production, remove the `ports` entry from the `db` service so the database is only accessible within the `care_net` Docker network.
+The `docker-compose.yml` exposes port 5432 to the host for local development tooling. In production, remove the `ports` entry from the `db` service so the database is only accessible within the `pact_net` Docker network.
 
 ---
 

@@ -51,18 +51,18 @@ def main() -> None:
     # Create the app with the seeded PactAPI
     from pact_platform.use.api.server import create_app
 
-    os.environ.setdefault("CARE_DEV_MODE", "true")
-    os.environ.setdefault("CARE_API_HOST", "0.0.0.0")
-    os.environ.setdefault("CARE_API_PORT", "8000")
+    os.environ.setdefault("PACT_DEV_MODE", "true")
+    os.environ.setdefault("PACT_API_HOST", "0.0.0.0")
+    os.environ.setdefault("PACT_API_PORT", "8000")
 
     app = create_app(
         platform_api=platform_api,
         dm_runner=components.get("dm_runner"),
     )
 
-    host = os.environ.get("CARE_API_HOST", "0.0.0.0")
-    # Cloud Run sets PORT; fall back to CARE_API_PORT then 8080
-    port = int(os.environ.get("PORT", os.environ.get("CARE_API_PORT", "8080")))
+    host = os.environ.get("PACT_API_HOST", "0.0.0.0")
+    # Cloud Run sets PORT; fall back to PACT_API_PORT then 8080
+    port = int(os.environ.get("PORT", os.environ.get("PACT_API_PORT", "8080")))
 
     logger.info("Starting PACT API with seeded data on http://%s:%d", host, port)
 

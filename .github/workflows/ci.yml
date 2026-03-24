@@ -98,7 +98,7 @@ jobs:
 
       - name: Run integration tests
         env:
-          CARE_DEV_MODE: "true"
+          PACT_DEV_MODE: "true"
         run: pytest tests/integration/ -v
 
   docker-build:
@@ -144,7 +144,7 @@ jobs:
         timeout-minutes: 5
         run: |
           echo "POSTGRES_PASSWORD=test-password-ci" > .env
-          echo "CARE_DEV_MODE=true" >> .env
+          echo "PACT_DEV_MODE=true" >> .env
           docker compose up -d --build --wait db api
 
       - name: Health check API

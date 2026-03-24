@@ -12,7 +12,7 @@
  * Token resolution priority:
  *   1. Firebase Auth ID token (when user is signed in via SSO)
  *   2. NEXT_PUBLIC_API_TOKEN environment variable
- *   3. localStorage CARE_API_TOKEN (static token login)
+ *   3. localStorage PACT_API_TOKEN (static token login)
  */
 
 "use client";
@@ -55,7 +55,7 @@ function resolveToken(): string | undefined {
 
   // Priority 3: localStorage (set by both Firebase and token auth flows)
   try {
-    return localStorage.getItem("CARE_API_TOKEN") ?? undefined;
+    return localStorage.getItem("PACT_API_TOKEN") ?? undefined;
   } catch {
     return undefined;
   }
@@ -83,7 +83,7 @@ async function resolveTokenAsync(): Promise<string | undefined> {
 
   // Priority 3: localStorage
   try {
-    return localStorage.getItem("CARE_API_TOKEN") ?? undefined;
+    return localStorage.getItem("PACT_API_TOKEN") ?? undefined;
   } catch {
     return undefined;
   }

@@ -98,10 +98,10 @@ export interface AuthContextValue {
 // localStorage keys (for static token fallback)
 // ---------------------------------------------------------------------------
 
-const STORAGE_KEY_TOKEN = "CARE_API_TOKEN";
-const STORAGE_KEY_USER_NAME = "CARE_USER_NAME";
-const STORAGE_KEY_USER_ROLE = "CARE_USER_ROLE";
-const STORAGE_KEY_AUTH_METHOD = "CARE_AUTH_METHOD";
+const STORAGE_KEY_TOKEN = "PACT_API_TOKEN";
+const STORAGE_KEY_USER_NAME = "PACT_USER_NAME";
+const STORAGE_KEY_USER_ROLE = "PACT_USER_ROLE";
+const STORAGE_KEY_AUTH_METHOD = "PACT_AUTH_METHOD";
 
 // ---------------------------------------------------------------------------
 // Context

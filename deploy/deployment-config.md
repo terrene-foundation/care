@@ -89,7 +89,7 @@ gcloud run deploy pact-api \
   --cpu 1 \
   --min-instances 0 \
   --max-instances 2 \
-  --set-env-vars "CARE_DEV_MODE=true,CARE_API_PORT=8080,CARE_API_HOST=0.0.0.0"
+  --set-env-vars "PACT_DEV_MODE=true,PACT_API_PORT=8080,PACT_API_HOST=0.0.0.0"
 ```
 
 ## Deploy Web to Vercel

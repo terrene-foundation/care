@@ -24,10 +24,10 @@ from pathlib import Path
 
 # Directories to scan
 SCAN_DIRS = [
-    "src/pact/trust",
-    "src/pact/trust/constraint",
-    "src/pact/trust/audit",
-    "src/pact/trust/store",
+    "src/pact_platform/trust",
+    "src/pact_platform/trust/constraint",
+    "src/pact_platform/trust/audit",
+    "src/pact_platform/trust/store",
 ]
 
 # Files exempt from fail-closed requirement (intentional fail-open)

@@ -44,10 +44,10 @@ cp .env.example .env
 Open `.env` and set at minimum:
 
 - `POSTGRES_PASSWORD` — a strong password for the database (see Environment Configuration)
-- `CARE_API_TOKEN` — a bearer token for API authentication
+- `PACT_API_TOKEN` — a bearer token for API authentication
 - One LLM provider key (`OPENAI_API_KEY` or `ANTHROPIC_API_KEY`)
 
-For local development you can set `CARE_DEV_MODE=true` to skip the API token requirement, but do not do this in production.
+For local development you can set `PACT_DEV_MODE=true` to skip the API token requirement, but do not do this in production.
 
 ### 3. Start all services
 
@@ -94,11 +94,11 @@ docker compose down -v        # stop containers and delete database volume
 
 | Service | Port | Description                             |
 | ------- | ---- | --------------------------------------- |
-| `db`    | 5432 | PostgreSQL 16 — PACT database  |
+| `db`    | 5432 | PostgreSQL 16 — PACT database           |
 | `api`   | 8000 | FastAPI server — REST API and WebSocket |
 | `web`   | 3000 | Next.js frontend — operator dashboard   |
 
-All three services share the `care_net` bridge network. The `api` and `web` containers communicate with each other over this network using service names as hostnames (`http://api:8000`, `http://db:5432`).
+All three services share the `pact_net` bridge network. The `api` and `web` containers communicate with each other over this network using service names as hostnames (`http://api:8000`, `http://db:5432`).
 
 ---
 
@@ -113,7 +113,7 @@ The minimum required variables for a working deployment:
 POSTGRES_PASSWORD=your-strong-password
 
 # API authentication token
-CARE_API_TOKEN=your-secure-token
+PACT_API_TOKEN=your-secure-token
 
 # LLM provider (at least one)
 ANTHROPIC_API_KEY=sk-ant-...
@@ -192,10 +192,10 @@ docker compose up -d
 
 ### Health endpoints
 
-| Endpoint      | Service | Description                                              |
-| ------------- | ------- | -------------------------------------------------------- |
+| Endpoint      | Service | Description                                     |
+| ------------- | ------- | ----------------------------------------------- |
 | `GET /health` | api     | Returns `{"status":"healthy","service":"pact"}` |
-| `GET /`       | web     | Returns the Next.js page (200 = healthy)                 |
+| `GET /`       | web     | Returns the Next.js page (200 = healthy)        |
 
 These endpoints are used by Docker Compose health checks and can be wired into external monitoring tools.
 
@@ -234,7 +234,7 @@ docker stats               # live CPU, memory, network for all containers
 
 ### api container exits immediately on startup
 
-The most common cause is a missing or invalid `CARE_API_TOKEN` with `CARE_DEV_MODE` not set to `true`.
+The most common cause is a missing or invalid `PACT_API_TOKEN` with `PACT_DEV_MODE` not set to `true`.
 
 Check the logs:
 
@@ -242,10 +242,10 @@ Check the logs:
 docker compose logs api
 ```
 
-If you see `EnvConfigError: CARE_API_TOKEN is required in production mode`, either:
+If you see `EnvConfigError: PACT_API_TOKEN is required in production mode`, either:
 
-- Set `CARE_API_TOKEN=your-token` in `.env`, or
-- Set `CARE_DEV_MODE=true` for local development
+- Set `PACT_API_TOKEN=your-token` in `.env`, or
+- Set `PACT_DEV_MODE=true` for local development
 
 ### web service fails health check
 
@@ -292,14 +292,14 @@ docker compose up --build       # build and start in one step
 
 Before exposing the PACT to external traffic:
 
-- [ ] `CARE_API_TOKEN` is set to a cryptographically random token (at least 32 bytes)
-- [ ] `CARE_DEV_MODE` is `false` or absent
-- [ ] `POSTGRES_PASSWORD` is not the default `care_dev_password`
+- [ ] `PACT_API_TOKEN` is set to a cryptographically random token (at least 32 bytes)
+- [ ] `PACT_DEV_MODE` is `false` or absent
+- [ ] `POSTGRES_PASSWORD` is not the default `pact_dev_password`
 - [ ] LLM API keys are present only in `.env`, not in source code or Docker images
 - [ ] `.env` is listed in `.gitignore` (it is by default — verify before committing)
 - [ ] Database port 5432 is not exposed to the internet (remove the `ports` entry from the `db` service for production)
 - [ ] HTTPS/TLS is configured via a reverse proxy (nginx, Caddy, or cloud load balancer) in front of port 8000 and 3000
-- [ ] `CARE_CORS_ORIGINS` lists only trusted frontend origins
+- [ ] `PACT_CORS_ORIGINS` lists only trusted frontend origins
 - [ ] Container images are scanned for vulnerabilities before production deployment
 
 ---

@@ -22,7 +22,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_DB: pact
-      POSTGRES_USER: care
+      POSTGRES_USER: pact
       # RT11-H1 / RT13: POSTGRES_PASSWORD must be set in .env — no default.
       # Copy .env.example to .env and set a strong password before running.
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env before running docker compose}
@@ -35,7 +35,7 @@ services:
     networks:
       - pact_net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U care -d pact"]
+      test: ["CMD-SHELL", "pg_isready -U pact -d pact"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -51,7 +51,7 @@ services:
       - .env
     environment:
       # Override DATABASE_URL to point at the db container
-      DATABASE_URL: postgresql://care:${POSTGRES_PASSWORD}@db:5432/pact
+      DATABASE_URL: postgresql://pact:${POSTGRES_PASSWORD}@db:5432/pact
       # Allow CORS from the web container and local development
       PACT_CORS_ORIGINS: "http://localhost:3000,http://web:3000"
       # Bind to all interfaces inside the container

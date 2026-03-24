@@ -10,13 +10,13 @@ Include the API token in the `Authorization` header:
 Authorization: Bearer <your-token>
 ```
 
-Set the token via `CARE_API_TOKEN` environment variable. In dev mode (`CARE_DEV_MODE=true`), an empty token is accepted.
+Set the token via `PACT_API_TOKEN` environment variable. In dev mode (`PACT_DEV_MODE=true`), an empty token is accepted.
 
 ## Base URL
 
 Default: `http://localhost:8000`
 
-Configure via `CARE_API_HOST` and `CARE_API_PORT` environment variables.
+Configure via `PACT_API_HOST` and `PACT_API_PORT` environment variables.
 
 ---
 
@@ -185,7 +185,7 @@ Events include: agent actions, approval requests, posture changes, bridge update
 
 ## Rate Limiting
 
-- GET endpoints: 60 requests/minute (configurable via `CARE_RATE_LIMIT_GET`)
-- POST endpoints: 20 requests/minute (configurable via `CARE_RATE_LIMIT_POST`)
+- GET endpoints: 60 requests/minute (configurable via `PACT_RATE_LIMIT_GET`)
+- POST endpoints: 20 requests/minute (configurable via `PACT_RATE_LIMIT_POST`)
 
 Rate limit headers are included in responses: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`.

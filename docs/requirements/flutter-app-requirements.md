@@ -17,7 +17,7 @@ The following existing artifacts define the scope:
 | Artifact                          | Location                                                                   | What it defines                                           |
 | --------------------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------- |
 | REST API (30+ endpoints)          | `/Users/esperie/repos/terrene/care/docs/rest-api.md`                       | All backend endpoints                                     |
-| TypeScript data models (28 types) | `/Users/esperie/repos/terrene/care/apps/web/types/pact.ts`        | Every data shape                                          |
+| TypeScript data models (28 types) | `/Users/esperie/repos/terrene/care/apps/web/types/pact.ts`                 | Every data shape                                          |
 | API client (35 methods)           | `/Users/esperie/repos/terrene/care/apps/web/lib/api.ts`                    | Client method signatures, error classes, WebSocket client |
 | Auth context                      | `/Users/esperie/repos/terrene/care/apps/web/lib/auth-context.tsx`          | Auth flow, token storage, user roles                      |
 | Notification context              | `/Users/esperie/repos/terrene/care/apps/web/lib/notification-context.tsx`  | Event-to-notification mapping, priority levels            |
@@ -304,7 +304,7 @@ Port the auth flow from `auth-context.tsx`. The Flutter implementation needs:
 
 - Store token in `flutter_secure_storage` (Keychain/EncryptedSharedPrefs/Credential Locker)
 - Store user name and role alongside token
-- Storage keys: `CARE_API_TOKEN`, `CARE_USER_NAME`, `CARE_USER_ROLE`
+- Storage keys: `PACT_API_TOKEN`, `PACT_USER_NAME`, `PACT_USER_ROLE`
 
 **Auth state (Riverpod)**:
 

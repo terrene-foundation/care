@@ -21,7 +21,7 @@ import logging
 import random
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 # ---------------------------------------------------------------------------
@@ -2083,7 +2083,7 @@ def seed_dm_runner_tasks():
     Returns:
         The DMTeamRunner instance with completed tasks and calibration data.
     """
-    from pact_platform.build.verticals.dm_runner import DMTeamRunner
+    from pact_platform.examples.foundation.dm_runner import DMTeamRunner
 
     runner = DMTeamRunner()
 
@@ -2107,7 +2107,7 @@ def seed_dm_runner_tasks():
 # ---------------------------------------------------------------------------
 
 
-def main() -> None:
+def main() -> dict[str, Any] | None:
     parser = argparse.ArgumentParser(description="Seed demo data for the PACT dashboard")
     parser.add_argument(
         "--reset",
