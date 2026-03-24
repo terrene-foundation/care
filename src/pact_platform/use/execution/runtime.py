@@ -749,6 +749,11 @@ class ExecutionRuntime:
                 if _aid not in self._action_timestamps:
                     self._action_timestamps[_aid] = []
                 self._action_timestamps[_aid].append(_now_ts)
+                # Prune stale timestamps on write (bounded per-agent list)
+                _cutoff_w = _now_ts - _RATE_LIMIT_WINDOW_SECONDS
+                self._action_timestamps[_aid] = [
+                    t for t in self._action_timestamps[_aid] if t >= _cutoff_w
+                ]
         except Exception as exc:
             logger.error(
                 "Task execution failed: task_id='%s' error='%s'",
