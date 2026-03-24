@@ -198,6 +198,9 @@ class ExecutionRuntime:
         self._governance_engine: GovernanceEngine | None = governance_engine
         # Agent ID -> D/T/R role address mapping for governance lookups
         self._agent_role_addresses: dict[str, str] = {}
+        # Emergency halt state — blocks all task processing when active
+        self._halted: bool = False
+        self._halt_reason: str = ""
 
         # RT4-M9: Thread-safe task queue
         self._lock = threading.Lock()
@@ -424,6 +427,31 @@ class ExecutionRuntime:
         with self._lock:
             return self._tasks.get(task_id)
 
+    def halt(self, reason: str) -> None:
+        """Emergency halt — block all task processing until resumed.
+
+        Args:
+            reason: Non-empty reason for the halt.
+        """
+        if not reason:
+            raise ValueError("Halt reason must not be empty")
+        self._halted = True
+        self._halt_reason = reason
+        logger.warning("ExecutionRuntime HALTED: %s", reason)
+
+    def resume(self) -> None:
+        """Resume normal operation after an emergency halt."""
+        was_halted = self._halted
+        self._halted = False
+        self._halt_reason = ""
+        if was_halted:
+            logger.info("ExecutionRuntime resumed from halt")
+
+    @property
+    def is_halted(self) -> bool:
+        """Whether the runtime is in emergency halt state."""
+        return self._halted
+
     def process_next(self) -> Task | None:
         """Process the next task in the queue.
 
@@ -442,6 +470,11 @@ class ExecutionRuntime:
         Returns:
             The processed Task, or None if the queue is empty.
         """
+        # Emergency halt check — block all processing
+        if self._halted:
+            logger.warning("process_next blocked: runtime is halted (%s)", self._halt_reason)
+            return None
+
         # RT5-08: Sync revocations before dequeuing so newly-revoked agents
         # are reflected in the registry before assignment.
         self._sync_revocations()
