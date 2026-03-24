@@ -90,6 +90,50 @@ verdict = engine.verify_action("Eng-CTO-Backend-Lead", "deploy", {"cost": 500})
 # GovernanceVerdict(level="auto_approved", reason="...")
 ```
 
+## Constraint Pipeline Architecture (v0.3.0)
+
+### Single Decision Path
+
+`GovernanceEngine.verify_action()` IS the governance decision. There is no parallel pipeline, no local constraint evaluation, no fallback. Any code that evaluates governance rules outside of `verify_action()` is an architectural violation.
+
+```
+All governance consumers → GovernanceEngine.verify_action() → GovernanceVerdict
+```
+
+### Legacy Constraint/ Modules Are Retired
+
+The following modules no longer exist in `pact_platform/trust/constraint/`:
+
+- `gradient.py` — RETIRED (logic is in L1 GovernanceEngine)
+- `envelope.py` — RETIRED (logic is in L1 GovernanceEngine)
+- `middleware.py` — RETIRED (replaced by HookEnforcer/ShadowEnforcer)
+
+The ONLY remaining `constraint/` module at L3 is `bridge_envelopes.py` — bridge topology lookup only, NOT governance decisions.
+
+### L1/L3 Boundary
+
+- **L1 (`kailash-pact`)**: owns governance DECISIONS — verify_action(), envelope evaluation, access checks, gradient
+- **L3 (`pact_platform`)**: owns operational INFRASTRUCTURE — emergency halt, cumulative budget tracking, rate limiting, bridge envelopes
+
+L3 INJECTS operational context (cumulative spend, call counts) into `verify_action()`. L3 NEVER evaluates governance rules locally.
+
+### HookEnforcer and ShadowEnforcer
+
+The two L3 consumers of GovernanceEngine:
+
+- `HookEnforcer`: blocking enforcer — gates action execution, raises on non-permissive verdict
+- `ShadowEnforcer`: observability enforcer — checks governance without blocking, records shadow verdicts
+
+Both take `governance_engine` + `role_address` at construction (fail at construction if missing, not at enforce time). Both are fail-closed — engine exceptions return BLOCKED, never re-raise.
+
+### Emergency Halt
+
+`ExecutionRuntime.halt()` / `resume()` / `is_halted()` implement an emergency stop. The halt check runs FIRST in `process_next()` — before governance checks, before any work. Halt is a safety override that preempts governance.
+
+### Mock Governance Engines
+
+For examples and seeding only. MUST be function-scoped or underscore-prefixed. MUST NOT be exported as public API. Use fnmatch pattern rules for permissiveness control.
+
 ## Security Invariants
 
 Per `.claude/rules/pact-governance.md`:

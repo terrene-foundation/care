@@ -320,9 +320,147 @@ agent.run(context, tools=all_available_tools)
 
 **Why**: DEFAULT-DENY for tool access ensures that agents cannot escalate their capabilities by discovering unregistered tools. Every tool must be explicitly approved and mapped to a clearance level. This is the governance equivalent of the principle of least privilege.
 
+### 11. No Local Governance Evaluation — All Decisions via verify_action()
+
+All governance decisions in `pact_platform/` (L3) MUST route through `GovernanceEngine.verify_action()`. Local constraint evaluation outside of `verify_action()` is FORBIDDEN.
+
+```python
+# DO:
+verdict = engine.verify_action(role_address=role_address, action=action, context=ctx)
+if not verdict.allowed:
+    return BLOCKED
+
+# DO NOT:
+envelope = load_envelope(role_address)
+if action_cost > envelope.max_cost:          # Local evaluation — FORBIDDEN
+    return BLOCKED
+if action not in envelope.allowed_actions:   # Local evaluation — FORBIDDEN
+    return BLOCKED
+```
+
+**Why**: Parallel evaluation paths produce split-brain governance — the engine's audit log does not reflect locally-evaluated decisions, breaking audit continuity and EATP compliance.
+
+### 12. Cumulative Budget MUST Be Injected into verify_action() Context
+
+When calling `verify_action()`, the current per-agent cumulative spend MUST be included in the context dict. The engine cannot track cumulative spend across calls on its own.
+
+```python
+# DO:
+verdict = engine.verify_action(
+    role_address=role_address,
+    action=action_name,
+    context={
+        "cost": this_action_cost,
+        "cumulative_spend": self._agent_spend.get(role_address, 0.0),
+        **action_context,
+    },
+)
+
+# DO NOT:
+verdict = engine.verify_action(
+    role_address=role_address,
+    action=action_name,
+    context={"cost": this_action_cost},  # Missing cumulative_spend — budget bypass!
+)
+```
+
+**Why**: The engine evaluates `cost` against `max_budget`. Without `cumulative_spend`, each action is evaluated in isolation — an agent can make unlimited low-cost calls that collectively exceed the budget.
+
+### 13. Rate Limits MUST Be Enforced, Not Just Logged
+
+When a rate limit is exceeded (rolling 24h window exceeded), the call MUST be blocked via `verify_action()` context injection or by returning BLOCKED directly. Logging alone is insufficient.
+
+```python
+# DO:
+daily_calls = self._get_call_count(role_address)
+verdict = engine.verify_action(
+    role_address=role_address,
+    action=action_name,
+    context={"daily_calls": daily_calls, ...},
+)
+# engine evaluates daily_calls against operational.max_daily_actions
+
+# DO NOT:
+daily_calls = self._get_call_count(role_address)
+if daily_calls > MAX_RATE:
+    logger.warning("Rate limit exceeded for %s", role_address)
+    # Execution continues! — FORBIDDEN
+```
+
+**Why**: Rate limit logging without enforcement is a governance gap. An agent can exceed rate limits with only a warning — this breaks operational envelope constraints.
+
+### 14. Emergency Halt MUST Be Checked Before Task Processing
+
+`ExecutionRuntime.is_halted()` MUST be the FIRST check in any task processing method. It runs before governance checks, before any work.
+
+```python
+# DO:
+def process_next(self, task: Task) -> TaskResult:
+    if self.is_halted():  # FIRST — before everything
+        return TaskResult(blocked=True, reason="runtime halted")
+    verdict = self._hook_enforcer.enforce(task.action, task.context)
+    if not verdict.allowed:
+        return TaskResult(blocked=True, reason=verdict.reason)
+    return self._execute(task)
+
+# DO NOT:
+def process_next(self, task: Task) -> TaskResult:
+    verdict = self._hook_enforcer.enforce(task.action, task.context)  # Governance first? WRONG
+    if not verdict.allowed:
+        return TaskResult(blocked=True, reason=verdict.reason)
+    if self.is_halted():  # Halt after governance? WRONG
+        return TaskResult(blocked=True, reason="runtime halted")
+    return self._execute(task)
+```
+
+**Why**: Emergency halt is a safety override that must preempt governance. A halted runtime must stop ALL work regardless of what governance would permit. Checking halt after governance allows governance to "approve" work that the operator has explicitly stopped.
+
+## MUST NOT Rules (Continued)
+
+### 6. MUST NOT Implement Retired Constraint/ Modules
+
+The following modules are RETIRED from `pact_platform/trust/constraint/` as of v0.3.0. Do NOT re-implement or import them:
+
+- `gradient.py` — verification gradient (now in L1 GovernanceEngine)
+- `envelope.py` — constraint envelope evaluation (now in L1 GovernanceEngine)
+- `middleware.py` — enforcement middleware (replaced by HookEnforcer/ShadowEnforcer)
+
+The ONLY permitted `constraint/` module at L3 is `bridge_envelopes.py`.
+
+```python
+# DO NOT re-implement or import:
+from pact_platform.trust.constraint.gradient import VerificationGradient    # RETIRED
+from pact_platform.trust.constraint.envelope import ConstraintEnvelopePipeline  # RETIRED
+from pact_platform.trust.constraint.middleware import EnforcementMiddleware  # RETIRED
+
+# DO: use HookEnforcer for blocking enforcement
+from pact_platform.engine.hook_enforcer import HookEnforcer
+```
+
+**Why**: These modules implemented parallel governance logic that diverged from the engine's state. Re-implementing them recreates the split-brain problem that v0.3.0 was designed to eliminate.
+
+### 7. MUST NOT Expose Mock Governance Engines as Public API
+
+Mock governance engines (for examples, seeding, tests) MUST be function-scoped or use underscore-prefixed names. They MUST NOT be exported from module `__all__` or used outside their immediate scope.
+
+```python
+# DO: function-scoped or prefixed
+def _make_mock_engine() -> GovernanceEngine: ...   # underscore prefix
+def test_something():
+    engine = _make_permissive_engine()             # function-scoped
+
+# DO NOT:
+class MockGovernanceEngine(GovernanceEngine): ...  # Public class — FORBIDDEN
+__all__ = ["MockGovernanceEngine"]                  # Export — FORBIDDEN
+```
+
+**Why**: Mock engines bypass real governance. If exposed as public API, they risk being imported in production paths — silently disabling all governance enforcement.
+
 ## Cross-References
 
 - `rules/boundary-test.md` — Domain vocabulary blacklist
 - `rules/trust-plane-security.md` — Trust store security patterns (apply same patterns to governance stores)
 - `rules/eatp.md` — EATP SDK conventions (dataclasses, error hierarchy)
 - `rules/security.md` — Global security rules (secrets, injection, input validation)
+- `skills/29-pact/pact-governance-engine.md` — Single-path architecture, L1/L3 boundary, cumulative budget injection
+- `skills/29-pact/pact-governed-agents.md` — HookEnforcer, ShadowEnforcer, emergency halt patterns
