@@ -6,9 +6,10 @@ implications. We take security seriously and appreciate responsible disclosure.
 
 ## Supported Versions
 
-| Version | Supported     |
-| ------- | ------------- |
-| 0.1.x   | Yes (current) |
+| Version     | Supported     |
+| ----------- | ------------- |
+| 0.3.x       | Yes (current) |
+| 0.1.x-0.2.x | No            |
 
 As the project is pre-1.0, only the latest release on the `main` branch receives
 security patches. When 1.0 is released, this table will be updated with a formal
@@ -71,34 +72,34 @@ require heightened review.
 
 ### Critical Severity
 
-- **Trust chain cryptography** (`pact/trust/`) -- Genesis records,
+- **Trust chain cryptography** (`pact_platform/trust/`) -- Genesis records,
   delegation chains, capability attestations, and their cryptographic integrity.
   A bypass here breaks the entire trust model.
 
-- **Constraint enforcement** (`pact/constraint/`) -- Constraint envelope
-  evaluation and the verification gradient engine. A bypass could allow an agent to
-  exceed its authorized permissions.
+- **Governance enforcement** (`pact_platform/engine/`) -- Operating envelope
+  evaluation, verification gradient, and hook enforcement. A bypass could allow
+  an agent to exceed its authorized permissions.
 
-- **Audit chain integrity** (`pact/audit/`) -- Tamper-evident audit anchors
+- **Audit chain integrity** (`pact_platform/audit/`) -- Tamper-evident audit anchors
   and chain verification. Compromising the audit chain destroys accountability.
 
 ### High Severity
 
-- **Approval queue** (`pact/execution/approval.py`) -- Human-in-the-loop
+- **Approval queue** (`pact_platform/use/execution/approval.py`) -- Human-in-the-loop
   approval for HELD actions. A bypass could allow self-approval of restricted
   actions.
 
-- **Platform configuration** (`pact/config/`) -- Configuration parsing and
+- **Platform configuration** (`pact_platform/build/config/`) -- Configuration parsing and
   validation. Malformed configuration could weaken constraints.
 
 ### Medium Severity
 
-- **Session management** (`pact/execution/session.py`) -- Session state
+- **Session management** (`pact_platform/use/execution/`) -- Session state
   and checkpoints. Information disclosure through session data.
 
-- **Audit export** (`pact/audit/anchor.py`, `export` method) -- Audit
-  chain export for external review. Sensitive operational data could be disclosed
-  if export filtering is bypassed.
+- **Audit export** (`pact_platform/audit/`) -- Audit chain export for
+  external review. Sensitive operational data could be disclosed if export
+  filtering is bypassed.
 
 ## Security Practices
 
@@ -139,7 +140,7 @@ Before submitting a PR that touches trust, crypto, or enforcement modules:
 
 ### In Scope
 
-- All code in the `pact/` package
+- All code in the `pact_platform/` package
 - Configuration parsing and validation
 - Trust chain and cryptographic operations
 - Constraint enforcement logic
@@ -160,4 +161,4 @@ Before submitting a PR that touches trust, crypto, or enforcement modules:
 
 The PACT is Apache 2.0 licensed, owned by the Terrene Foundation.
 This security policy applies to the open-source codebase at
-https://github.com/terrene-foundation/care.
+https://github.com/terrene-foundation/pact.

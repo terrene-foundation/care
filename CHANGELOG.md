@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-03-25
+
+### Added
+
+- **L3 Platform Repivot** — PACT Platform is now the human judgment surface for governed AI operations, built on kailash-pact (L1) governance primitives and kaizen-agents (L2) autonomous execution.
+- **11 DataFlow Models** — AgenticObjective, AgenticRequest, AgenticWorkSession, AgenticArtifact, AgenticDecision, AgenticReviewDecision, AgenticFinding, AgenticPool, AgenticPoolMembership, Run, ExecutionMetric (121 auto-generated CRUD nodes).
+- **7 API Routers** (42+ endpoints) — objectives, requests, sessions, decisions, pools, reviews, metrics. FastAPI with authentication, rate limiting, CORS, security headers.
+- **5 Platform Services** — RequestRouter, ApprovalQueue, CompletionWorkflow, CostTracking, NotificationDispatch.
+- **6 Engine Components** — EnvelopeAdapter, GovernedDelegate, ApprovalBridge, EventBridge, SupervisorOrchestrator, AutoSeed.
+- **CLI** with 10 commands — quickstart, org, role, clearance, bridge, envelope, agent, audit, validate, status.
+- **Web Dashboard** (Next.js 15 + React 19) — objectives, requests, pools, org-builder pages plus existing approvals, agents, bridges, trust-chains, envelopes, cost, audit, shadow, verification.
+- **Mobile Screens** (Flutter) — objectives, requests, pools.
+- **University Example Vertical** — demonstrates all PACT concepts (D/T/R hierarchy, envelopes, clearances, verification gradient) without requiring domain expertise.
+- **6 Notification Integrations** — NotificationAdapter, Slack/Discord/Teams webhooks, LLMProviderManager.
+- **Docker Compose** — PostgreSQL 16 + API + Web dashboard, health-checked, ready to run.
+
+### Changed
+
+- **Repository repivoted** from governance-only library to full L3 platform. Governance primitives migrated to kailash-pact (L1) in kailash-py monorepo.
+- **Package name** is now `pact-platform` (PyPI). Import path: `from pact_platform import ...`.
+
+### Security
+
+- Fail-closed governance enforcement via HookEnforcer and ShadowEnforcer.
+- Default-deny tool registration — unregistered tools are BLOCKED.
+- Emergency halt checked before all task processing.
+- Cumulative budget injection into verify_action() context.
+- Rate limit enforcement (not just logging).
+
 ## [0.2.0] - 2026-03-21
 
 ### Added
@@ -68,5 +97,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No hardcoded secrets (all from .env).
 - Parameterized database queries throughout.
 
+[0.3.0]: https://github.com/terrene-foundation/pact/releases/tag/v0.3.0
 [0.2.0]: https://github.com/terrene-foundation/pact/releases/tag/v0.2.0
 [0.1.0]: https://github.com/terrene-foundation/pact/releases/tag/v0.1.0

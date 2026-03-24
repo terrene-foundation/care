@@ -1,8 +1,8 @@
-# Contributing to the PACT
+# Contributing to PACT Platform
 
-Thank you for your interest in contributing to the PACT. This guide covers everything you need to set up your development environment, understand the contribution process, and submit changes.
+Thank you for your interest in contributing to the PACT Platform. This guide covers everything you need to set up your development environment, understand the contribution process, and submit changes.
 
-The PACT is owned by the Terrene Foundation and licensed under Apache 2.0. All contributions are welcome from anyone -- the Foundation operates under a uniform contributor framework with no special access or advantage for any contributor.
+The PACT Platform is owned by the Terrene Foundation and licensed under Apache 2.0. All contributions are welcome from anyone -- the Foundation operates under a uniform contributor framework with no special access or advantage for any contributor.
 
 ---
 
@@ -18,15 +18,15 @@ The PACT is owned by the Terrene Foundation and licensed under Apache 2.0. All c
 
 ```bash
 # Clone the repository
-git clone https://github.com/terrene-foundation/care.git
-cd care
+git clone https://github.com/terrene-foundation/pact.git
+cd pact
 
 # Create and activate a virtual environment
 python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # Install with development dependencies
-pip install -e ".[dev]"
+pip install -e ".[all,dev]"
 ```
 
 ### Environment Configuration
@@ -48,35 +48,38 @@ Edit `.env` with your API keys. At minimum, configure one LLM provider. The root
 pytest
 
 # Run with coverage
-pytest --cov=pact
+pytest --cov=src/pact_platform
 
 # Lint
-ruff check .
+ruff check src/pact_platform/ tests/
 
 # Type check
-mypy pact/
+mypy src/pact_platform/
 ```
 
-All 875+ tests should pass. If any fail, check that your dependencies installed correctly and your `.env` is configured.
+All 1838+ tests should pass. If any fail, check that your dependencies installed correctly and your `.env` is configured.
 
 ---
 
 ## Project Structure
 
 ```
-pact/          Main package
-  trust/                EATP trust layer (genesis, delegation, posture, scoring)
-  constraint/           Constraint envelopes and verification gradient
-  execution/            Agent runtime (teams, sessions, approval queues)
-  audit/                Tamper-evident audit chains
-  workspace/            Workspace management and cross-functional bridges
-  config/               Configuration schema and loader
-  persistence/          Storage abstraction (MemoryStore, FilesystemStore)
-tests/                  Test suite (unit, integration)
-docs/                   Documentation
+src/pact_platform/       Main package
+  models/                  11 DataFlow models (121 auto-generated CRUD nodes)
+  use/api/routers/         7 API routers (42+ endpoints)
+  use/services/            5 platform services
+  use/execution/           Execution runtime, approval, enforcement
+  engine/                  EnvelopeAdapter, GovernedDelegate, bridges, orchestrator
+  build/config/            Organization definition schema and loader
+  build/org/               Org compilation and seeding
+  build/cli/               CLI subcommands
+  integrations/            Notification adapters (Slack, Discord, Teams)
+  examples/university/     Example vertical
+apps/web/                Next.js dashboard (React 19 + TypeScript)
+apps/mobile/             Flutter companion app
+tests/                   Test suite (unit, integration)
+docs/                    Documentation
 ```
-
-See [docs/architecture.md](docs/architecture.md) for the full architecture overview.
 
 ---
 
@@ -91,14 +94,14 @@ pytest
 # Run with verbose output
 pytest -v
 
-# Run a specific test file
-pytest tests/test_trust_posture.py
+# Run a specific test directory
+pytest tests/unit/
 
 # Run tests matching a pattern
 pytest -k "test_delegation"
 
 # Run with coverage report
-pytest --cov=pact --cov-report=term-missing
+pytest --cov=src/pact_platform --cov-report=term-missing
 ```
 
 ### Test Requirements
@@ -127,10 +130,10 @@ Line length is 100 characters.
 
 ```bash
 # Check for issues
-ruff check .
+ruff check src/pact_platform/ tests/
 
 # Auto-fix what can be fixed
-ruff check --fix .
+ruff check --fix src/pact_platform/ tests/
 ```
 
 ### Type Checking
@@ -138,12 +141,12 @@ ruff check --fix .
 The project uses **mypy** for type checking:
 
 ```bash
-mypy pact/
+mypy src/pact_platform/
 ```
 
 ### Conventions
 
-- Use **Pydantic** models for data structures (the project uses Pydantic v2).
+- Use `@dataclass` (not Pydantic) for data structures.
 - Use `from __future__ import annotations` for deferred annotation evaluation.
 - All public classes and methods should have docstrings.
 - Use `logging` (not `print`) for diagnostic output.
@@ -185,10 +188,10 @@ type(scope): description
 **Examples**:
 
 ```
-feat(trust): add posture downgrade notification
-fix(constraint): handle zero budget in financial evaluation
+feat(engine): add cumulative budget injection to verify_action
+fix(api): handle NaN cost in objectives router
 docs(readme): update quick start example
-test(delegation): add monotonic tightening edge cases
+test(governance): add monotonic tightening edge cases
 ```
 
 Each commit should be self-contained: tests and implementation together, building and passing on its own.
@@ -217,10 +220,10 @@ git checkout -b feat/your-feature-name
 pytest
 
 # Lint
-ruff check .
+ruff check src/pact_platform/ tests/
 
 # Type check
-mypy pact/
+mypy src/pact_platform/
 ```
 
 ### 4. Submit a Pull Request
@@ -262,9 +265,10 @@ All PRs require review before merging. Reviewers will check:
 
 ## Standards Alignment
 
-The PACT is the reference implementation of the CARE, EATP, and CO specifications. Contributions must not violate these standards:
+The PACT Platform is the reference implementation of the Quartet -- CARE, PACT, EATP, and CO. Contributions must not violate these standards:
 
-- **CARE**: Dual Plane Model (Trust Plane + Execution Plane), constraint envelopes with five dimensions, monotonic tightening
+- **CARE**: Dual Plane Model (Trust Plane + Execution Plane), Human-on-the-Loop governance
+- **PACT**: D/T/R accountability grammar, operating envelopes, monotonic tightening, knowledge clearance
 - **EATP**: Five-element trust lineage chains, verification gradient, trust postures
 - **CO**: Seven principles, five layers of cognitive orchestration
 
@@ -276,7 +280,7 @@ Key invariants that must be preserved:
 - Trust posture upgrades require evidence; downgrades are instant
 - Every agent action must produce an audit anchor
 - The five constraint dimensions (Financial, Operational, Temporal, Data Access, Communication) are the governance mechanism
-- Certain actions (content strategy, crisis response, financial decisions, governance modifications) are never fully delegated regardless of posture level
+- D/T/R grammar: every Department or Team must be immediately followed by exactly one Role
 
 ---
 
@@ -288,6 +292,6 @@ Contributors are expected to act professionally and respectfully. The Terrene Fo
 
 ## Questions?
 
-- **Documentation**: [terrene.dev/care](https://terrene.dev/care)
-- **Issues**: [github.com/terrene-foundation/care/issues](https://github.com/terrene-foundation/care/issues)
+- **Documentation**: [terrene.dev/pact](https://terrene.dev/pact)
+- **Issues**: [github.com/terrene-foundation/pact/issues](https://github.com/terrene-foundation/pact/issues)
 - **Foundation**: [terrene.foundation](https://terrene.foundation)
