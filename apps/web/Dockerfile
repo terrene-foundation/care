@@ -1,7 +1,7 @@
 # Copyright 2026 Terrene Foundation
 # Licensed under the Apache License, Version 2.0
 #
-# CARE Platform — Next.js web frontend
+# PACT Platform — Next.js web frontend
 # Multi-stage build: deps → builder → runner
 # Requires next.config.js to have output: "standalone"
 
