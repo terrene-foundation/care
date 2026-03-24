@@ -118,6 +118,8 @@ class ShadowEnforcer:
     happen, but never actually blocking or modifying any action.
     """
 
+    _MAX_AGENTS: int = 10_000
+
     def __init__(
         self,
         governance_engine: GovernanceEngine,
@@ -401,6 +403,13 @@ class ShadowEnforcer:
         """Update rolling metrics for an agent after a new evaluation."""
         is_first = agent_id not in self._metrics
         if is_first:
+            # Evict oldest agent if at capacity
+            if len(self._metrics) >= self._MAX_AGENTS:
+                oldest_id = min(
+                    self._metrics,
+                    key=lambda k: self._metrics[k].window_end,
+                )
+                del self._metrics[oldest_id]
             self._metrics[agent_id] = ShadowMetrics(
                 agent_id=agent_id,
                 window_start=result.timestamp,
