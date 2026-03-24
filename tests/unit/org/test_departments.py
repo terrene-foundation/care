@@ -11,7 +11,7 @@ TDD: These tests are written FIRST, before the implementation.
 
 import pytest
 
-from care_platform.build.config.schema import (
+from pact_platform.build.config.schema import (
     AgentConfig,
     CommunicationConstraintConfig,
     ConstraintEnvelopeConfig,
@@ -23,7 +23,7 @@ from care_platform.build.config.schema import (
     TemporalConstraintConfig,
     WorkspaceConfig,
 )
-from care_platform.build.org.builder import (
+from pact_platform.build.org.builder import (
     OrgBuilder,
     OrgDefinition,
 )
@@ -605,9 +605,9 @@ class TestMonotonicTighteningOrgToDepartment:
         org = _make_org_with_departments()
         results = org.validate_org_detailed()
         tightening_errors = [r for r in results if "DEPT_ORG_TIGHTENING" in r.code]
-        assert len(tightening_errors) == 0, (
-            f"Expected no tightening errors, got: {tightening_errors}"
-        )
+        assert (
+            len(tightening_errors) == 0
+        ), f"Expected no tightening errors, got: {tightening_errors}"
 
     def test_dept_financial_exceeds_org_fails(self):
         """Department spending limit higher than org must fail."""
@@ -664,9 +664,9 @@ class TestMonotonicTighteningDeptToTeam:
         org = _make_org_with_departments()
         results = org.validate_org_detailed()
         tightening_errors = [r for r in results if "TEAM_DEPT_TIGHTENING" in r.code]
-        assert len(tightening_errors) == 0, (
-            f"Expected no tightening errors, got: {tightening_errors}"
-        )
+        assert (
+            len(tightening_errors) == 0
+        ), f"Expected no tightening errors, got: {tightening_errors}"
 
     def test_team_financial_exceeds_dept_fails(self):
         """Team spending limit higher than department must fail."""
@@ -712,9 +712,9 @@ class TestMonotonicTighteningFullChain:
         org = _make_org_with_departments()
         results = org.validate_org_detailed()
         tightening_errors = [r for r in results if "TIGHTENING" in r.code and r.is_error]
-        assert len(tightening_errors) == 0, (
-            f"Expected no tightening errors, got: {tightening_errors}"
-        )
+        assert (
+            len(tightening_errors) == 0
+        ), f"Expected no tightening errors, got: {tightening_errors}"
 
     def test_agent_looser_than_team_still_caught(self):
         """Agent envelope looser than team envelope is caught by existing team-level checks."""
@@ -827,10 +827,10 @@ class TestBackwardCompatibilityNoDepartments:
         assert len(dept_tightening) == 0
 
     def test_from_config_preserves_departments(self):
-        """from_config() should still work (no departments in PlatformConfig)."""
-        from care_platform.build.config.schema import GenesisConfig, PlatformConfig
+        """from_config() should still work (no departments in PactConfig)."""
+        from pact_platform.build.config.schema import GenesisConfig, PactConfig
 
-        platform = PlatformConfig(
+        platform = PactConfig(
             name="Round Trip",
             genesis=GenesisConfig(authority="test.org", authority_name="Test"),
             constraint_envelopes=[_make_envelope("env-1")],
@@ -864,7 +864,7 @@ class TestTemplateDepartmentField:
 
     def test_team_template_has_department_field(self):
         """TeamTemplate must have an optional department field."""
-        from care_platform.build.templates.registry import TeamTemplate
+        from pact_platform.build.templates.registry import TeamTemplate
 
         tpl = TeamTemplate(
             name="test-template",
@@ -878,7 +878,7 @@ class TestTemplateDepartmentField:
 
     def test_team_template_department_defaults_to_none(self):
         """TeamTemplate department field defaults to None."""
-        from care_platform.build.templates.registry import TeamTemplate
+        from pact_platform.build.templates.registry import TeamTemplate
 
         tpl = TeamTemplate(
             name="test-template",
@@ -890,7 +890,7 @@ class TestTemplateDepartmentField:
 
     def test_existing_templates_still_work(self):
         """Existing built-in templates (media, governance, etc.) should still load."""
-        from care_platform.build.templates.registry import TemplateRegistry
+        from pact_platform.build.templates.registry import TemplateRegistry
 
         registry = TemplateRegistry()
         templates = registry.list()

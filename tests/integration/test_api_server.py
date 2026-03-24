@@ -1,6 +1,6 @@
 # Copyright 2026 Terrene Foundation
 # Licensed under the Apache License, Version 2.0
-"""Integration tests for the CARE Platform API server.
+"""Integration tests for the PACT API server.
 
 Tests the FastAPI server with real seeded data (no mocks). Validates
 endpoint behavior, response structure, authentication enforcement,
@@ -29,7 +29,7 @@ class TestHealthEndpoint:
         assert response.status_code == 200
         body = response.json()
         assert body["status"] == "healthy"
-        assert body["service"] == "care-platform"
+        assert body["service"] == "pact"
 
     async def test_health_returns_json_content_type(self, client: httpx.AsyncClient):
         """GET /health returns application/json content type."""
@@ -144,7 +144,7 @@ class TestVerificationStatsEndpoint:
         response = await client.get("/api/v1/verification/stats")
         body = response.json()
         data = body["data"]
-        # CARE Platform defines 4 verification levels — returned at top level of data
+        # PACT defines 4 verification levels — returned at top level of data
         for level in ["AUTO_APPROVED", "FLAGGED", "HELD", "BLOCKED"]:
             assert level in data, f"Missing verification level '{level}' in data: {data}"
 

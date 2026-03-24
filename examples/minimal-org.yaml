@@ -3,7 +3,7 @@
 #
 # Minimal single-team organization definition (generated from OrgTemplate.minimal_template())
 # Use this as a starting point for new organizations.
-# Import via: care-platform org import-file --file minimal-org.yaml
+# Import via: pact org import-file --file minimal-org.yaml
 #
 org_id: starter-org
 name: Starter Org

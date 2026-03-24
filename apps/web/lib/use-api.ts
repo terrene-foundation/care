@@ -2,7 +2,7 @@
 // Licensed under the Apache License, Version 2.0
 
 /**
- * useApi -- React hook for data fetching from the CARE Platform API.
+ * useApi -- React hook for data fetching from the PACT API.
  *
  * Provides loading, error, and data states. Handles AbortController cleanup
  * on unmount to prevent state updates on unmounted components.
@@ -12,17 +12,17 @@
  * Token resolution priority:
  *   1. Firebase Auth ID token (when user is signed in via SSO)
  *   2. NEXT_PUBLIC_API_TOKEN environment variable
- *   3. localStorage CARE_API_TOKEN (static token login)
+ *   3. localStorage PACT_API_TOKEN (static token login)
  */
 
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import type { ApiResponse, PlatformEvent } from "../types/care-platform";
+import type { ApiResponse, PlatformEvent } from "../types/pact";
 import type { WebSocketState } from "./api";
 import {
-  CareApiClient,
-  CareWebSocketClient,
+  PactApiClient,
+  PactWebSocketClient,
   ApiError,
   NetworkError,
 } from "./api";
@@ -55,7 +55,7 @@ function resolveToken(): string | undefined {
 
   // Priority 3: localStorage (set by both Firebase and token auth flows)
   try {
-    return localStorage.getItem("CARE_API_TOKEN") ?? undefined;
+    return localStorage.getItem("PACT_API_TOKEN") ?? undefined;
   } catch {
     return undefined;
   }
@@ -83,19 +83,19 @@ async function resolveTokenAsync(): Promise<string | undefined> {
 
   // Priority 3: localStorage
   try {
-    return localStorage.getItem("CARE_API_TOKEN") ?? undefined;
+    return localStorage.getItem("PACT_API_TOKEN") ?? undefined;
   } catch {
     return undefined;
   }
 }
 
 /** Shared API client instance. */
-let sharedClient: CareApiClient | null = null;
+let sharedClient: PactApiClient | null = null;
 
 /** Get the shared API client instance. */
-export function getApiClient(): CareApiClient {
+export function getApiClient(): PactApiClient {
   if (!sharedClient) {
-    sharedClient = new CareApiClient({
+    sharedClient = new PactApiClient({
       baseUrl: DEFAULT_BASE_URL,
       token: resolveToken(),
     });
@@ -107,10 +107,10 @@ export function getApiClient(): CareApiClient {
  * Get the shared API client with a fresh async token.
  * Preferred for Firebase auth where tokens may need refresh.
  */
-export async function getApiClientAsync(): Promise<CareApiClient> {
+export async function getApiClientAsync(): Promise<PactApiClient> {
   if (!sharedClient) {
     const token = await resolveTokenAsync();
-    sharedClient = new CareApiClient({
+    sharedClient = new PactApiClient({
       baseUrl: DEFAULT_BASE_URL,
       token,
     });
@@ -136,13 +136,13 @@ export interface UseApiState<T> {
 }
 
 /**
- * Hook for fetching data from the CARE Platform API.
+ * Hook for fetching data from the PACT API.
  *
  * @param fetcher - Async function that calls the API client and returns data.
  * @param deps - Dependency array to re-fetch when values change.
  */
 export function useApi<T>(
-  fetcher: (client: CareApiClient) => Promise<ApiResponse<T>>,
+  fetcher: (client: PactApiClient) => Promise<ApiResponse<T>>,
   deps: ReadonlyArray<unknown> = [],
 ): UseApiState<T> {
   const [data, setData] = useState<T | null>(null);
@@ -239,7 +239,7 @@ function deriveWsUrl(baseUrl: string): string {
 }
 
 /**
- * Hook for real-time WebSocket events from the CARE Platform.
+ * Hook for real-time WebSocket events from PACT.
  *
  * @param onEvent - Optional callback invoked for every received event.
  * @param autoConnect - Whether to connect automatically on mount. Defaults to true.
@@ -251,7 +251,7 @@ export function useWebSocket(
   const [connectionState, setConnectionState] =
     useState<WebSocketState>("disconnected");
   const [lastEvent, setLastEvent] = useState<PlatformEvent | null>(null);
-  const clientRef = useRef<CareWebSocketClient | null>(null);
+  const clientRef = useRef<PactWebSocketClient | null>(null);
   const onEventRef = useRef(onEvent);
 
   // Keep the callback ref current without triggering reconnects
@@ -261,7 +261,7 @@ export function useWebSocket(
     const wsUrl = deriveWsUrl(DEFAULT_BASE_URL);
     const token = resolveToken();
 
-    const client = new CareWebSocketClient({
+    const client = new PactWebSocketClient({
       url: wsUrl,
       token,
     });

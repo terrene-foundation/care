@@ -1,8 +1,8 @@
 # Copyright 2026 Terrene Foundation
 # Licensed under the Apache License, Version 2.0
-"""Integration test fixtures for the CARE Platform API server.
+"""Integration test fixtures for the PACT API server.
 
-Provides a fully seeded PlatformAPI instance and an httpx.AsyncClient
+Provides a fully seeded PactAPI instance and an httpx.AsyncClient
 configured with ASGITransport for testing FastAPI endpoints against
 real seed data (no mocks).
 """
@@ -21,15 +21,15 @@ import pytest_asyncio
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from care_platform.build.config.env import EnvConfig
-from care_platform.build.workspace.bridge import BridgeManager
-from care_platform.build.workspace.models import WorkspaceRegistry
-from care_platform.trust.store.cost_tracking import CostTracker
-from care_platform.trust.store.posture_history import PostureHistoryStore
-from care_platform.use.api.endpoints import PlatformAPI
-from care_platform.use.api.server import create_app
-from care_platform.use.execution.approval import ApprovalQueue
-from care_platform.use.execution.registry import AgentRegistry
+from pact_platform.build.config.env import EnvConfig
+from pact_platform.build.workspace.bridge import BridgeManager
+from pact_platform.build.workspace.models import WorkspaceRegistry
+from pact_platform.trust.store.cost_tracking import CostTracker
+from pact_platform.trust.store.posture_history import PostureHistoryStore
+from pact_platform.use.api.endpoints import PactAPI
+from pact_platform.use.api.server import create_app
+from pact_platform.use.execution.approval import ApprovalQueue
+from pact_platform.use.execution.registry import AgentRegistry
 from scripts.seed_demo import (
     build_audit_chain,
     convert_verification_stats_to_enum_keys,
@@ -53,7 +53,7 @@ _seeded_components_cache: dict | None = None
 
 
 def _build_seeded_components() -> dict:
-    """Build all CARE Platform components with demo seed data.
+    """Build all PACT components with demo seed data.
 
     Uses the same seed functions as the production seed_demo script
     to ensure realistic, consistent data. Cached at module level for
@@ -106,9 +106,9 @@ def seeded_components() -> dict:
 
 
 @pytest.fixture()
-def platform_api(seeded_components: dict) -> PlatformAPI:
-    """Create a PlatformAPI wired with real seeded components."""
-    return PlatformAPI(
+def platform_api(seeded_components: dict) -> PactAPI:
+    """Create a PactAPI wired with real seeded components."""
+    return PactAPI(
         registry=seeded_components["registry"],
         approval_queue=seeded_components["approval_queue"],
         cost_tracker=seeded_components["cost_tracker"],
@@ -125,23 +125,23 @@ def platform_api(seeded_components: dict) -> PlatformAPI:
 @pytest.fixture()
 def dev_env_config() -> EnvConfig:
     """EnvConfig in dev mode with no API token (auth disabled)."""
-    return EnvConfig(care_dev_mode=True, care_api_token="")
+    return EnvConfig(pact_dev_mode=True, pact_api_token="")
 
 
 @pytest.fixture()
 def auth_env_config() -> EnvConfig:
     """EnvConfig with API token enabled for auth testing."""
-    return EnvConfig(care_dev_mode=False, care_api_token=TEST_API_TOKEN)
+    return EnvConfig(pact_dev_mode=False, pact_api_token=TEST_API_TOKEN)
 
 
 @pytest_asyncio.fixture()
-async def client(platform_api: PlatformAPI, dev_env_config: EnvConfig) -> AsyncGenerator:
-    """Async HTTP client for the seeded CARE Platform API (no auth required).
+async def client(platform_api: PactAPI, dev_env_config: EnvConfig) -> AsyncGenerator:
+    """Async HTTP client for the seeded PACT API (no auth required).
 
     Uses httpx.AsyncClient with ASGITransport to test FastAPI endpoints
     without running a real server.
     """
-    import care_platform.use.api.server as server_module
+    import pact_platform.use.api.server as server_module
 
     old_default = server_module._default_api
     server_module._default_api = None
@@ -155,13 +155,13 @@ async def client(platform_api: PlatformAPI, dev_env_config: EnvConfig) -> AsyncG
 
 
 @pytest_asyncio.fixture()
-async def auth_client(platform_api: PlatformAPI, auth_env_config: EnvConfig) -> AsyncGenerator:
-    """Async HTTP client for the seeded CARE Platform API (auth required).
+async def auth_client(platform_api: PactAPI, auth_env_config: EnvConfig) -> AsyncGenerator:
+    """Async HTTP client for the seeded PACT API (auth required).
 
     Uses httpx.AsyncClient with ASGITransport. Requests must include
     a valid Bearer token to access protected endpoints.
     """
-    import care_platform.use.api.server as server_module
+    import pact_platform.use.api.server as server_module
 
     old_default = server_module._default_api
     server_module._default_api = None

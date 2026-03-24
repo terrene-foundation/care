@@ -1,6 +1,6 @@
 # Trust Model
 
-The CARE Platform implements a governed trust model that determines what agents can do, when, and under what constraints. Every agent action passes through the Trust Plane before execution. This page explains the model's structure: the fractal organization (TRUST / BUILD / USE), the EATP trust chain, trust postures, the verification gradient, ShadowEnforcer observation, and the fail-closed enforcement contract.
+The PACT implements a governed trust model that determines what agents can do, when, and under what constraints. Every agent action passes through the Trust Plane before execution. This page explains the model's structure: the fractal organization (TRUST / BUILD / USE), the EATP trust chain, trust postures, the verification gradient, ShadowEnforcer observation, and the fail-closed enforcement contract.
 
 ---
 
@@ -11,7 +11,7 @@ The CARE specification defines two planes:
 - **Trust Plane** -- establishes, maintains, and verifies trust. No agent actions happen here. It answers: "Is this agent allowed to do this?"
 - **Execution Plane** -- manages the runtime environment where agents operate. Every Execution Plane action passes through the Trust Plane first.
 
-The CARE Platform organizes its codebase into three top-level packages that reflect this model:
+The PACT organizes its codebase into three top-level packages that reflect this model:
 
 | Package  | Plane           | Responsibility                                                                                       |
 | -------- | --------------- | ---------------------------------------------------------------------------------------------------- |

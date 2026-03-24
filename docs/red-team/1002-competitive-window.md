@@ -9,11 +9,11 @@
 
 ## Finding
 
-Well-funded competitors (LangChain at $25M+, CrewAI at $18M, Microsoft AutoGen, Google ADK, OpenAI Agents SDK) may add "good enough" governance before the CARE Platform fully matures. If a major platform ships trust-chain governance, the CARE Platform's differentiation narrows.
+Well-funded competitors (LangChain at $25M+, CrewAI at $18M, Microsoft AutoGen, Google ADK, OpenAI Agents SDK) may add "good enough" governance before the PACT fully matures. If a major platform ships trust-chain governance, the PACT's differentiation narrows.
 
 ## Risk/Impact
 
-**High**. The agent orchestration market moves fast. If a competitor adds governance features that are "good enough" for most enterprises, the CARE Platform's governed orchestration positioning weakens. The window to establish category leadership in "Governed Agent Orchestration" is finite.
+**High**. The agent orchestration market moves fast. If a competitor adds governance features that are "good enough" for most enterprises, the PACT's governed orchestration positioning weakens. The window to establish category leadership in "Governed Agent Orchestration" is finite.
 
 ## Analysis
 
@@ -30,25 +30,25 @@ Well-funded competitors (LangChain at $25M+, CrewAI at $18M, Microsoft AutoGen, 
 
 **Key observation**: No competitor has governance in the EATP sense -- cryptographic trust chains, five-dimension constraint envelopes, verification gradient with four levels, evolutionary trust postures, or cascade revocation. Their governance is either observability (after the fact) or output validation (prompt-level). None address organizational trust.
 
-### CARE Platform's Durable Differentiators
+### PACT's Durable Differentiators
 
 These differentiators are structural, not feature-based. They are hard for competitors to replicate because they require architectural decisions that conflict with VC-backed business models:
 
-1. **Cryptographic trust chains** -- Every action traces to a human authority through signed delegation chains. Not just logging or tracing, but verifiable traceability. Implemented in `care_platform/trust/`.
+1. **Cryptographic trust chains** -- Every action traces to a human authority through signed delegation chains. Not just logging or tracing, but verifiable traceability. Implemented in `pact/trust/`.
 
-2. **Five-dimension constraint envelopes** -- Financial, Operational, Temporal, Data Access, Communication. Formally defined, monotonically tightening through delegation. Implemented in `care_platform/constraint/envelope.py`.
+2. **Five-dimension constraint envelopes** -- Financial, Operational, Temporal, Data Access, Communication. Formally defined, monotonically tightening through delegation. Implemented in `pact/constraint/envelope.py`.
 
 3. **Organizational model** -- Workspace-as-knowledge-base with team-based agent delegation. Not individual agents in isolation but agents operating within an organizational structure. This is an architectural decision, not a feature toggle.
 
 4. **Non-profit Foundation credibility** -- Terrene Foundation owns all IP irrevocably under Apache 2.0/CC BY 4.0. No VC pressure to monetize governance, no pivot risk, no "open core bait-and-switch." Government and regulatory alignment reinforces credibility.
 
-5. **Open specifications independent of any platform** -- CARE, EATP, CO are CC BY 4.0 specifications. Even if the CARE Platform disappeared, the specifications would remain for anyone to implement. Competitors sell platforms; the Foundation publishes standards.
+5. **Open specifications independent of any platform** -- CARE, EATP, CO are CC BY 4.0 specifications. Even if the PACT disappeared, the specifications would remain for anyone to implement. Competitors sell platforms; the Foundation publishes standards.
 
-6. **Implementation maturity** -- The CARE Platform already has a full trust pipeline implemented: constraint envelopes, verification gradient engine, trust posture lifecycle, ShadowEnforcer, approval queue, cost tracking, audit anchors. This is production code with tests, not a roadmap.
+6. **Implementation maturity** -- The PACT already has a full trust pipeline implemented: constraint envelopes, verification gradient engine, trust posture lifecycle, ShadowEnforcer, approval queue, cost tracking, audit anchors. This is production code with tests, not a roadmap.
 
 ### Competitive Positioning Defense
 
-**Category creation**: "Governed Agent Orchestration" is a new category the CARE Platform defines. The positioning is not "better LangChain" but "EATP governance for your agent teams." This is analogous to:
+**Category creation**: "Governed Agent Orchestration" is a new category the PACT defines. The positioning is not "better LangChain" but "EATP governance for your agent teams." This is analogous to:
 
 - Linux (generic OS) vs Red Hat Enterprise Linux (governed, certified)
 - Kubernetes (generic orchestration) vs OpenShift (enterprise governance layer)
@@ -59,7 +59,7 @@ These differentiators are structural, not feature-based. They are hard for compe
 - The Foundation owns the specifications (CC BY 4.0) -- competitors would be implementing Foundation standards
 - Foundation neutrality is the advantage: VC-backed governance always serves the shareholder; Foundation governance serves the standard
 
-**First-mover advantage**: The CARE Platform is already implemented with a working trust pipeline. Moving from "competitor adds governance features" to "competitor matches EATP-level governance" requires them to develop the equivalent of five-dimension constraint envelopes, verification gradient, trust postures, delegation chains, and cascade revocation -- all architecturally integrated. This is not a weekend project.
+**First-mover advantage**: The PACT is already implemented with a working trust pipeline. Moving from "competitor adds governance features" to "competitor matches EATP-level governance" requires them to develop the equivalent of five-dimension constraint envelopes, verification gradient, trust postures, delegation chains, and cascade revocation -- all architecturally integrated. This is not a weekend project.
 
 ### Monitoring Process
 

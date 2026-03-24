@@ -16,8 +16,8 @@ from unittest.mock import MagicMock
 import pytest
 from fastapi.testclient import TestClient
 
-from care_platform.build.config.env import EnvConfig
-from care_platform.use.api.server import create_app
+from pact_platform.build.config.env import EnvConfig
+from pact_platform.use.api.server import create_app
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -27,7 +27,7 @@ from care_platform.use.api.server import create_app
 @pytest.fixture()
 def dev_config():
     """Dev mode config (no auth needed for testing endpoints)."""
-    return EnvConfig(care_api_token="", care_dev_mode=True)
+    return EnvConfig(pact_api_token="", pact_dev_mode=True)
 
 
 @pytest.fixture()

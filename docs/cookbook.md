@@ -1,435 +1,407 @@
-# CARE Platform Cookbook
+# Cookbook
 
-Working examples for common CARE Platform operations. Each recipe is self-contained
-and can be run directly. For the full runnable quickstart, see `examples/quickstart.py`.
+Working recipes for common governance tasks. Each recipe is self-contained and can be run directly.
 
----
-
-## Example 1: Setting Up a Minimal Organization
-
-Load a YAML configuration and inspect the resulting platform structure.
+## Recipe 1: Create an Organization from Python
 
 ```python
-from care_platform import PlatformConfig
-from care_platform.build.config.schema import GenesisConfig
+from pact.build.config.schema import DepartmentConfig, TeamConfig
+from pact.build.org.builder import OrgDefinition
+from pact.governance.compilation import RoleDefinition, compile_org
+from pact.governance.engine import GovernanceEngine
 
-# Option A: Build configuration in Python
-config = PlatformConfig(
+# Define the org structure
+org = OrgDefinition(
+    org_id="my-org",
     name="My Organization",
-    genesis=GenesisConfig(
-        authority="my-org.example",
-        authority_name="My Organization",
-    ),
+    departments=[
+        DepartmentConfig(department_id="d-exec", name="Executive"),
+        DepartmentConfig(department_id="d-ops", name="Operations"),
+    ],
+    teams=[
+        TeamConfig(id="t-support", name="Support", workspace="ws-support"),
+    ],
+    roles=[
+        RoleDefinition(
+            role_id="r-ceo",
+            name="CEO",
+            is_primary_for_unit="d-exec",
+        ),
+        RoleDefinition(
+            role_id="r-coo",
+            name="COO",
+            reports_to_role_id="r-ceo",
+            is_primary_for_unit="d-ops",
+        ),
+        RoleDefinition(
+            role_id="r-support-lead",
+            name="Support Lead",
+            reports_to_role_id="r-coo",
+            is_primary_for_unit="t-support",
+        ),
+    ],
 )
 
-print(f"Organization: {config.name}")
-print(f"Genesis authority: {config.genesis.authority}")
-print(f"Teams defined: {len(config.teams)}")
-print(f"Agents defined: {len(config.agents)}")
-print(f"Constraint envelopes: {len(config.constraint_envelopes)}")
+engine = GovernanceEngine(org)
+compiled = engine.get_org()
+for addr in sorted(compiled.nodes.keys()):
+    print(f"  {addr}: {compiled.nodes[addr].name}")
 ```
 
+## Recipe 2: Load an Organization from YAML
+
 ```python
-# Option B: Load from YAML file
-import yaml
-from care_platform import PlatformConfig
+from pact.governance.yaml_loader import load_org_yaml
+from pact.governance.engine import GovernanceEngine
 
-with open("examples/care-config.yaml") as f:
-    raw = yaml.safe_load(f)
+loaded = load_org_yaml("my-org.yaml")
+engine = GovernanceEngine(loaded.org_definition)
 
-config = PlatformConfig(**raw)
-
-print(f"Organization: {config.name}")
-print(f"Genesis: {config.genesis.authority}")
-print(f"Teams: {[t.id for t in config.teams]}")
-print(f"Agents: {[a.id for a in config.agents]}")
+print(f"Loaded: {engine.org_name}")
+print(f"Departments: {len([n for n in engine.get_org().nodes.values() if n.node_type.value == 'D'])}")
 ```
 
----
-
-## Example 2: Creating a Delegation Chain
-
-Demonstrate authority flowing from genesis to a team lead to a specialist agent.
-Each level has a constraint envelope, and each child envelope must be a monotonic
-tightening of the parent.
+## Recipe 3: Set Up Role Envelopes
 
 ```python
-from care_platform import ConstraintEnvelope
-from care_platform.build.config.schema import (
-    CommunicationConstraintConfig,
-    ConstraintEnvelopeConfig,
-    DataAccessConstraintConfig,
-    FinancialConstraintConfig,
-    OperationalConstraintConfig,
-    TemporalConstraintConfig,
-)
-
-# Genesis-level envelope: broad permissions for the team lead
-team_lead_config = ConstraintEnvelopeConfig(
-    id="team-lead-envelope",
-    description="Team lead -- coordinates team, reviews drafts",
-    financial=FinancialConstraintConfig(max_spend_usd=100.0),
-    operational=OperationalConstraintConfig(
-        allowed_actions=[
-            "coordinate_team",
-            "review_drafts",
-            "collect_metrics",
-            "generate_report",
-        ],
-        blocked_actions=["publish_external"],
-        max_actions_per_day=100,
-    ),
-    temporal=TemporalConstraintConfig(
-        active_hours_start="08:00",
-        active_hours_end="20:00",
-        timezone="UTC",
-    ),
-    data_access=DataAccessConstraintConfig(
-        read_paths=["workspaces/team/"],
-        write_paths=["workspaces/team/drafts/"],
-        blocked_data_types=["pii"],
-    ),
-    communication=CommunicationConstraintConfig(
-        internal_only=True,
-        external_requires_approval=True,
-    ),
-)
-
-# Specialist envelope: narrower permissions delegated from team lead
-specialist_config = ConstraintEnvelopeConfig(
-    id="specialist-envelope",
-    description="Specialist -- only metrics collection, tighter limits",
-    financial=FinancialConstraintConfig(max_spend_usd=0.0),
-    operational=OperationalConstraintConfig(
-        allowed_actions=["collect_metrics", "generate_report"],
-        blocked_actions=["publish_external", "coordinate_team"],
-        max_actions_per_day=20,
-    ),
-    temporal=TemporalConstraintConfig(
-        active_hours_start="09:00",
-        active_hours_end="18:00",
-        timezone="UTC",
-    ),
-    data_access=DataAccessConstraintConfig(
-        read_paths=["workspaces/team/analytics/"],
-        write_paths=["workspaces/team/drafts/reports/"],
-        blocked_data_types=["pii"],
-    ),
-    communication=CommunicationConstraintConfig(
-        internal_only=True,
-        external_requires_approval=True,
-    ),
-)
-
-parent = ConstraintEnvelope(config=team_lead_config)
-child = ConstraintEnvelope(config=specialist_config)
-
-# Verify the delegation is valid (child is tighter than parent)
-is_valid = child.is_tighter_than(parent)
-print(f"Delegation chain valid (monotonic tightening): {is_valid}")
-# Output: Delegation chain valid (monotonic tightening): True
-```
-
-The delegation chain works because the specialist envelope:
-
-- Has a lower spending limit (0.0 vs 100.0)
-- Has fewer allowed actions (subset of parent)
-- Has more blocked actions (superset of parent)
-- Has narrower active hours (09:00-18:00 vs 08:00-20:00)
-- Maintains the same communication restrictions
-
----
-
-## Example 3: Verifying an Agent Action
-
-Evaluate an action against a constraint envelope and inspect the per-dimension
-results.
-
-```python
-from datetime import UTC, datetime
-
-from care_platform import ConstraintEnvelope, EvaluationResult
-from care_platform.build.config.schema import (
-    CommunicationConstraintConfig,
-    ConstraintEnvelopeConfig,
-    DataAccessConstraintConfig,
-    FinancialConstraintConfig,
-    OperationalConstraintConfig,
-    TemporalConstraintConfig,
-)
-
-envelope_config = ConstraintEnvelopeConfig(
-    id="verifier-demo",
-    description="Demo envelope for action verification",
-    financial=FinancialConstraintConfig(max_spend_usd=50.0),
-    operational=OperationalConstraintConfig(
-        allowed_actions=["collect_metrics", "generate_report"],
-        blocked_actions=["publish_external"],
-        max_actions_per_day=20,
-    ),
-    temporal=TemporalConstraintConfig(
-        active_hours_start="09:00",
-        active_hours_end="18:00",
-        timezone="UTC",
-    ),
-    data_access=DataAccessConstraintConfig(
-        read_paths=["workspaces/analytics/"],
-        write_paths=["workspaces/reports/"],
-        blocked_data_types=["pii"],
-    ),
-    communication=CommunicationConstraintConfig(
-        internal_only=True,
-        external_requires_approval=True,
-    ),
-)
-
-envelope = ConstraintEnvelope(config=envelope_config)
-
-# Evaluate an allowed action during active hours
-result = envelope.evaluate_action(
-    "collect_metrics",
-    "analytics-agent",
-    spend_amount=5.0,
-    current_time=datetime(2026, 3, 12, 10, 0, tzinfo=UTC),
-)
-
-print(f"Action: {result.action}")
-print(f"Overall result: {result.overall_result.value}")
-print(f"Allowed: {result.is_allowed}")
-print()
-
-# Inspect each dimension
-for dim in result.dimensions:
-    print(f"  {dim.dimension}: {dim.result.value}"
-          + (f" -- {dim.reason}" if dim.reason else ""))
-```
-
-The evaluation checks all five dimensions and returns the most restrictive result.
-If any dimension returns DENIED, the overall result is DENIED.
-
----
-
-## Example 4: Monotonic Tightening Validation
-
-Demonstrate the rule that child envelopes can never expand permissions beyond
-the parent.
-
-```python
-from care_platform import ConstraintEnvelope
-from care_platform.build.config.schema import (
-    CommunicationConstraintConfig,
+from pact.governance.envelopes import RoleEnvelope
+from pact.build.config.schema import (
     ConstraintEnvelopeConfig,
     FinancialConstraintConfig,
     OperationalConstraintConfig,
 )
 
-parent_config = ConstraintEnvelopeConfig(
-    id="parent",
-    financial=FinancialConstraintConfig(max_spend_usd=100.0),
-    operational=OperationalConstraintConfig(
-        allowed_actions=["read", "write", "delete"],
-        blocked_actions=["admin"],
-        max_actions_per_day=50,
-    ),
-    communication=CommunicationConstraintConfig(
-        internal_only=True,
-        external_requires_approval=True,
-    ),
-)
-
-# Valid child: tighter than parent
-valid_child_config = ConstraintEnvelopeConfig(
-    id="valid-child",
-    financial=FinancialConstraintConfig(max_spend_usd=50.0),  # tighter
-    operational=OperationalConstraintConfig(
-        allowed_actions=["read", "write"],  # subset of parent
-        blocked_actions=["admin", "delete"],  # superset of parent
-        max_actions_per_day=25,  # tighter
-    ),
-    communication=CommunicationConstraintConfig(
-        internal_only=True,
-        external_requires_approval=True,
+# CEO sets envelope for COO
+coo_envelope = RoleEnvelope(
+    id="env-coo",
+    defining_role_address="D1-R1",      # CEO
+    target_role_address="D1-R1-D1-R1",  # COO
+    envelope=ConstraintEnvelopeConfig(
+        id="env-coo",
+        financial=FinancialConstraintConfig(
+            max_spend_usd=100000,
+            requires_approval_above_usd=25000,
+        ),
+        operational=OperationalConstraintConfig(
+            allowed_actions=["read", "write", "approve", "hire", "deploy"],
+            blocked_actions=["terminate_contract"],
+        ),
     ),
 )
+engine.set_role_envelope(coo_envelope)
 
-# Invalid child: tries to expand permissions
-invalid_child_config = ConstraintEnvelopeConfig(
-    id="invalid-child",
-    financial=FinancialConstraintConfig(max_spend_usd=200.0),  # WIDER than parent
-    operational=OperationalConstraintConfig(
-        allowed_actions=["read", "write", "delete", "admin"],  # adds "admin"
-        blocked_actions=[],  # removes parent blocks
-    ),
-    communication=CommunicationConstraintConfig(
-        internal_only=False,  # relaxes restriction
-        external_requires_approval=False,
+# COO sets tighter envelope for Support Lead
+support_envelope = RoleEnvelope(
+    id="env-support",
+    defining_role_address="D1-R1-D1-R1",        # COO
+    target_role_address="D1-R1-D1-R1-T1-R1",    # Support Lead
+    envelope=ConstraintEnvelopeConfig(
+        id="env-support",
+        financial=FinancialConstraintConfig(
+            max_spend_usd=5000,
+            requires_approval_above_usd=1000,
+        ),
+        operational=OperationalConstraintConfig(
+            allowed_actions=["read", "write"],
+        ),
     ),
 )
-
-parent = ConstraintEnvelope(config=parent_config)
-valid = ConstraintEnvelope(config=valid_child_config)
-invalid = ConstraintEnvelope(config=invalid_child_config)
-
-print(f"Valid child is tighter than parent: {valid.is_tighter_than(parent)}")
-# Output: True
-
-print(f"Invalid child is tighter than parent: {invalid.is_tighter_than(parent)}")
-# Output: False
+engine.set_role_envelope(support_envelope)
 ```
 
-This is a core EATP invariant: delegation can only narrow authority, never expand
-it. The `is_tighter_than` method checks financial limits, allowed/blocked actions,
-rate limits, and communication restrictions.
-
----
-
-## Example 5: Walking a Trust Chain
-
-Build an audit chain, append actions, then walk the chain to verify integrity.
+## Recipe 4: Grant Clearances
 
 ```python
-from care_platform import AuditAnchor, AuditChain
-from care_platform.build.config.schema import VerificationLevel
+from pact.governance.clearance import RoleClearance
+from pact.build.config.schema import ConfidentialityLevel
 
-# Create a new chain
-chain = AuditChain(chain_id="content-team-2026-03")
-
-# Record several agent actions
-chain.append(
-    agent_id="content-creator",
-    action="draft_linkedin_post",
-    verification_level=VerificationLevel.AUTO_APPROVED,
-    result="success",
-    metadata={"topic": "EATP trust model overview"},
+# CEO gets SECRET clearance (self-granted as root authority)
+engine.grant_clearance(
+    "D1-R1",
+    RoleClearance(
+        role_address="D1-R1",
+        max_clearance=ConfidentialityLevel.SECRET,
+        nda_signed=True,
+        granted_by_role_address="D1-R1",
+    ),
 )
 
-chain.append(
-    agent_id="content-creator",
-    action="format_content",
-    verification_level=VerificationLevel.AUTO_APPROVED,
-    result="success",
+# COO gets CONFIDENTIAL clearance
+engine.grant_clearance(
+    "D1-R1-D1-R1",
+    RoleClearance(
+        role_address="D1-R1-D1-R1",
+        max_clearance=ConfidentialityLevel.CONFIDENTIAL,
+        granted_by_role_address="D1-R1",
+    ),
 )
 
-chain.append(
-    agent_id="content-creator",
-    action="publish_external",
-    verification_level=VerificationLevel.BLOCKED,
-    result="denied",
-    metadata={"reason": "Action blocked by constraint envelope"},
+# Support Lead gets RESTRICTED with a compartment
+engine.grant_clearance(
+    "D1-R1-D1-R1-T1-R1",
+    RoleClearance(
+        role_address="D1-R1-D1-R1-T1-R1",
+        max_clearance=ConfidentialityLevel.RESTRICTED,
+        compartments=frozenset({"customer-data"}),
+        granted_by_role_address="D1-R1-D1-R1",
+    ),
 )
-
-# Walk the chain and verify integrity
-is_valid, errors = chain.verify_chain_integrity()
-
-print(f"Chain ID: {chain.chain_id}")
-print(f"Chain length: {chain.length}")
-print(f"Integrity valid: {is_valid}")
-print()
-
-# Walk each anchor
-for anchor in chain.anchors:
-    print(f"  [{anchor.sequence}] {anchor.agent_id}: {anchor.action} "
-          f"-> {anchor.verification_level.value} ({anchor.result})")
-    print(f"       Hash: {anchor.content_hash[:16]}...")
-    if anchor.previous_hash:
-        print(f"       Prev: {anchor.previous_hash[:16]}...")
-    else:
-        print(f"       Prev: (genesis)")
-print()
-
-# Filter by verification level
-blocked = chain.filter_by_level(VerificationLevel.BLOCKED)
-print(f"Blocked actions: {len(blocked)}")
-for a in blocked:
-    print(f"  {a.action} by {a.agent_id}")
 ```
 
-Each anchor in the chain contains a SHA-256 hash of its content plus a reference to
-the previous anchor's hash. This forms a tamper-evident chain: if any record is
-modified, the hash chain breaks and `verify_chain_integrity()` reports the exact
-point of tampering.
-
----
-
-## Example 6: Audit Trail Recording
-
-Record a complete audit trail for a work session, then export it for review.
+## Recipe 5: Create a Cross-Functional Bridge
 
 ```python
-from datetime import UTC, datetime
+from pact.governance.access import PactBridge
+from pact.build.config.schema import ConfidentialityLevel
+from datetime import datetime, timedelta, UTC
 
-from care_platform import AuditChain
-from care_platform.build.config.schema import VerificationLevel
+# Bilateral standing bridge between CEO and COO
+engine.create_bridge(PactBridge(
+    id="bridge-exec",
+    role_a_address="D1-R1",
+    role_b_address="D1-R1-D1-R1",
+    bridge_type="standing",
+    max_classification=ConfidentialityLevel.CONFIDENTIAL,
+    bilateral=True,
+))
 
-chain = AuditChain(chain_id="dm-team-session-001")
-
-# Morning: analytics agent collects metrics (auto-approved)
-chain.append(
-    agent_id="dm-analytics",
-    action="collect_metrics",
-    verification_level=VerificationLevel.AUTO_APPROVED,
-    result="success",
-    metadata={"source": "linkedin", "metrics_count": 42},
-)
-
-# Content creator drafts a post (auto-approved)
-chain.append(
-    agent_id="dm-content-creator",
-    action="draft_linkedin_post",
-    verification_level=VerificationLevel.AUTO_APPROVED,
-    result="success",
-    metadata={"topic": "weekly insights"},
-)
-
-# Content creator attempts external publication (blocked by envelope)
-chain.append(
-    agent_id="dm-content-creator",
-    action="publish_external",
-    verification_level=VerificationLevel.BLOCKED,
-    result="denied",
-    metadata={"reason": "Blocked action in constraint envelope"},
-)
-
-# Team lead reviews draft (auto-approved)
-chain.append(
-    agent_id="dm-team-lead",
-    action="review_drafts",
-    verification_level=VerificationLevel.AUTO_APPROVED,
-    result="approved",
-)
-
-# Verify chain integrity before export
-is_valid, errors = chain.verify_chain_integrity()
-assert is_valid, f"Chain integrity failed: {errors}"
-
-# Export full chain for audit review
-full_export = chain.export()
-print(f"Full chain export: {len(full_export)} records")
-
-# Export filtered by agent
-analytics_export = chain.export(agent_id="dm-analytics")
-print(f"Analytics agent records: {len(analytics_export)}")
-
-# Export filtered by time (records since a specific timestamp)
-since_time = datetime(2026, 3, 12, 0, 0, tzinfo=UTC)
-recent_export = chain.export(since=since_time)
-print(f"Records since {since_time.date()}: {len(recent_export)}")
-
-# Each exported record includes all fields for regulatory review
-if full_export:
-    sample = full_export[0]
-    print(f"\nSample record fields: {list(sample.keys())}")
+# Scoped bridge with expiration (for a project)
+engine.create_bridge(PactBridge(
+    id="bridge-project-x",
+    role_a_address="D1-R1-D1-R1",        # COO
+    role_b_address="D1-R1-D1-R1-T1-R1",  # Support Lead
+    bridge_type="scoped",
+    max_classification=ConfidentialityLevel.RESTRICTED,
+    operational_scope=("project-x",),
+    bilateral=False,  # COO can read Support data, but not reverse
+    expires_at=datetime.now(UTC) + timedelta(days=90),
+))
 ```
 
-The export produces a list of dictionaries, each containing the complete anchor
-data in JSON-serializable form. This is suitable for regulatory review,
-compliance reporting, or external audit tools.
+## Recipe 6: Create a Knowledge Share Policy
 
----
+```python
+from pact.governance.access import KnowledgeSharePolicy
+from pact.build.config.schema import ConfidentialityLevel
 
-## Further Reading
+# Operations shares RESTRICTED data with Support
+engine.create_ksp(KnowledgeSharePolicy(
+    id="ksp-ops-to-support",
+    source_unit_address="D1-R1-D1",          # Operations department
+    target_unit_address="D1-R1-D1-R1-T1",    # Support team
+    max_classification=ConfidentialityLevel.RESTRICTED,
+    created_by_role_address="D1-R1-D1-R1",   # COO authorized
+))
+```
 
-- `docs/getting-started.md` -- step-by-step installation and setup guide
-- `examples/quickstart.py` -- runnable script combining envelope, trust, and audit
-- `examples/care-config.yaml` -- full Terrene Foundation organization configuration
-- `examples/minimal-config.yaml` -- smallest valid configuration
+## Recipe 7: Check Knowledge Access
+
+```python
+from pact.governance.knowledge import KnowledgeItem
+from pact.build.config.schema import ConfidentialityLevel, TrustPostureLevel
+
+# A confidential operations report
+report = KnowledgeItem(
+    item_id="ops-report-q4",
+    classification=ConfidentialityLevel.CONFIDENTIAL,
+    owning_unit_address="D1-R1-D1",  # Operations department
+)
+
+# CEO checks access at CONTINUOUS_INSIGHT posture
+decision = engine.check_access(
+    "D1-R1",
+    report,
+    TrustPostureLevel.CONTINUOUS_INSIGHT,
+)
+print(f"CEO: allowed={decision.allowed}, reason={decision.reason}")
+
+# Support Lead checks access at SUPERVISED posture
+decision = engine.check_access(
+    "D1-R1-D1-R1-T1-R1",
+    report,
+    TrustPostureLevel.SUPERVISED,
+)
+print(f"Support Lead: allowed={decision.allowed}, reason={decision.reason}")
+```
+
+## Recipe 8: Create a Governed Agent
+
+```python
+from pact.governance.agent import PactGovernedAgent, GovernanceBlockedError
+from pact.governance.decorators import governed_tool
+from pact.build.config.schema import TrustPostureLevel
+
+# Define tools with governance metadata
+@governed_tool("read", cost=0.0)
+def read_document(doc_id: str) -> str:
+    return f"Contents of {doc_id}"
+
+@governed_tool("write", cost=10.0)
+def write_report(content: str) -> str:
+    return f"Report written: {content}"
+
+@governed_tool("deploy", cost=500.0)
+def deploy_to_production() -> str:
+    return "Deployed to production"
+
+# Create a governed agent for the Support Lead role
+agent = PactGovernedAgent(
+    engine=engine,
+    role_address="D1-R1-D1-R1-T1-R1",
+    posture=TrustPostureLevel.SUPERVISED,
+)
+
+# Register tools with the agent
+agent.register_tool("read", cost=0.0)
+agent.register_tool("write", cost=10.0)
+agent.register_tool("deploy", cost=500.0)
+
+# Execute through governance
+result = agent.execute_tool("read", _tool_fn=lambda: read_document("doc-1"))
+print(f"Read result: {result}")
+
+# This will be BLOCKED (deploy is not in allowed_actions for Support Lead)
+try:
+    agent.execute_tool("deploy", _tool_fn=deploy_to_production)
+except GovernanceBlockedError as e:
+    print(f"Blocked: {e.verdict.reason}")
+```
+
+## Recipe 9: Use the MockGovernedAgent for Testing
+
+```python
+from pact.governance.testing import MockGovernedAgent
+from pact.governance.decorators import governed_tool
+from pact.build.config.schema import TrustPostureLevel
+
+@governed_tool("read", cost=0.0)
+def tool_read() -> str:
+    return "read_result"
+
+@governed_tool("write", cost=10.0)
+def tool_write() -> str:
+    return "write_result"
+
+# Script of actions to execute
+mock = MockGovernedAgent(
+    engine=engine,
+    role_address="D1-R1-D1-R1-T1-R1",
+    tools=[tool_read, tool_write],
+    script=["read", "write", "read"],
+    posture=TrustPostureLevel.SUPERVISED,
+)
+
+results = mock.run()
+print(f"Results: {results}")
+# Output: Results: ['read_result', 'write_result', 'read_result']
+```
+
+## Recipe 10: Get a Frozen Governance Context
+
+```python
+from pact.build.config.schema import TrustPostureLevel
+
+# Get a frozen snapshot of governance state for an agent
+ctx = engine.get_context(
+    "D1-R1-D1-R1-T1-R1",
+    posture=TrustPostureLevel.SUPERVISED,
+)
+
+# Inspect the context
+print(f"Role: {ctx.role_address}")
+print(f"Posture: {ctx.posture.value}")
+print(f"Allowed actions: {sorted(ctx.allowed_actions)}")
+print(f"Clearance level: {ctx.effective_clearance_level.value}")
+print(f"Compartments: {sorted(ctx.compartments)}")
+
+# Serialize for transport
+data = ctx.to_dict()
+print(f"Serialized: {data}")
+
+# Deserialize
+from pact.governance.context import GovernanceContext
+restored = GovernanceContext.from_dict(data)
+assert restored.role_address == ctx.role_address
+```
+
+## Recipe 11: Explain Governance Decisions
+
+```python
+from pact.governance.explain import describe_address, explain_access
+from pact.governance.knowledge import KnowledgeItem
+from pact.build.config.schema import ConfidentialityLevel, TrustPostureLevel
+
+# Describe a positional address in human-readable form
+description = describe_address("D1-R1-D1-R1-T1-R1", engine.get_org())
+print(description)
+# Output: Support Lead (Support > Operations)
+
+# Get a step-by-step trace of an access decision
+item = KnowledgeItem(
+    item_id="secret-report",
+    classification=ConfidentialityLevel.SECRET,
+    owning_unit_address="D1",
+    compartments=frozenset({"executive"}),
+)
+
+# You need to gather clearances manually for the explain API
+clearances = {}  # Map of address -> RoleClearance
+# (In practice, use engine._gather_clearances() or your own collection)
+
+trace = explain_access(
+    role_address="D1-R1-D1-R1-T1-R1",
+    knowledge_item=item,
+    posture=TrustPostureLevel.SUPERVISED,
+    compiled_org=engine.get_org(),
+    clearances=clearances,
+    ksps=[],
+    bridges=[],
+)
+print(trace)
+```
+
+## Recipe 12: Use SQLite Persistence
+
+```python
+from pact.governance.engine import GovernanceEngine
+
+# Create engine with SQLite backend
+engine = GovernanceEngine(
+    org_definition,
+    store_backend="sqlite",
+    store_url="/tmp/my-org-governance.db",
+)
+
+# All mutations (clearances, envelopes, bridges, KSPs) are now persisted
+# Restarting the engine with the same store_url loads existing state
+```
+
+## Recipe 13: Validate an Org with the CLI
+
+```bash
+# Validate a YAML org definition
+python -m pact.governance.cli validate my-org.yaml
+
+# Output:
+# Validating 'my-org.yaml'...
+# Organization: My Organization (my-org)
+# Departments: 2, Teams: 1, Roles: 3
+# Clearances: 3, Envelopes: 2, Bridges: 1, KSPs: 1
+# All references valid.
+```
+
+## Recipe 14: Set Up Posture-Based Default Envelopes
+
+```python
+from pact.governance.envelopes import default_envelope_for_posture
+from pact.build.config.schema import TrustPostureLevel
+
+# Get conservative default envelopes for each posture level
+for posture in TrustPostureLevel:
+    env = default_envelope_for_posture(posture)
+    print(f"{posture.value}:")
+    print(f"  max_spend_usd: {env.financial.max_spend_usd}")
+    print(f"  allowed_actions: {env.operational.allowed_actions}")
+    print(f"  internal_only: {env.communication.internal_only}")
+    print()
+```

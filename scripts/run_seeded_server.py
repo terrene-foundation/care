@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Copyright 2026 Terrene Foundation
 # Licensed under the Apache License, Version 2.0
-"""Launch the CARE Platform API server with demo seed data pre-loaded.
+"""Launch the PACT API server with demo seed data pre-loaded.
 
 Usage:
     python scripts/run_seeded_server.py
@@ -32,10 +32,10 @@ def main() -> None:
         logger.error("Seed script returned None — cannot start server")
         sys.exit(1)
 
-    # Build PlatformAPI from seeded components
-    from care_platform.use.api.endpoints import PlatformAPI
+    # Build PactAPI from seeded components
+    from pact_platform.use.api.endpoints import PactAPI
 
-    platform_api = PlatformAPI(
+    platform_api = PactAPI(
         registry=components["registry"],
         approval_queue=components["approval_queue"],
         cost_tracker=components["cost_tracker"],
@@ -48,23 +48,23 @@ def main() -> None:
         audit_chain=components.get("audit_chain"),
     )
 
-    # Create the app with the seeded PlatformAPI
-    from care_platform.use.api.server import create_app
+    # Create the app with the seeded PactAPI
+    from pact_platform.use.api.server import create_app
 
-    os.environ.setdefault("CARE_DEV_MODE", "true")
-    os.environ.setdefault("CARE_API_HOST", "0.0.0.0")
-    os.environ.setdefault("CARE_API_PORT", "8000")
+    os.environ.setdefault("PACT_DEV_MODE", "true")
+    os.environ.setdefault("PACT_API_HOST", "0.0.0.0")
+    os.environ.setdefault("PACT_API_PORT", "8000")
 
     app = create_app(
         platform_api=platform_api,
         dm_runner=components.get("dm_runner"),
     )
 
-    host = os.environ.get("CARE_API_HOST", "0.0.0.0")
-    # Cloud Run sets PORT; fall back to CARE_API_PORT then 8080
-    port = int(os.environ.get("PORT", os.environ.get("CARE_API_PORT", "8080")))
+    host = os.environ.get("PACT_API_HOST", "0.0.0.0")
+    # Cloud Run sets PORT; fall back to PACT_API_PORT then 8080
+    port = int(os.environ.get("PORT", os.environ.get("PACT_API_PORT", "8080")))
 
-    logger.info("Starting CARE Platform API with seeded data on http://%s:%d", host, port)
+    logger.info("Starting PACT API with seeded data on http://%s:%d", host, port)
 
     import uvicorn
 

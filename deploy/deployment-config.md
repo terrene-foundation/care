@@ -1,4 +1,4 @@
-# CARE Platform — Deployment Configuration
+# PACT — Deployment Configuration
 
 **Provider**: Google Cloud Platform (GCP)
 **Account**: jack@terrene.foundation
@@ -51,13 +51,13 @@
 gcloud auth login jack@terrene.foundation
 
 # 2. Create project
-gcloud projects create terrene-care --name="CARE Platform"
+gcloud projects create terrene-pact --name="PACT"
 
 # 3. Link billing
-gcloud billing projects link terrene-care --billing-account=BILLING_ACCOUNT_ID
+gcloud billing projects link terrene-pact --billing-account=BILLING_ACCOUNT_ID
 
 # 4. Set as active project
-gcloud config set project terrene-care
+gcloud config set project terrene-pact
 
 # 5. Enable required APIs
 gcloud services enable \
@@ -66,10 +66,10 @@ gcloud services enable \
   cloudbuild.googleapis.com
 
 # 6. Create Artifact Registry repo
-gcloud artifacts repositories create care-platform \
+gcloud artifacts repositories create pact \
   --repository-format=docker \
   --location=asia-southeast1 \
-  --description="CARE Platform container images"
+  --description="PACT container images"
 ```
 
 ## Deploy API to Cloud Run
@@ -77,11 +77,11 @@ gcloud artifacts repositories create care-platform \
 ```bash
 # Build and push image
 gcloud builds submit \
-  --tag asia-southeast1-docker.pkg.dev/terrene-care/care-platform/api:latest
+  --tag asia-southeast1-docker.pkg.dev/terrene-pact/pact/api:latest
 
 # Deploy to Cloud Run
-gcloud run deploy care-platform-api \
-  --image asia-southeast1-docker.pkg.dev/terrene-care/care-platform/api:latest \
+gcloud run deploy pact-api \
+  --image asia-southeast1-docker.pkg.dev/terrene-pact/pact/api:latest \
   --platform managed \
   --region asia-southeast1 \
   --allow-unauthenticated \
@@ -89,7 +89,7 @@ gcloud run deploy care-platform-api \
   --cpu 1 \
   --min-instances 0 \
   --max-instances 2 \
-  --set-env-vars "CARE_DEV_MODE=true,CARE_API_PORT=8080,CARE_API_HOST=0.0.0.0"
+  --set-env-vars "PACT_DEV_MODE=true,PACT_API_PORT=8080,PACT_API_HOST=0.0.0.0"
 ```
 
 ## Deploy Web to Vercel
@@ -114,10 +114,10 @@ vercel --prod
 
 ```bash
 # List revisions
-gcloud run revisions list --service care-platform-api --region asia-southeast1
+gcloud run revisions list --service pact-api --region asia-southeast1
 
 # Roll back to previous revision
-gcloud run services update-traffic care-platform-api \
+gcloud run services update-traffic pact-api \
   --to-revisions PREVIOUS_REVISION=100 \
   --region asia-southeast1
 ```
@@ -125,7 +125,7 @@ gcloud run services update-traffic care-platform-api \
 ## Production Checklist
 
 - [ ] GCP account authenticated (jack@terrene.foundation)
-- [ ] Project created (terrene-care)
+- [ ] Project created (terrene-pact)
 - [ ] Billing linked
 - [ ] APIs enabled (Cloud Run, Artifact Registry, Cloud Build)
 - [ ] Docker image built and pushed

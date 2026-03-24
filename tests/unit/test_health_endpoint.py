@@ -3,7 +3,7 @@
 """Unit tests for Task 5027: Expanded health check endpoint.
 
 Tests that /health returns structured JSON with component-level health
-status and a version number from care_platform.__version__.
+status and a version number from pact.__version__.
 """
 
 from __future__ import annotations
@@ -11,21 +11,21 @@ from __future__ import annotations
 import httpx
 import pytest
 
-import care_platform
-from care_platform.build.config.env import EnvConfig
-from care_platform.use.api.server import create_app
+import pact
+from pact_platform.build.config.env import EnvConfig
+from pact_platform.use.api.server import create_app
 
 
 @pytest.fixture()
 def dev_config() -> EnvConfig:
     """EnvConfig in dev mode (auth disabled)."""
-    return EnvConfig(care_dev_mode=True, care_api_token="")
+    return EnvConfig(pact_dev_mode=True, pact_api_token="")
 
 
 @pytest.fixture()
 def app(dev_config: EnvConfig):
     """Create a FastAPI app with dev config for health check testing."""
-    import care_platform.use.api.server as server_module
+    import pact_platform.use.api.server as server_module
 
     old_default = server_module._default_api
     server_module._default_api = None
@@ -75,14 +75,16 @@ class TestHealthEndpoint:
         resp = await client.get("/health")
         data = resp.json()
         assert "version" in data
-        assert data["version"] == care_platform.__version__
+        assert data["version"] == pact.__version__
 
     @pytest.mark.asyncio
     async def test_health_version_matches_package(self, client: httpx.AsyncClient):
-        """Version in health response must match care_platform.__version__."""
+        """Version in health response must match pact.__version__."""
         resp = await client.get("/health")
         data = resp.json()
-        assert data["version"] == "0.1.0"
+        from pact import __version__
+
+        assert data["version"] == __version__
 
     @pytest.mark.asyncio
     async def test_health_components_include_database(self, client: httpx.AsyncClient):

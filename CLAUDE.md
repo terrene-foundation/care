@@ -1,14 +1,26 @@
-# CARE Platform
+# PACT
 
-This repository is the **CARE Platform** — the Terrene Foundation's open-source governed operational model for running organizations with AI agents under EATP trust governance, CO methodology, and CARE philosophy.
+This repository is **PACT** — the Terrene Foundation's reference implementation of PACT (Principled Architecture for Constrained Trust), the fourth standard in the Quartet alongside CARE, EATP, and CO. It implements the D/T/R accountability grammar, recursive operating envelope delegation, knowledge clearance framework, and verification gradient for running organizations with AI agents under governed autonomy.
 
-The CARE Platform is Foundation-owned, Apache 2.0 licensed, and irrevocably open. Since the standards, SDKs, and reference model are all open, anyone can build commercial implementations on top — the Foundation has no structural relationship with any commercial entity.
+PACT is Foundation-owned, Apache 2.0 licensed, and irrevocably open. Since the standards, SDKs, and reference model are all open, anyone can build commercial implementations on top — the Foundation has no structural relationship with any commercial entity.
 
 ## What This Is
 
-A governed operational model that operationalizes the Terrene Foundation as an agent-orchestrated organization. Each Foundation workspace becomes the knowledge base for an agent team. The platform is built on the Kailash Python SDK (Kaizen agent framework, DataFlow persistence, Nexus API layer, EATP SDK trust layer).
+A **framework** and **reference implementation** of PACT (Principled Architecture for Constrained Trust). PACT publishes the domain-agnostic governance framework — D/T/R grammar validation, operating envelope composition, knowledge clearance, verification gradient — plus a simple example vertical (e.g., a university or open-source project) that proves the system works without requiring domain expertise. Built on the Kailash Python SDK (Kaizen agent framework, DataFlow persistence, Nexus API layer, EATP SDK trust layer).
 
-**What it is NOT**: A generic agent orchestrator competing with LangChain/CrewAI. It is governed orchestration — an opinionated framework for running organizations with AI agents under EATP trust governance.
+**The boundary test**: If you ripped out all domain vocabulary from a vertical's code and replaced it with different domain terms, the `pact` library code wouldn't change at all. Only the configuration and domain layer would change.
+
+**What it is NOT**: A generic agent orchestrator competing with LangChain/CrewAI. It is governed orchestration — an opinionated framework for running organizations with AI agents under PACT architectural governance.
+
+### Framework vs Verticals
+
+| Layer                  | Repository         | Purpose                                           |
+| ---------------------- | ------------------ | ------------------------------------------------- |
+| **Framework**          | `pact` (this repo) | Domain-agnostic PACT library + example vertical   |
+| **Financial vertical** | `astra`            | Production-grade MAS-regulated financial services |
+| **HRIS vertical**      | `arbor`            | Production-grade Singapore SME HR governance      |
+
+Verticals `import pact` and define their domain's D/T/R structure, envelope constraints, and clearance mappings as PACT configuration. The framework knows nothing about finance, healthcare, or any other domain.
 
 ## Absolute Directives
 
@@ -16,7 +28,7 @@ These override ALL other instructions. They govern behavior before any rule file
 
 ### 0. Foundation Independence — No Commercial Coupling
 
-CARE Platform is a **Terrene Foundation project**. It is fully independent. There is NO relationship between CARE Platform and any commercial product, proprietary codebase, or commercial entity. Do not reference, compare with, or design against any proprietary product. Do not use language like "open-source version of X." CARE Platform IS the product — not a derivative of anything. See `rules/independence.md` for full policy.
+PACT is a **Terrene Foundation project**. It is fully independent. There is NO relationship between PACT and any commercial product, proprietary codebase, or commercial entity. Do not reference, compare with, or design against any proprietary product. Do not use language like "open-source version of X." PACT IS the product — not a derivative of anything. See `rules/independence.md` for full policy.
 
 ### 1. Framework-First
 
@@ -41,7 +53,7 @@ See `rules/no-stubs.md` for details.
 
 ### 4. Standards Alignment
 
-Every implementation decision must align with the CARE, EATP, and CO specifications. When in doubt, consult the relevant standards expert agent. The CARE Platform is the reference implementation of these standards — it must embody them correctly.
+Every implementation decision must align with the CARE, PACT, EATP, and CO specifications. When in doubt, consult the relevant standards expert agent. This repo is the reference implementation of the Quartet — it must embody them correctly.
 
 ### 5. Recommended Reviews
 
@@ -51,33 +63,51 @@ Every implementation decision must align with the CARE, EATP, and CO specificati
 
 ## Architecture Overview
 
-### Product Stack
+### Three-Layer Stack
 
-| Layer        | Foundation (Open)                     |
-| ------------ | ------------------------------------- |
-| Specs        | CARE, EATP, CO, CDI (CC BY 4.0)       |
-| SDKs         | Kailash Python, EATP SDK (Apache 2.0) |
-| **Platform** | **CARE Platform** (Apache 2.0)        |
+| Layer  | Package                     | What                                                             | Version |
+| ------ | --------------------------- | ---------------------------------------------------------------- | ------- |
+| **L3** | `pact-platform` (this repo) | Org builder, approval UX, work management, dashboard, deployment | 0.3.0   |
+| **L2** | `kaizen-agents`             | GovernedSupervisor, progressive disclosure, autonomous execution | 0.1.0   |
+| **L1** | `kailash-pact`              | GovernanceEngine, D/T/R grammar, envelopes, clearance, gradient  | 0.3.0   |
+| **L1** | `kailash[trust]`            | EATP SDK, trust chains, signing, postures, enforcement           | 2.0.0+  |
+| **L1** | `kailash-dataflow`          | Auto-generated CRUD nodes (11 per model)                         | 1.2.0   |
+| **L0** | `kailash`                   | Core SDK, workflow runtime, 140+ nodes                           | 2.0.0+  |
 
-### Five Architecture Gaps (COC Setup → CARE Platform)
+### Platform Components (v0.3.0)
 
-| Gap                       | Current (COC)                          | Needed (CARE Platform)                        |
-| ------------------------- | -------------------------------------- | --------------------------------------------- |
-| Multi-user runtime        | Single Claude Code session             | Multiple humans, multiple agent teams         |
-| Persistence               | Filesystem (markdown, git)             | Cryptographic trust chains, auditable history |
-| Cryptographic enforcement | Rules Claude reads + lightweight hooks | Signed constraint envelopes, audit anchors    |
-| Runtime independence      | Claude Code only (Anthropic)           | Multiple LLM backends, local models           |
-| Workspace coordination    | Isolated directories                   | Cross-Functional Bridges between teams        |
+| Component              | Location                         | What                                                                                                                            |
+| ---------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| DataFlow Models (11)   | `pact_platform/models/`          | AgenticObjective, Request, WorkSession, Artifact, Decision, ReviewDecision, Finding, Pool, PoolMembership, Run, ExecutionMetric |
+| API Routers (7)        | `pact_platform/use/api/routers/` | objectives, requests, sessions, decisions, pools, reviews, metrics (42+ endpoints)                                              |
+| Services (5)           | `pact_platform/use/services/`    | RequestRouter, ApprovalQueue, CompletionWorkflow, CostTracking, NotificationDispatch                                            |
+| Engine (6)             | `pact_platform/engine/`          | EnvelopeAdapter, GovernedDelegate, ApprovalBridge, EventBridge, SupervisorOrchestrator, AutoSeed                                |
+| Integrations (6)       | `pact_platform/integrations/`    | NotificationAdapter, Slack/Discord/Teams webhooks, LLMProviderManager                                                           |
+| CLI (10 commands)      | `pact_platform/cli.py`           | quickstart, org, role, clearance, bridge, envelope, agent, audit, validate, status                                              |
+| Web Dashboard (4 new)  | `apps/web/app/`                  | objectives, requests, pools, org-builder pages                                                                                  |
+| Mobile Screens (3 new) | `apps/mobile/lib/features/`      | objectives, requests, pools screens                                                                                             |
+| Existing Frontend      | `apps/web/`, `apps/mobile/`      | approvals, agents, bridges, trust-chains, envelopes, cost, audit, shadow, verification                                          |
 
-### Implementation Phases
+### Import Patterns
 
-| Phase | What                                    | Builds On                  |
-| ----- | --------------------------------------- | -------------------------- |
-| 1     | Package COC setup as reusable framework | Existing COC setup         |
-| 2     | Add persistence (EATP SDK + DataFlow)   | EATP SDK Phase 1           |
-| 3     | Add multi-team runtime (Kaizen agents)  | Kaizen framework           |
-| 4     | Add Cross-Functional Bridges            | EATP cross-team delegation |
-| 5     | Organization Builder                    | All previous phases        |
+```python
+# Governance (from kailash-pact — L1)
+from pact.governance import GovernanceEngine, GovernanceVerdict
+from pact.governance import compile_org, load_org_yaml
+
+# Config types (from this repo — L3)
+from pact_platform.build.config.schema import OrgDefinition, AgentConfig, ConstraintEnvelopeConfig
+
+# Work management models (from this repo — L3)
+from pact_platform.models import db, validate_finite
+
+# Engine wiring (from this repo — L3)
+from pact_platform.engine import SupervisorOrchestrator, PlatformEnvelopeAdapter
+
+# Trust layer (kailash[trust] — L1)
+from kailash.trust import TrustOperations, generate_keypair
+from kailash.trust.chain import VerificationLevel, VerificationResult
+```
 
 ## Workspace Commands
 
@@ -115,6 +145,7 @@ Every implementation decision must align with the CARE, EATP, and CO specificati
 | Terrene naming & terminology      | `rules/terrene-naming.md`    | Global                                              |
 | Documentation & version accuracy  | `rules/documentation.md`     | `README.md`, `docs/**`, `CHANGELOG.md`              |
 | Constitution consistency          | `rules/constitution.md`      | Scoped                                              |
+| Boundary test (domain vocabulary) | `rules/boundary-test.md`     | `src/pact_platform/**` (excluding `examples/`)      |
 | Auto-generated workflow instincts | `rules/learned-instincts.md` | Global                                              |
 
 ## Agents
@@ -194,16 +225,18 @@ For Kailash SDK implementation patterns, see `.claude/skills/` — organized by 
 
 - **project** — TrustPlane EATP reference implementation skills (store backends, security patterns, enterprise features)
 
-## The Trinity
+## The Quartet
 
-| Standard | Full Name                                      | Type        | License   |
-| -------- | ---------------------------------------------- | ----------- | --------- |
-| **CARE** | Collaborative Autonomous Reflective Enterprise | Philosophy  | CC BY 4.0 |
-| **EATP** | Enterprise Agent Trust Protocol                | Protocol    | CC BY 4.0 |
-| **CO**   | Cognitive Orchestration                        | Methodology | CC BY 4.0 |
+| Standard | Full Name                                      | Type         | License   |
+| -------- | ---------------------------------------------- | ------------ | --------- |
+| **CARE** | Collaborative Autonomous Reflective Enterprise | Philosophy   | CC BY 4.0 |
+| **PACT** | Principled Architecture for Constrained Trust  | Architecture | CC BY 4.0 |
+| **EATP** | Enterprise Agent Trust Protocol                | Protocol     | CC BY 4.0 |
+| **CO**   | Cognitive Orchestration                        | Methodology  | CC BY 4.0 |
 
 - **COC** = CO for Codegen (first domain application of CO)
 - CARE planes: **Trust Plane** + **Execution Plane**
+- PACT grammar: **D** (Department) + **T** (Team) + **R** (Role) — every D/T must be immediately followed by exactly one R
 - Constraint dimensions: Financial, Operational, Temporal, Data Access, Communication
 - Foundation owns ALL open-source IP (fully transferred, irrevocable). No structural relationship with any commercial entity.
 
@@ -238,12 +271,12 @@ All frameworks are built ON Core SDK — they don't replace it.
 
 ## Key Reference Locations (Terrene Knowledge Base)
 
-The CARE Platform is informed by the Terrene Foundation knowledge base at `~/repos/terrene/terrene/`:
+PACT is informed by the Terrene Foundation knowledge base at `~/repos/terrene/terrene/`:
 
-| Content                    | Location                                                                  |
-| -------------------------- | ------------------------------------------------------------------------- |
-| Foundation truths          | `~/repos/terrene/terrene/docs/00-anchor/`                                 |
-| Standards (CARE, EATP, CO) | `~/repos/terrene/terrene/docs/02-standards/`                              |
-| Constitution               | `~/repos/terrene/terrene/docs/06-operations/constitution/`                |
-| Publications (theses)      | `~/repos/terrene/terrene/docs/02-standards/publications/`                 |
-| EATP SDK                   | `eatp>=0.1.0` package (standalone); `trust-plane>=0.2.0` (reference impl) |
+| Content                          | Location                                                                  |
+| -------------------------------- | ------------------------------------------------------------------------- |
+| Foundation truths                | `~/repos/terrene/terrene/docs/00-anchor/`                                 |
+| Standards (CARE, PACT, EATP, CO) | `~/repos/terrene/terrene/docs/02-standards/`                              |
+| Constitution                     | `~/repos/terrene/terrene/docs/06-operations/constitution/`                |
+| Publications (theses)            | `~/repos/terrene/terrene/docs/02-standards/publications/`                 |
+| EATP SDK                         | `eatp>=0.1.0` package (standalone); `trust-plane>=0.2.0` (reference impl) |

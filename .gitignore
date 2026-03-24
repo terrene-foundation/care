@@ -5,7 +5,7 @@ __pycache__/
 *.so
 .Python
 /build/
-!src/care_platform/build/
+!src/pact/build/
 develop-eggs/
 dist/
 downloads/
@@ -78,3 +78,12 @@ apps/mobile/.dart_tool/
 # Python build
 dist/
 *.egg-info/
+.hypothesis/
+
+# SQLite test databases
+*.db
+*.db-wal
+*.db-shm
+
+# Test results (generated at runtime)
+**/.test-results

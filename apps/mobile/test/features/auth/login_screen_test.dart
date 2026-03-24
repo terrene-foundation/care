@@ -97,7 +97,7 @@ void main() {
 
       // Hints
       expect(find.text('e.g. Jane Smith'), findsOneWidget);
-      expect(find.text('Enter your CARE_API_TOKEN'), findsOneWidget);
+      expect(find.text('Enter your PACT_API_TOKEN'), findsOneWidget);
 
       // Submit button (may need scroll to see it)
       await tester.scrollUntilVisible(
@@ -151,7 +151,7 @@ void main() {
         'Test User',
       );
       await tester.enterText(
-        find.widgetWithText(TextField, 'Enter your CARE_API_TOKEN'),
+        find.widgetWithText(TextField, 'Enter your PACT_API_TOKEN'),
         'test-token',
       );
 

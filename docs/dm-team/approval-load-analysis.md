@@ -75,7 +75,7 @@ The ApprovalQueue already supports three urgency levels:
 
 For routine content that follows approved templates:
 
-- `care-platform approve-batch <action-id-1> <action-id-2> ...` approves multiple items at once
+- `pact approve-batch <action-id-1> <action-id-2> ...` approves multiple items at once
 - Routine items (templated content within approved categories) can be batch-approved at the start of each week
 - Non-routine items (crisis content, regulatory topics, novel outreach) require individual review
 

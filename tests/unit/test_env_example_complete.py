@@ -3,7 +3,7 @@
 """Unit tests for Task 5028: .env.example completeness.
 
 Validates that .env.example documents all environment variables
-recognized by the CARE Platform. Prevents configuration drift where
+recognized by the PACT. Prevents configuration drift where
 new env vars are added to code but not documented.
 """
 
@@ -15,15 +15,15 @@ from pathlib import Path
 # Project root — .env.example lives here
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 _ENV_EXAMPLE = _PROJECT_ROOT / ".env.example"
-_ENV_PY = _PROJECT_ROOT / "src" / "care_platform" / "build" / "config" / "env.py"
+_ENV_PY = _PROJECT_ROOT / "src" / "pact_platform" / "build" / "config" / "env.py"
 
 
 def _parse_env_example_keys() -> set[str]:
     """Extract all environment variable names from .env.example.
 
     Handles commented and uncommented lines like:
-        CARE_API_TOKEN=value
-        # CARE_API_TOKEN=value
+        PACT_API_TOKEN=value
+        # PACT_API_TOKEN=value
     """
     keys: set[str] = set()
     text = _ENV_EXAMPLE.read_text()
@@ -81,30 +81,30 @@ class TestEnvExampleCompleteness:
             f"{sorted(missing)}. Add them to .env.example so developers know about them."
         )
 
-    def test_care_api_token_documented(self):
-        """CARE_API_TOKEN must be in .env.example."""
+    def test_pact_api_token_documented(self):
+        """PACT_API_TOKEN must be in .env.example."""
         keys = _parse_env_example_keys()
-        assert "CARE_API_TOKEN" in keys
+        assert "PACT_API_TOKEN" in keys
 
-    def test_care_api_host_documented(self):
-        """CARE_API_HOST must be in .env.example."""
+    def test_pact_api_host_documented(self):
+        """PACT_API_HOST must be in .env.example."""
         keys = _parse_env_example_keys()
-        assert "CARE_API_HOST" in keys
+        assert "PACT_API_HOST" in keys
 
-    def test_care_api_port_documented(self):
-        """CARE_API_PORT must be in .env.example."""
+    def test_pact_api_port_documented(self):
+        """PACT_API_PORT must be in .env.example."""
         keys = _parse_env_example_keys()
-        assert "CARE_API_PORT" in keys
+        assert "PACT_API_PORT" in keys
 
-    def test_care_dev_mode_documented(self):
-        """CARE_DEV_MODE must be in .env.example."""
+    def test_pact_dev_mode_documented(self):
+        """PACT_DEV_MODE must be in .env.example."""
         keys = _parse_env_example_keys()
-        assert "CARE_DEV_MODE" in keys
+        assert "PACT_DEV_MODE" in keys
 
-    def test_care_log_format_documented(self):
-        """CARE_LOG_FORMAT must be in .env.example (added by task 5024)."""
+    def test_pact_log_format_documented(self):
+        """PACT_LOG_FORMAT must be in .env.example (added by task 5024)."""
         keys = _parse_env_example_keys()
-        assert "CARE_LOG_FORMAT" in keys
+        assert "PACT_LOG_FORMAT" in keys
 
     def test_database_url_documented(self):
         """DATABASE_URL must be in .env.example."""
@@ -117,10 +117,10 @@ class TestEnvExampleCompleteness:
         assert "POSTGRES_PASSWORD" in keys
 
     def test_rate_limit_vars_documented(self):
-        """CARE_RATE_LIMIT_GET and CARE_RATE_LIMIT_POST must be in .env.example."""
+        """PACT_RATE_LIMIT_GET and PACT_RATE_LIMIT_POST must be in .env.example."""
         keys = _parse_env_example_keys()
-        assert "CARE_RATE_LIMIT_GET" in keys
-        assert "CARE_RATE_LIMIT_POST" in keys
+        assert "PACT_RATE_LIMIT_GET" in keys
+        assert "PACT_RATE_LIMIT_POST" in keys
 
     def test_eatp_vars_documented(self):
         """EATP config vars must be in .env.example."""
@@ -129,14 +129,14 @@ class TestEnvExampleCompleteness:
         assert "EATP_CREDENTIAL_TTL_SECONDS" in keys
 
     def test_cors_origins_documented(self):
-        """CARE_CORS_ORIGINS must be in .env.example."""
+        """PACT_CORS_ORIGINS must be in .env.example."""
         keys = _parse_env_example_keys()
-        assert "CARE_CORS_ORIGINS" in keys
+        assert "PACT_CORS_ORIGINS" in keys
 
     def test_max_ws_subscribers_documented(self):
-        """CARE_MAX_WS_SUBSCRIBERS must be in .env.example."""
+        """PACT_MAX_WS_SUBSCRIBERS must be in .env.example."""
         keys = _parse_env_example_keys()
-        assert "CARE_MAX_WS_SUBSCRIBERS" in keys
+        assert "PACT_MAX_WS_SUBSCRIBERS" in keys
 
     def test_redis_url_documented(self):
         """REDIS_URL must be in .env.example."""

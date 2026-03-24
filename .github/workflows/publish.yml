@@ -110,5 +110,5 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/terrene-foundation/care-platform:${{ steps.version.outputs.version }}
-            ghcr.io/terrene-foundation/care-platform:latest
+            ghcr.io/terrene-foundation/pact:${{ steps.version.outputs.version }}
+            ghcr.io/terrene-foundation/pact:latest

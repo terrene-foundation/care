@@ -15,19 +15,19 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from care_platform.build.bootstrap import PlatformBootstrap
-from care_platform.build.config.schema import (
+from pact_platform.build.bootstrap import PlatformBootstrap
+from pact_platform.build.config.schema import (
     AgentConfig,
     ConstraintEnvelopeConfig,
     FinancialConstraintConfig,
     GenesisConfig,
     OperationalConstraintConfig,
-    PlatformConfig,
+    PactConfig,
     TeamConfig,
     TrustPostureLevel,
     WorkspaceConfig,
 )
-from care_platform.trust.store.store import MemoryStore
+from pact_platform.trust.store.store import MemoryStore
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -37,9 +37,9 @@ from care_platform.trust.store.store import MemoryStore
 def _make_config(
     *,
     workspaces: list[WorkspaceConfig] | None = None,
-) -> PlatformConfig:
-    """Create a minimal PlatformConfig for testing."""
-    return PlatformConfig(
+) -> PactConfig:
+    """Create a minimal PactConfig for testing."""
+    return PactConfig(
         name="Test Foundation",
         genesis=GenesisConfig(
             authority="test.foundation",

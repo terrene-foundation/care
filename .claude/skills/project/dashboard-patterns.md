@@ -1,6 +1,6 @@
 # Dashboard Patterns
 
-Patterns for working with the CARE Platform governance dashboard (Next.js web app).
+Patterns for working with the PACT governance dashboard (Next.js web app).
 
 ## Design System Quick Reference
 
@@ -103,7 +103,7 @@ Run `python scripts/seed_demo.py` to populate all pages with realistic data. The
 
 ## Key Architecture Decisions
 
-See `workspaces/care-platform/decisions.yml` for full rationale on:
+See `workspaces/pact/decisions.yml` for full rationale on:
 
 - Auth via /health endpoint (no dedicated login API)
 - Client-side notifications from WebSocket events

@@ -3,9 +3,9 @@ Copyright 2026 Terrene Foundation
 Licensed under the Apache License, Version 2.0
 -->
 
-# CARE Platform Operator Guide
+# PACT Operator Guide
 
-This guide covers running the CARE Platform in a containerized environment using Docker Compose.
+This guide covers running the PACT in a containerized environment using Docker Compose.
 
 ---
 
@@ -44,10 +44,10 @@ cp .env.example .env
 Open `.env` and set at minimum:
 
 - `POSTGRES_PASSWORD` — a strong password for the database (see Environment Configuration)
-- `CARE_API_TOKEN` — a bearer token for API authentication
+- `PACT_API_TOKEN` — a bearer token for API authentication
 - One LLM provider key (`OPENAI_API_KEY` or `ANTHROPIC_API_KEY`)
 
-For local development you can set `CARE_DEV_MODE=true` to skip the API token requirement, but do not do this in production.
+For local development you can set `PACT_DEV_MODE=true` to skip the API token requirement, but do not do this in production.
 
 ### 3. Start all services
 
@@ -58,7 +58,7 @@ docker compose up
 This starts three services in dependency order:
 
 1. `db` — PostgreSQL 16 (waits until healthy)
-2. `api` — CARE Platform FastAPI server on port 8000 (waits until db is healthy)
+2. `api` — PACT FastAPI server on port 8000 (waits until db is healthy)
 3. `web` — Next.js frontend on port 3000 (waits until api is healthy)
 
 To run in the background:
@@ -72,7 +72,7 @@ docker compose up -d
 ```bash
 # API health check
 curl http://localhost:8000/health
-# Expected: {"status":"healthy","service":"care-platform"}
+# Expected: {"status":"healthy","service":"pact"}
 
 # Frontend
 open http://localhost:3000
@@ -94,11 +94,11 @@ docker compose down -v        # stop containers and delete database volume
 
 | Service | Port | Description                             |
 | ------- | ---- | --------------------------------------- |
-| `db`    | 5432 | PostgreSQL 16 — CARE Platform database  |
+| `db`    | 5432 | PostgreSQL 16 — PACT database           |
 | `api`   | 8000 | FastAPI server — REST API and WebSocket |
 | `web`   | 3000 | Next.js frontend — operator dashboard   |
 
-All three services share the `care_net` bridge network. The `api` and `web` containers communicate with each other over this network using service names as hostnames (`http://api:8000`, `http://db:5432`).
+All three services share the `pact_net` bridge network. The `api` and `web` containers communicate with each other over this network using service names as hostnames (`http://api:8000`, `http://db:5432`).
 
 ---
 
@@ -113,7 +113,7 @@ The minimum required variables for a working deployment:
 POSTGRES_PASSWORD=your-strong-password
 
 # API authentication token
-CARE_API_TOKEN=your-secure-token
+PACT_API_TOKEN=your-secure-token
 
 # LLM provider (at least one)
 ANTHROPIC_API_KEY=sk-ant-...
@@ -129,18 +129,18 @@ ANTHROPIC_MODEL=claude-sonnet-4-6
 While the containers are running:
 
 ```bash
-docker compose exec db psql -U care -d care_platform
+docker compose exec db psql -U care -d pact
 ```
 
 From your host machine (requires psql installed locally):
 
 ```bash
-psql postgresql://care:your-password@localhost:5432/care_platform
+psql postgresql://care:your-password@localhost:5432/pact
 ```
 
 ### Running database migrations
 
-The CARE Platform uses Alembic for database migrations. Run migrations after starting the services:
+The PACT uses Alembic for database migrations. Run migrations after starting the services:
 
 ```bash
 docker compose exec api python -m alembic upgrade head
@@ -157,7 +157,7 @@ docker compose exec api python -m alembic current
 Create a database backup with pg_dump:
 
 ```bash
-docker compose exec db pg_dump -U care care_platform > backup_$(date +%Y%m%d_%H%M%S).sql
+docker compose exec db pg_dump -U care pact > backup_$(date +%Y%m%d_%H%M%S).sql
 ```
 
 Store the backup file in a secure, off-container location. Do not commit backup files to the repository.
@@ -171,7 +171,7 @@ To restore from a backup:
 docker compose stop api web
 
 # Restore
-docker compose exec -T db psql -U care care_platform < backup_YYYYMMDD_HHMMSS.sql
+docker compose exec -T db psql -U care pact < backup_YYYYMMDD_HHMMSS.sql
 
 # Restart
 docker compose start api web
@@ -192,10 +192,10 @@ docker compose up -d
 
 ### Health endpoints
 
-| Endpoint      | Service | Description                                              |
-| ------------- | ------- | -------------------------------------------------------- |
-| `GET /health` | api     | Returns `{"status":"healthy","service":"care-platform"}` |
-| `GET /`       | web     | Returns the Next.js page (200 = healthy)                 |
+| Endpoint      | Service | Description                                     |
+| ------------- | ------- | ----------------------------------------------- |
+| `GET /health` | api     | Returns `{"status":"healthy","service":"pact"}` |
+| `GET /`       | web     | Returns the Next.js page (200 = healthy)        |
 
 These endpoints are used by Docker Compose health checks and can be wired into external monitoring tools.
 
@@ -234,7 +234,7 @@ docker stats               # live CPU, memory, network for all containers
 
 ### api container exits immediately on startup
 
-The most common cause is a missing or invalid `CARE_API_TOKEN` with `CARE_DEV_MODE` not set to `true`.
+The most common cause is a missing or invalid `PACT_API_TOKEN` with `PACT_DEV_MODE` not set to `true`.
 
 Check the logs:
 
@@ -242,10 +242,10 @@ Check the logs:
 docker compose logs api
 ```
 
-If you see `EnvConfigError: CARE_API_TOKEN is required in production mode`, either:
+If you see `EnvConfigError: PACT_API_TOKEN is required in production mode`, either:
 
-- Set `CARE_API_TOKEN=your-token` in `.env`, or
-- Set `CARE_DEV_MODE=true` for local development
+- Set `PACT_API_TOKEN=your-token` in `.env`, or
+- Set `PACT_DEV_MODE=true` for local development
 
 ### web service fails health check
 
@@ -290,16 +290,16 @@ docker compose up --build       # build and start in one step
 
 ## Security Checklist
 
-Before exposing the CARE Platform to external traffic:
+Before exposing the PACT to external traffic:
 
-- [ ] `CARE_API_TOKEN` is set to a cryptographically random token (at least 32 bytes)
-- [ ] `CARE_DEV_MODE` is `false` or absent
-- [ ] `POSTGRES_PASSWORD` is not the default `care_dev_password`
+- [ ] `PACT_API_TOKEN` is set to a cryptographically random token (at least 32 bytes)
+- [ ] `PACT_DEV_MODE` is `false` or absent
+- [ ] `POSTGRES_PASSWORD` is not the default `pact_dev_password`
 - [ ] LLM API keys are present only in `.env`, not in source code or Docker images
 - [ ] `.env` is listed in `.gitignore` (it is by default — verify before committing)
 - [ ] Database port 5432 is not exposed to the internet (remove the `ports` entry from the `db` service for production)
 - [ ] HTTPS/TLS is configured via a reverse proxy (nginx, Caddy, or cloud load balancer) in front of port 8000 and 3000
-- [ ] `CARE_CORS_ORIGINS` lists only trusted frontend origins
+- [ ] `PACT_CORS_ORIGINS` lists only trusted frontend origins
 - [ ] Container images are scanned for vulnerabilities before production deployment
 
 ---

@@ -6,8 +6,8 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from care_platform.trust.store.audit_query import AuditQuery, AuditReport
-from care_platform.trust.store.store import MemoryStore
+from pact_platform.trust.store.audit_query import AuditQuery, AuditReport
+from pact_platform.trust.store.store import MemoryStore
 
 # ---------------------------------------------------------------------------
 # Helpers

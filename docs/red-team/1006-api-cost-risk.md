@@ -38,7 +38,7 @@ These estimates assume a mix of models (cheaper models for routine tasks, more c
 
 #### Cost Tracking Module
 
-**Location**: `care_platform/persistence/cost_tracking.py`
+**Location**: `pact/persistence/cost_tracking.py`
 **Tests**: `tests/unit/persistence/test_cost_tracking.py`
 
 The `CostTracker` provides comprehensive API cost management:

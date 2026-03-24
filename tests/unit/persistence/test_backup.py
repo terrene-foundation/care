@@ -16,14 +16,14 @@ from datetime import UTC, datetime
 
 import pytest
 
-from care_platform.trust.store.backup import (
+from pact_platform.trust.store.backup import (
     BackupError,
     RestoreError,
     backup_store,
     restore_store,
 )
-from care_platform.trust.store.sqlite_store import SQLiteTrustStore
-from care_platform.trust.store.store import MemoryStore
+from pact_platform.trust.store.sqlite_store import SQLiteTrustStore
+from pact_platform.trust.store.store import MemoryStore
 
 # ---------------------------------------------------------------------------
 # Helpers

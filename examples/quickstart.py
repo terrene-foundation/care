@@ -1,7 +1,7 @@
 # Copyright 2026 Terrene Foundation
 # Licensed under the Apache License, Version 2.0
 """
-Quickstart — demonstrates the core CARE Platform API.
+Quickstart — demonstrates the core PACT API.
 
 This script shows how to:
 1. Create a constraint envelope and evaluate an agent action
@@ -14,14 +14,14 @@ Run with:
 
 from datetime import UTC, datetime
 
-from care_platform import (
+from pact import (
     AuditChain,
     ConstraintEnvelope,
     EvaluationResult,
     TrustScore,
     calculate_trust_score,
 )
-from care_platform.build.config.schema import (
+from pact.build.config.schema import (
     CommunicationConstraintConfig,
     ConstraintEnvelopeConfig,
     DataAccessConstraintConfig,
@@ -31,7 +31,7 @@ from care_platform.build.config.schema import (
     TrustPostureLevel,
     VerificationLevel,
 )
-from care_platform.trust.scoring import TrustFactors
+from pact.trust.scoring import TrustFactors
 
 
 def main() -> None:

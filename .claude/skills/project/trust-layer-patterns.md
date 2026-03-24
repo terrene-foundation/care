@@ -1,6 +1,6 @@
 # Trust Layer Patterns
 
-Patterns for working with the CARE Platform trust and constraint layers. These patterns were established across Milestones 8-10 (EATP SDK integration, governance hardening, fail-closed audit) and validated through 3 red team rounds.
+Patterns for working with the PACT trust and constraint layers. These patterns were established across Milestones 8-10 (EATP SDK integration, governance hardening, fail-closed audit) and validated through 3 red team rounds.
 
 ## EATP SDK Consumption Pattern
 
@@ -9,7 +9,7 @@ CARE wraps EATP SDK primitives — it never rebuilds them.
 ### Decorators (`trust/decorators.py`)
 
 ```python
-from care_platform.trust.decorators import CareTrustOpsProvider, care_verified
+from pact.trust.decorators import CareTrustOpsProvider, care_verified
 
 provider = CareTrustOpsProvider(bridge)  # bridge must be initialized
 
@@ -26,7 +26,7 @@ async def read_data(agent_id: str, path: str) -> dict:
 ### Enforcement Pipeline (`constraint/enforcement.py`)
 
 ```python
-from care_platform.trust.constraint.enforcement import CareEnforcementPipeline
+from pact.trust.constraint.enforcement import CareEnforcementPipeline
 
 pipeline = CareEnforcementPipeline(gradient, on_held=HeldBehavior.CALLBACK, held_callback=callback)
 result = pipeline.classify_and_enforce(action="draft_content", agent_id="agent-001")

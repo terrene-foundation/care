@@ -3,9 +3,9 @@ requires = ["setuptools>=65.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "care-platform"
-version = "0.1.0"
-description = "CARE Platform — Governed operational model for running organizations with AI agents under EATP trust governance"
+name = "pact-platform"
+version = "0.3.0"
+description = "PACT Platform — human judgment surface for governed AI operations. Org definition, approval UX, work management, dashboard, and deployment on top of kailash-pact governance primitives."
 authors = [
     {name = "Terrene Foundation", email = "info@terrene.foundation"}
 ]
@@ -23,10 +23,11 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
 dependencies = [
-    # Core dependencies (always required)
-    "pydantic>=2.0",
-    "fastapi>=0.104.0",
-    "uvicorn>=0.24.0",
+    # Kailash SDK ecosystem (aligned with kailash-coc-claude-py template)
+    "kailash[trust,pact]>=2.1.0",
+    "kailash-pact>=0.4.0",
+    "kailash-dataflow>=1.2.0",
+    "kailash-kaizen>=2.2.1",
     # CLI Framework
     "click>=8.0",
     "rich>=13.0.0",
@@ -36,6 +37,9 @@ dependencies = [
     "cryptography>=41.0.0",
     # JCS canonical JSON serialization (RFC 8785)
     "jcs>=0.2.1",
+    # API server
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
     # Rate limiting
     "slowapi>=0.1.9",
     # Monitoring
@@ -44,33 +48,28 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "structlog>=23.1.0",
     "pyyaml>=6.0",
-    # EATP SDK (trust protocol — core to CARE Platform, always required)
-    "eatp>=0.1.0",
-    # Trust Plane (EATP reference implementation)
-    "trust-plane>=0.2.0",
 ]
 
 [project.optional-dependencies]
-# Kailash SDK frameworks — not imported in source yet, install when needed
-# (install with: pip install care-platform[kailash])
-kailash = [
-    "kailash>=0.12.5",
-    "kailash-nexus>=1.4.2",
-    "kailash-dataflow>=0.12.4",
-    "kailash-kaizen>=1.2.5",
+# Nexus multi-channel deployment
+nexus = [
+    "kailash-nexus>=1.4.3",
+]
+# kaizen-agents (GovernedSupervisor — Delegate engine)
+agents = [
+    "kaizen-agents>=0.1.0",
 ]
 # Firebase Admin SDK for SSO token verification
-# (install with: pip install care-platform[firebase])
 firebase = [
     "firebase-admin>=6.0",
 ]
-# PostgreSQL support (install with: pip install care-platform[postgres])
+# PostgreSQL support
 postgres = [
-    "psycopg2-binary>=2.9.0",
+    "psycopg[binary]>=3.0",
 ]
 # All optional dependencies
 all = [
-    "care-platform[kailash,firebase,postgres]",
+    "pact-platform[nexus,agents,firebase,postgres]",
 ]
 dev = [
     # Testing (pytest>=7.2.0 removes vulnerable py dependency)
@@ -81,8 +80,10 @@ dev = [
     # HTTP client for integration tests
     "httpx>=0.25.0",
     # PostgreSQL for tests
-    "psycopg2-binary>=2.9.0",
+    "psycopg[binary]>=3.0",
     # Linting & Formatting
+    "black>=23.0",
+    "isort>=5.12.0",
     "ruff>=0.1.0",
     "mypy>=1.0",
     # Security & Pre-commit
@@ -91,12 +92,12 @@ dev = [
 ]
 
 [project.scripts]
-care-platform = "care_platform.build.cli:main"
+pact = "pact_platform.cli:main"
 
 [project.urls]
-"Homepage" = "https://github.com/terrene-foundation/care"
-"Bug Tracker" = "https://github.com/terrene-foundation/care/issues"
-"Documentation" = "https://terrene.dev/care"
+"Homepage" = "https://github.com/terrene-foundation/pact"
+"Bug Tracker" = "https://github.com/terrene-foundation/pact/issues"
+"Documentation" = "https://terrene.dev/pact"
 
 [tool.setuptools.packages.find]
 where = ["src"]

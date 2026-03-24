@@ -9,7 +9,7 @@
 
 ## Finding
 
-Since the CARE, EATP, and CO standards are published under CC BY 4.0 and the CARE Platform is Apache 2.0, anyone can build commercial implementations. The question: how does the Foundation govern third-party conformance? What does "CARE-compatible" mean? Who decides? How is it tested?
+Since the CARE, EATP, and CO standards are published under CC BY 4.0 and the PACT is Apache 2.0, anyone can build commercial implementations. The question: how does the Foundation govern third-party conformance? What does "CARE-compatible" mean? Who decides? How is it tested?
 
 ## Risk/Impact
 
@@ -83,7 +83,7 @@ Each conformance level requires an automated test suite that third-party impleme
 
 ### Test Vectors
 
-The CARE Platform repository should publish reference test vectors:
+The PACT repository should publish reference test vectors:
 
 - Known constraint envelopes with expected evaluation results
 - Known delegation chains with expected constraint tightening outcomes
@@ -102,4 +102,4 @@ These serve as the canonical "correct answers" that any conforming implementatio
 
 ## Conclusion
 
-The conformance framework is designed with three levels (L1-L3) aligned to the EATP verification gradient. The approach scales from self-certification (appropriate for current Foundation capacity) to formal certification (appropriate at scale). The immediate action is to publish the conformance level definitions and begin building the L1 test suite alongside the CARE Platform implementation. L2 and L3 test suites naturally emerge from the CARE Platform's own test suite.
+The conformance framework is designed with three levels (L1-L3) aligned to the EATP verification gradient. The approach scales from self-certification (appropriate for current Foundation capacity) to formal certification (appropriate at scale). The immediate action is to publish the conformance level definitions and begin building the L1 test suite alongside the PACT implementation. L2 and L3 test suites naturally emerge from the PACT's own test suite.

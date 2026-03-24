@@ -1,18 +1,18 @@
 # Copyright 2026 Terrene Foundation
 # Licensed under the Apache License, Version 2.0
-"""Tests for CARE Platform configuration schema."""
+"""Tests for PACT configuration schema."""
 
 import pytest
 from pydantic import ValidationError
 
-from care_platform.build.config.schema import (
+from pact_platform.build.config.schema import (
     AgentConfig,
     ConstraintEnvelopeConfig,
     FinancialConstraintConfig,
     GenesisConfig,
     GradientRuleConfig,
     OperationalConstraintConfig,
-    PlatformConfig,
+    PactConfig,
     TeamConfig,
     TemporalConstraintConfig,
     TrustPostureLevel,
@@ -188,13 +188,13 @@ class TestTeamConfig:
         assert len(team.agents) == 3
 
 
-# --- PlatformConfig ---
+# --- PactConfig ---
 
 
-class TestPlatformConfig:
+class TestPactConfig:
     @pytest.fixture()
     def minimal_config(self):
-        return PlatformConfig(
+        return PactConfig(
             name="Test Org",
             genesis=GenesisConfig(
                 authority="test.org",
@@ -204,7 +204,7 @@ class TestPlatformConfig:
 
     @pytest.fixture()
     def full_config(self):
-        return PlatformConfig(
+        return PactConfig(
             name="Terrene Foundation",
             genesis=GenesisConfig(
                 authority="terrene.foundation",
@@ -270,7 +270,7 @@ class TestPlatformConfig:
 
     def test_duplicate_envelope_ids_rejected(self):
         with pytest.raises(ValidationError, match="Duplicate constraint envelope IDs"):
-            PlatformConfig(
+            PactConfig(
                 name="Test",
                 genesis=GenesisConfig(authority="test", authority_name="Test"),
                 constraint_envelopes=[
@@ -281,7 +281,7 @@ class TestPlatformConfig:
 
     def test_duplicate_agent_ids_rejected(self):
         with pytest.raises(ValidationError, match="Duplicate agent IDs"):
-            PlatformConfig(
+            PactConfig(
                 name="Test",
                 genesis=GenesisConfig(authority="test", authority_name="Test"),
                 agents=[
@@ -292,7 +292,7 @@ class TestPlatformConfig:
 
     def test_duplicate_team_ids_rejected(self):
         with pytest.raises(ValidationError, match="Duplicate team IDs"):
-            PlatformConfig(
+            PactConfig(
                 name="Test",
                 genesis=GenesisConfig(authority="test", authority_name="Test"),
                 teams=[

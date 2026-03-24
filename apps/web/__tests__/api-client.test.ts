@@ -2,7 +2,7 @@
 // Licensed under the Apache License, Version 2.0
 
 /**
- * Tests for the CareApiClient and CareWebSocketClient.
+ * Tests for the PactApiClient and PactWebSocketClient.
  *
  * Uses vi.fn() mocks for fetch and WebSocket to test:
  * - HTTP request construction and error handling
@@ -12,18 +12,18 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
-  CareApiClient,
-  CareWebSocketClient,
+  PactApiClient,
+  PactWebSocketClient,
   ApiError,
   NetworkError,
 } from "../lib/api";
 import type { WebSocketState } from "../lib/api";
 
 // =========================================================================
-// CareApiClient
+// PactApiClient
 // =========================================================================
 
-describe("CareApiClient", () => {
+describe("PactApiClient", () => {
   const mockFetch = vi.fn();
   const originalFetch = globalThis.fetch;
 
@@ -37,18 +37,18 @@ describe("CareApiClient", () => {
   });
 
   it("throws if baseUrl is empty", () => {
-    expect(() => new CareApiClient({ baseUrl: "" })).toThrow(
-      "CareApiClient requires a non-empty baseUrl",
+    expect(() => new PactApiClient({ baseUrl: "" })).toThrow(
+      "PactApiClient requires a non-empty baseUrl",
     );
   });
 
   it("strips trailing slashes from baseUrl", () => {
-    const client = new CareApiClient({ baseUrl: "http://localhost:8000///" });
+    const client = new PactApiClient({ baseUrl: "http://localhost:8000///" });
     expect(client.getBaseUrl()).toBe("http://localhost:8000");
   });
 
   it("stores and retrieves tokens", () => {
-    const client = new CareApiClient({
+    const client = new PactApiClient({
       baseUrl: "http://localhost:8000",
       token: "test-token",
     });
@@ -62,7 +62,7 @@ describe("CareApiClient", () => {
   });
 
   it("includes Authorization header when token is set", async () => {
-    const client = new CareApiClient({
+    const client = new PactApiClient({
       baseUrl: "http://localhost:8000",
       token: "my-secret-token",
     });
@@ -85,7 +85,7 @@ describe("CareApiClient", () => {
   });
 
   it("does not include Authorization header when no token", async () => {
-    const client = new CareApiClient({
+    const client = new PactApiClient({
       baseUrl: "http://localhost:8000",
     });
 
@@ -106,7 +106,7 @@ describe("CareApiClient", () => {
   });
 
   it("returns typed data for listTeams", async () => {
-    const client = new CareApiClient({ baseUrl: "http://localhost:8000" });
+    const client = new PactApiClient({ baseUrl: "http://localhost:8000" });
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -124,7 +124,7 @@ describe("CareApiClient", () => {
   });
 
   it("throws ApiError on 401", async () => {
-    const client = new CareApiClient({ baseUrl: "http://localhost:8000" });
+    const client = new PactApiClient({ baseUrl: "http://localhost:8000" });
 
     mockFetch.mockResolvedValueOnce({
       ok: false,
@@ -135,7 +135,7 @@ describe("CareApiClient", () => {
 
     await expect(client.listTeams()).rejects.toThrow(ApiError);
     await expect(
-      new CareApiClient({ baseUrl: "http://localhost:8000" })
+      new PactApiClient({ baseUrl: "http://localhost:8000" })
         .listTeams()
         .catch((e: ApiError) => {
           // Re-mock for this call
@@ -145,7 +145,7 @@ describe("CareApiClient", () => {
   });
 
   it("throws ApiError on 403", async () => {
-    const client = new CareApiClient({ baseUrl: "http://localhost:8000" });
+    const client = new PactApiClient({ baseUrl: "http://localhost:8000" });
 
     mockFetch.mockResolvedValueOnce({
       ok: false,
@@ -165,7 +165,7 @@ describe("CareApiClient", () => {
   });
 
   it("throws ApiError on 500", async () => {
-    const client = new CareApiClient({ baseUrl: "http://localhost:8000" });
+    const client = new PactApiClient({ baseUrl: "http://localhost:8000" });
 
     mockFetch.mockResolvedValueOnce({
       ok: false,
@@ -184,7 +184,7 @@ describe("CareApiClient", () => {
   });
 
   it("throws NetworkError on fetch failure", async () => {
-    const client = new CareApiClient({ baseUrl: "http://localhost:8000" });
+    const client = new PactApiClient({ baseUrl: "http://localhost:8000" });
 
     mockFetch.mockRejectedValueOnce(new Error("Failed to fetch"));
 
@@ -198,7 +198,7 @@ describe("CareApiClient", () => {
   });
 
   it("throws NetworkError on timeout", async () => {
-    const client = new CareApiClient({
+    const client = new PactApiClient({
       baseUrl: "http://localhost:8000",
       timeoutMs: 10,
     });
@@ -224,7 +224,7 @@ describe("CareApiClient", () => {
   });
 
   it("encodes URL parameters in listAgents", async () => {
-    const client = new CareApiClient({ baseUrl: "http://localhost:8000" });
+    const client = new PactApiClient({ baseUrl: "http://localhost:8000" });
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -243,7 +243,7 @@ describe("CareApiClient", () => {
   });
 
   it("sends POST for approveAction", async () => {
-    const client = new CareApiClient({ baseUrl: "http://localhost:8000" });
+    const client = new PactApiClient({ baseUrl: "http://localhost:8000" });
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -270,7 +270,7 @@ describe("CareApiClient", () => {
   });
 
   it("sends POST for rejectAction", async () => {
-    const client = new CareApiClient({ baseUrl: "http://localhost:8000" });
+    const client = new PactApiClient({ baseUrl: "http://localhost:8000" });
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -291,7 +291,7 @@ describe("CareApiClient", () => {
   });
 
   it("builds costReport URL with query params", async () => {
-    const client = new CareApiClient({ baseUrl: "http://localhost:8000" });
+    const client = new PactApiClient({ baseUrl: "http://localhost:8000" });
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -318,7 +318,7 @@ describe("CareApiClient", () => {
   });
 
   it("builds listAuditAnchors URL with filters", async () => {
-    const client = new CareApiClient({ baseUrl: "http://localhost:8000" });
+    const client = new PactApiClient({ baseUrl: "http://localhost:8000" });
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -345,12 +345,11 @@ describe("CareApiClient", () => {
   });
 
   it("calls health endpoint correctly", async () => {
-    const client = new CareApiClient({ baseUrl: "http://localhost:8000" });
+    const client = new PactApiClient({ baseUrl: "http://localhost:8000" });
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: () =>
-        Promise.resolve({ status: "healthy", service: "care-platform" }),
+      json: () => Promise.resolve({ status: "healthy", service: "pact" }),
     });
 
     const result = await client.health();
@@ -361,7 +360,7 @@ describe("CareApiClient", () => {
   });
 
   it("calls getTeamAudit with team ID", async () => {
-    const client = new CareApiClient({ baseUrl: "http://localhost:8000" });
+    const client = new PactApiClient({ baseUrl: "http://localhost:8000" });
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -383,10 +382,10 @@ describe("CareApiClient", () => {
 });
 
 // =========================================================================
-// CareWebSocketClient
+// PactWebSocketClient
 // =========================================================================
 
-describe("CareWebSocketClient", () => {
+describe("PactWebSocketClient", () => {
   let mockWebSocketInstances: MockWebSocket[];
 
   class MockWebSocket {
@@ -441,14 +440,14 @@ describe("CareWebSocketClient", () => {
   });
 
   it("starts in disconnected state", () => {
-    const client = new CareWebSocketClient({
+    const client = new PactWebSocketClient({
       url: "ws://localhost:8000/ws",
     });
     expect(client.getState()).toBe("disconnected");
   });
 
   it("transitions to connected on open", () => {
-    const client = new CareWebSocketClient({
+    const client = new PactWebSocketClient({
       url: "ws://localhost:8000/ws",
     });
 
@@ -466,7 +465,7 @@ describe("CareWebSocketClient", () => {
   });
 
   it("appends token as query parameter", () => {
-    const client = new CareWebSocketClient({
+    const client = new PactWebSocketClient({
       url: "ws://localhost:8000/ws",
       token: "secret-token",
     });
@@ -480,7 +479,7 @@ describe("CareWebSocketClient", () => {
   });
 
   it("dispatches events to listeners", () => {
-    const client = new CareWebSocketClient({
+    const client = new PactWebSocketClient({
       url: "ws://localhost:8000/ws",
     });
 
@@ -508,7 +507,7 @@ describe("CareWebSocketClient", () => {
   });
 
   it("removes listeners via unsubscribe function", () => {
-    const client = new CareWebSocketClient({
+    const client = new PactWebSocketClient({
       url: "ws://localhost:8000/ws",
     });
 
@@ -549,7 +548,7 @@ describe("CareWebSocketClient", () => {
   });
 
   it("ignores malformed messages", () => {
-    const client = new CareWebSocketClient({
+    const client = new PactWebSocketClient({
       url: "ws://localhost:8000/ws",
     });
 
@@ -566,7 +565,7 @@ describe("CareWebSocketClient", () => {
   });
 
   it("reconnects with exponential backoff on close", () => {
-    const client = new CareWebSocketClient({
+    const client = new PactWebSocketClient({
       url: "ws://localhost:8000/ws",
       initialReconnectDelayMs: 100,
       maxReconnectAttempts: 3,
@@ -596,7 +595,7 @@ describe("CareWebSocketClient", () => {
   });
 
   it("stops reconnecting after max attempts", () => {
-    const client = new CareWebSocketClient({
+    const client = new PactWebSocketClient({
       url: "ws://localhost:8000/ws",
       initialReconnectDelayMs: 100,
       maxReconnectAttempts: 2,
@@ -639,7 +638,7 @@ describe("CareWebSocketClient", () => {
   });
 
   it("does not reconnect on intentional disconnect", () => {
-    const client = new CareWebSocketClient({
+    const client = new PactWebSocketClient({
       url: "ws://localhost:8000/ws",
       initialReconnectDelayMs: 100,
     });
@@ -659,7 +658,7 @@ describe("CareWebSocketClient", () => {
   });
 
   it("resets reconnect attempts on successful connection", () => {
-    const client = new CareWebSocketClient({
+    const client = new PactWebSocketClient({
       url: "ws://localhost:8000/ws",
       initialReconnectDelayMs: 100,
       maxReconnectAttempts: 5,
@@ -684,7 +683,7 @@ describe("CareWebSocketClient", () => {
   });
 
   it("does not create duplicate connections when already connected", () => {
-    const client = new CareWebSocketClient({
+    const client = new PactWebSocketClient({
       url: "ws://localhost:8000/ws",
     });
 

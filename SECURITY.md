@@ -1,6 +1,6 @@
 # Security Policy
 
-The CARE Platform handles cryptographic trust chains, constraint enforcement, and
+The PACT handles cryptographic trust chains, constraint enforcement, and
 tamper-evident audit records. Vulnerabilities in these areas have direct trust
 implications. We take security seriously and appreciate responsible disclosure.
 
@@ -71,32 +71,32 @@ require heightened review.
 
 ### Critical Severity
 
-- **Trust chain cryptography** (`care_platform/trust/`) -- Genesis records,
+- **Trust chain cryptography** (`pact/trust/`) -- Genesis records,
   delegation chains, capability attestations, and their cryptographic integrity.
   A bypass here breaks the entire trust model.
 
-- **Constraint enforcement** (`care_platform/constraint/`) -- Constraint envelope
+- **Constraint enforcement** (`pact/constraint/`) -- Constraint envelope
   evaluation and the verification gradient engine. A bypass could allow an agent to
   exceed its authorized permissions.
 
-- **Audit chain integrity** (`care_platform/audit/`) -- Tamper-evident audit anchors
+- **Audit chain integrity** (`pact/audit/`) -- Tamper-evident audit anchors
   and chain verification. Compromising the audit chain destroys accountability.
 
 ### High Severity
 
-- **Approval queue** (`care_platform/execution/approval.py`) -- Human-in-the-loop
+- **Approval queue** (`pact/execution/approval.py`) -- Human-in-the-loop
   approval for HELD actions. A bypass could allow self-approval of restricted
   actions.
 
-- **Platform configuration** (`care_platform/config/`) -- Configuration parsing and
+- **Platform configuration** (`pact/config/`) -- Configuration parsing and
   validation. Malformed configuration could weaken constraints.
 
 ### Medium Severity
 
-- **Session management** (`care_platform/execution/session.py`) -- Session state
+- **Session management** (`pact/execution/session.py`) -- Session state
   and checkpoints. Information disclosure through session data.
 
-- **Audit export** (`care_platform/audit/anchor.py`, `export` method) -- Audit
+- **Audit export** (`pact/audit/anchor.py`, `export` method) -- Audit
   chain export for external review. Sensitive operational data could be disclosed
   if export filtering is bypassed.
 
@@ -139,7 +139,7 @@ Before submitting a PR that touches trust, crypto, or enforcement modules:
 
 ### In Scope
 
-- All code in the `care_platform/` package
+- All code in the `pact/` package
 - Configuration parsing and validation
 - Trust chain and cryptographic operations
 - Constraint enforcement logic
@@ -158,6 +158,6 @@ Before submitting a PR that touches trust, crypto, or enforcement modules:
 
 ## License
 
-The CARE Platform is Apache 2.0 licensed, owned by the Terrene Foundation.
+The PACT is Apache 2.0 licensed, owned by the Terrene Foundation.
 This security policy applies to the open-source codebase at
 https://github.com/terrene-foundation/care.

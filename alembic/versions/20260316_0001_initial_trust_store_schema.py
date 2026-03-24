@@ -3,8 +3,8 @@
 """Initial trust store schema — creates all tables matching migrations.py v1.
 
 Creates the 8 trust store tables with indexes, matching the schema defined
-in care_platform.persistence.migrations (Migration v1) and
-care_platform.persistence.postgresql_store.PostgreSQLTrustStore._create_tables.
+in pact.persistence.migrations (Migration v1) and
+pact.persistence.postgresql_store.PostgreSQLTrustStore._create_tables.
 
 Tables created:
 - envelopes: Constraint envelopes (EATP trust boundaries)

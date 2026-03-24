@@ -13,9 +13,9 @@ from __future__ import annotations
 
 import pytest
 
-from care_platform.build.config.env import EnvConfig
-from care_platform.use.api.server import create_app
-from care_platform.use.api.shutdown import ShutdownManager
+from pact_platform.build.config.env import EnvConfig
+from pact_platform.use.api.server import create_app
+from pact_platform.use.api.shutdown import ShutdownManager
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -25,7 +25,7 @@ from care_platform.use.api.shutdown import ShutdownManager
 @pytest.fixture()
 def dev_config():
     """Dev mode config."""
-    return EnvConfig(care_api_token="", care_dev_mode=True)
+    return EnvConfig(pact_api_token="", pact_dev_mode=True)
 
 
 # ---------------------------------------------------------------------------

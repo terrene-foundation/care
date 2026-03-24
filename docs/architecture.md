@@ -1,313 +1,272 @@
-# CARE Platform Architecture
+# Architecture
 
-This document describes the architecture of the CARE Platform -- the module structure, data flow, trust enforcement pipeline, and extension points.
+This document describes the internal architecture of the PACT governance framework.
 
----
+## Overview
 
-## Architecture Layers
-
-The CARE Platform is organized into five architecture layers, each building on the one below:
-
-| Layer                | Modules                    | Responsibility                                                           |
-| -------------------- | -------------------------- | ------------------------------------------------------------------------ |
-| **1. Configuration** | `config/`                  | Organization definition: genesis, teams, agents, envelopes, workspaces   |
-| **2. Trust**         | `trust/`                   | EATP trust lifecycle: genesis, delegation, posture, attestation, scoring |
-| **3. Constraint**    | `constraint/`              | Constraint envelope evaluation and verification gradient classification  |
-| **4. Execution**     | `execution/`, `workspace/` | Agent runtime, sessions, approval queues, cross-functional bridges       |
-| **5. Audit**         | `audit/`, `persistence/`   | Tamper-evident audit chains, trust object storage                        |
-
----
-
-## Trust Plane vs Execution Plane
-
-Following the CARE Dual Plane Model, every component belongs to one of two planes:
-
-### Trust Plane
-
-The Trust Plane establishes, maintains, and verifies the trust infrastructure. No agent action occurs here -- this plane answers the question "is this agent allowed to do this?"
-
-**Modules**: `trust/`, `constraint/`, `audit/`
-
-Key responsibilities:
-
-- **Genesis establishment** (`trust/genesis.py`, `trust/eatp_bridge.py`) -- create the cryptographic root of trust with Ed25519 key pairs
-- **Delegation management** (`trust/delegation.py`) -- delegate capabilities with monotonic tightening validation
-- **Trust posture lifecycle** (`trust/posture.py`) -- manage evolutionary trust levels (Supervised through Delegated)
-- **Capability attestation** (`trust/attestation.py`) -- signed declarations of agent capabilities
-- **Trust scoring** (`trust/scoring.py`) -- five-factor weighted trust assessment
-- **Constraint evaluation** (`constraint/envelope.py`) -- evaluate actions against five constraint dimensions
-- **Verification gradient** (`constraint/gradient.py`) -- classify actions as AUTO_APPROVED, FLAGGED, HELD, or BLOCKED
-- **Audit chains** (`audit/anchor.py`) -- tamper-evident records with SHA-256 hash chaining
-
-### Execution Plane
-
-The Execution Plane manages the runtime environment where agents operate. Every action in the Execution Plane passes through the Trust Plane for verification.
-
-**Modules**: `execution/`, `workspace/`
-
-Key responsibilities:
-
-- **Agent and team definitions** (`execution/agent.py`) -- runtime representations combining config with trust state
-- **Agent registry** (`execution/registry.py`) -- track agent status and lifecycle
-- **Session management** (`execution/session.py`) -- manage execution sessions with checkpoints
-- **Approval queues** (`execution/approval.py`) -- queue HELD actions for human approval
-- **Workspace management** (`workspace/models.py`) -- workspace-as-knowledge-base for agent teams
-- **Cross-functional bridges** (`workspace/bridge.py`) -- controlled inter-team data and communication flow
-
----
-
-## Module Structure
+The GovernanceEngine is the single entry point for all governance decisions. It composes six subsystems into a thread-safe facade:
 
 ```
-care_platform/
-  __init__.py             Package root with public API exports
-
-  config/
-    schema.py             Pydantic models: PlatformConfig, AgentConfig, TeamConfig,
-                          ConstraintEnvelopeConfig (5 dimensions), VerificationGradientConfig,
-                          GenesisConfig, WorkspaceConfig, TrustPostureLevel, VerificationLevel
-    loader.py             YAML configuration loader
-    defaults.py           Default configuration values
-
-  trust/
-    eatp_bridge.py        EATPBridge -- connects CARE models to EATP SDK operations
-                          (establish_genesis, delegate, verify_action, record_audit)
-    genesis.py            GenesisManager -- genesis lifecycle (create, validate, renew)
-    delegation.py         DelegationManager -- delegation chains with monotonic tightening
-                          (create_delegation, validate_tightening, walk_chain)
-    posture.py            TrustPosture -- evolutionary trust lifecycle
-                          (can_upgrade, upgrade, downgrade, is_action_always_held)
-    attestation.py        CapabilityAttestation -- EATP Element 4 signed declarations
-    scoring.py            TrustScore -- five-factor weighted scoring
-                          (chain completeness, depth, coverage, posture, recency)
-    credentials.py        Short-lived credential management
-    messaging.py          Trust-aware inter-agent messaging
-    reasoning.py          Reasoning trace capture for audit
-    revocation.py         Trust revocation (surgical and cascade)
-    shadow_enforcer.py    ShadowEnforcer -- validates agent decisions without blocking
-
-  constraint/
-    envelope.py           ConstraintEnvelope -- runtime evaluation against 5 dimensions
-                          (evaluate_action, is_tighter_than, content_hash)
-    gradient.py           GradientEngine -- classifies actions into verification levels
-                          (classify with QUICK/STANDARD/FULL thoroughness)
-    middleware.py         Constraint enforcement middleware
-    signing.py            Constraint envelope signing
-
-  execution/
-    agent.py              AgentDefinition, TeamDefinition -- runtime agent/team models
-    registry.py           AgentRegistry -- agent status tracking
-    session.py            PlatformSession, SessionManager -- execution session management
-    approval.py           ApprovalQueue -- queue for HELD actions
-    hook_enforcer.py      Pre/post execution hooks
-    llm_backend.py        LLM backend abstraction (multi-provider)
-
-  audit/
-    anchor.py             AuditAnchor, AuditChain -- tamper-evident SHA-256 hash chains
-                          (append, verify_chain_integrity, export)
-    pipeline.py           Audit pipeline processing
-
-  workspace/
-    models.py             Workspace, WorkspaceRegistry -- workspace lifecycle
-    bridge.py             Bridge, BridgeManager -- cross-functional bridges
-                          (standing, scoped, ad-hoc with dual-side approval)
-
-  persistence/
-    store.py              TrustStore protocol, MemoryStore, FilesystemStore
-    audit_query.py        Audit anchor query capabilities
-    cost_tracking.py      LLM cost tracking and budget enforcement
-    posture_history.py    Posture change persistence
-    versioning.py         Configuration versioning
-
-  org/
-    builder.py            Organization builder for platform bootstrapping
-
-  verticals/
-    dm_team.py            Domain-specific team template (Digital Marketing)
-
-  cli/
-    (entry point)         Command-line interface (care-platform command)
+                        GovernanceEngine
+                              |
+              +---------------+---------------+
+              |               |               |
+         Compilation    Envelopes      Clearance
+              |               |               |
+         D/T/R Tree    Three-Layer      5-Level
+         Addressing     Envelope      Classification
+                          Model         + Posture
+              |               |               |
+              +-------+-------+-------+-------+
+                      |               |
+                   Access          Audit
+                 Enforcement       Chain
+                 (5 Steps)        (EATP)
 ```
 
----
+## D/T/R Addressing
 
-## Data Flow: Action Lifecycle
+Every position in a PACT organization has a positional address built from three segment types:
 
-When an agent attempts an action, the following pipeline executes:
+- **D** (Department) -- an organizational unit
+- **T** (Team) -- a functional team within a department
+- **R** (Role) -- a position occupied by a person or agent
+
+The core invariant: **every D or T must be immediately followed by exactly one R** (its head). This guarantees that every organizational unit has a single accountable person.
+
+### Address Examples
 
 ```
-1. Agent requests action
-       |
-       v
-2. CONSTRAINT EVALUATION (constraint/envelope.py)
-   Evaluate action against the agent's five-dimension constraint envelope.
-   Result: ALLOWED | NEAR_BOUNDARY | DENIED
-       |
-       v
-3. VERIFICATION GRADIENT (constraint/gradient.py)
-   Classify the action based on envelope result + pattern rules.
-   Result: AUTO_APPROVED | FLAGGED | HELD | BLOCKED
-       |
-       +-- BLOCKED --> reject, record audit anchor, return
-       |
-       +-- HELD --> queue in ApprovalQueue, await human decision
-       |
-       +-- FLAGGED / AUTO_APPROVED --> continue
-       |
-       v
-4. TRUST VERIFICATION (trust/eatp_bridge.py)
-   Verify the agent's trust chain via EATP SDK:
-   - Chain integrity (genesis -> delegation -> attestation)
-   - Capability check (agent has required capability)
-   - Constraint check (EATP-level constraint validation)
-   Result: VALID | INVALID
-       |
-       +-- INVALID --> reject, record audit anchor, return
-       |
-       v
-5. EXECUTION
-   Agent performs the action within its workspace context.
-       |
-       v
-6. AUDIT RECORDING (audit/anchor.py, trust/eatp_bridge.py)
-   Record a tamper-evident audit anchor:
-   - SHA-256 content hash
-   - Chain to previous anchor (hash linkage)
-   - Agent ID, action, result, verification level, timestamp
+D1-R1                         President (heads the first department)
+D1-R1-D1-R1                   Provost (heads Academic Affairs under President)
+D1-R1-D1-R1-D1-R1             Dean of Engineering (under Provost)
+D1-R1-D1-R1-D1-R1-T1-R1       CS Chair (heads CS Department team)
+D1-R1-D1-R1-D1-R1-T1-R1-R1    CS Faculty Member (reports to CS Chair)
 ```
 
----
+### Compilation
 
-## Verification Gradient Detail
+The `compile_org()` function transforms a declarative OrgDefinition (departments, teams, roles with reports_to chains) into a CompiledOrg -- a flat dictionary of address-indexed OrgNodes. Compilation:
 
-The GradientEngine (`constraint/gradient.py`) classifies actions at three thoroughness levels:
+1. Validates all references (no dangling, no duplicates, no cycles)
+2. Builds the parent-child tree from `reports_to_role_id` chains
+3. Assigns positional addresses via depth-first traversal
+4. Creates OrgNode entries for departments, teams, and roles
+5. Freezes the result with MappingProxyType to prevent post-compilation mutation
 
-| Thoroughness | Time  | What It Checks                                    |
-| ------------ | ----- | ------------------------------------------------- |
-| **QUICK**    | ~1ms  | Pattern matching only (glob rules)                |
-| **STANDARD** | ~5ms  | Pattern matching + constraint envelope evaluation |
-| **FULL**     | ~50ms | Pattern + envelope + full EATP chain verification |
+Safety limits prevent resource exhaustion: max depth of 50, max 500 children per node, max 100,000 total nodes.
 
-Classification priority:
+## Three-Layer Envelope Model
 
-1. If envelope evaluation returns DENIED, action is BLOCKED
-2. If envelope evaluation returns NEAR_BOUNDARY, action is FLAGGED
-3. First matching gradient rule determines the level
-4. If no rule matches, the configured default level applies (default: HELD)
+Operating envelopes define what a role is allowed to do. PACT uses a three-layer model:
 
----
+### Layer 1: Role Envelope (Standing)
 
-## Trust Scoring
+A RoleEnvelope is a persistent constraint boundary set by a supervisor for their direct report. It defines the maximum permissions for that role across five dimensions:
 
-Trust scores (`trust/scoring.py`) are calculated from five weighted factors:
+| Dimension         | What It Controls                         | Example                          |
+| ----------------- | ---------------------------------------- | -------------------------------- |
+| **Financial**     | Spending limits, approval thresholds     | max_spend_usd: 10000             |
+| **Operational**   | Allowed/blocked actions, rate limits     | allowed_actions: [read, write]   |
+| **Temporal**      | Active hours, blackout periods           | active_hours: 09:00-17:00        |
+| **Data Access**   | Read/write paths, blocked data types     | read_paths: [/data/public]       |
+| **Communication** | Internal-only flag, channel restrictions | allowed_channels: [email, slack] |
 
-| Factor              | Weight | Scoring                                               |
-| ------------------- | ------ | ----------------------------------------------------- |
-| Chain completeness  | 30%    | Count of 5 EATP elements present (0.0 to 1.0)         |
-| Delegation depth    | 15%    | Shorter chains score higher (inverse ratio)           |
-| Constraint coverage | 25%    | Dimensions configured out of 5                        |
-| Posture level       | 20%    | Pseudo-Agent=0.0 through Delegated=1.0                |
-| Chain recency       | 10%    | Fresher attestations score higher (age vs 90-day max) |
+### Layer 2: Task Envelope (Ephemeral)
 
-Scores map to letter grades: A+ (>=0.95), A (>=0.85), B+ (>=0.75), B (>=0.65), C (>=0.50), D (>=0.35), F (<0.35).
+A TaskEnvelope is a temporary narrowing of the RoleEnvelope for a specific task. It expires automatically and cannot widen the standing boundaries. Use it when an agent needs temporarily reduced permissions for a sensitive operation.
 
----
+### Layer 3: Effective Envelope (Computed)
 
-## Storage Layer
+The effective envelope is the intersection of all envelopes from the root to the target role, plus any active task envelope. The computation walks the accountability chain and intersects each dimension using deny-overrides:
 
-The persistence layer (`persistence/store.py`) defines a `TrustStore` protocol with pluggable implementations:
+- **Financial**: min() of all numeric limits
+- **Operational**: set intersection of allowed actions; set union of blocked actions
+- **Temporal**: overlap of operating windows; union of blackout periods
+- **Data Access**: set intersection of allowed paths; set union of blocked data types
+- **Communication**: set intersection of allowed channels; tighter restrictions win
 
-| Implementation      | Use Case                    | Persistence               |
-| ------------------- | --------------------------- | ------------------------- |
-| **MemoryStore**     | Development, testing        | None (process lifetime)   |
-| **FilesystemStore** | Single-instance deployments | JSON files on disk        |
-| **DataFlowStore**   | Production (planned)        | Kailash DataFlow database |
+### Monotonic Tightening
 
-The TrustStore interface covers four object types:
+Child envelopes can only be equal to or more restrictive than parent envelopes. The Dean cannot give the CS Chair a higher spending limit than the Dean's own limit. This is enforced by `RoleEnvelope.validate_tightening()` which checks each dimension independently.
 
-- **Envelopes** -- constraint envelope snapshots
-- **Audit anchors** -- tamper-evident action records
-- **Posture changes** -- trust posture transition history
-- **Revocations** -- trust revocation records
+## Knowledge Clearance
 
----
+Clearance is independent of authority. A junior specialist can hold higher clearance than a senior executive when the knowledge domain requires it.
+
+### Five Levels
+
+| Level        | Numeric Order | Description                   |
+| ------------ | ------------- | ----------------------------- |
+| PUBLIC       | 0             | Open information              |
+| RESTRICTED   | 1             | Internal use only             |
+| CONFIDENTIAL | 2             | Need-to-know basis            |
+| SECRET       | 3             | Compartmented access required |
+| TOP_SECRET   | 4             | Maximum protection            |
+
+### Posture Ceiling
+
+The effective clearance for any access decision is:
+
+```
+effective = min(role.max_clearance, POSTURE_CEILING[current_posture])
+```
+
+| Posture            | Ceiling      |
+| ------------------ | ------------ |
+| PSEUDO_AGENT       | PUBLIC       |
+| SUPERVISED         | RESTRICTED   |
+| SHARED_PLANNING    | CONFIDENTIAL |
+| CONTINUOUS_INSIGHT | SECRET       |
+| DELEGATED          | TOP_SECRET   |
+
+Even a role with TOP_SECRET clearance cannot access SECRET data when operating at SUPERVISED posture.
+
+### Compartments
+
+For SECRET and TOP_SECRET items, the role must hold **all** compartments the item belongs to. Compartments are named (e.g., "human-subjects", "personnel", "student-records") and are independent of the classification level.
+
+## 5-Step Access Enforcement Algorithm
+
+The `can_access()` function implements a 5-step algorithm. Default is DENY (fail-closed).
+
+**Step 1: Clearance Resolution**
+Find the role's clearance. If missing or vetting status is not ACTIVE, deny immediately.
+
+**Step 2: Classification Check**
+Compute effective clearance (min of role clearance and posture ceiling). If effective clearance < item classification, deny.
+
+**Step 3: Compartment Check**
+For SECRET and TOP_SECRET items: if the item has compartments, the role must hold all of them. Missing any compartment means deny.
+
+**Step 4: Containment Check** (5 sub-paths)
+
+- **4a: Same unit** -- role is in the same D or T as the item owner
+- **4b: Downward visibility** -- role address is a prefix of the item owner (supervisors see down)
+- **4c: T-inherits-D** -- role in a team inherits access to its parent department's data
+- **4d: KSP** -- a Knowledge Share Policy grants cross-unit access
+- **4e: Bridge** -- a Cross-Functional Bridge grants role-level cross-boundary access
+
+**Step 5: Default Deny**
+If no access path was found in Step 4, deny.
+
+## Verification Gradient
+
+When an action is verified against an envelope, the result falls into one of four zones:
+
+| Level             | Meaning                                         | Agent Behavior              |
+| ----------------- | ----------------------------------------------- | --------------------------- |
+| **AUTO_APPROVED** | Action is within all constraint dimensions      | Proceed silently            |
+| **FLAGGED**       | Action is near a boundary (within 20% of limit) | Proceed with logged warning |
+| **HELD**          | Action exceeds a soft limit                     | Pause for human approval    |
+| **BLOCKED**       | Action violates a hard constraint               | Denied, cannot proceed      |
+
+The GovernanceEngine's `verify_action()` method combines envelope enforcement and knowledge access checks. The most restrictive result wins.
+
+## GovernanceEngine API
+
+The engine exposes three categories of methods:
+
+### Decision API
+
+- `verify_action(role_address, action, context)` -- Primary decision endpoint. Returns a GovernanceVerdict.
+- `check_access(role_address, knowledge_item, posture)` -- Knowledge access check. Returns an AccessDecision.
+- `compute_envelope(role_address, task_id)` -- Compute effective envelope for a role.
+
+### Query API
+
+- `get_org()` -- Return the compiled organization.
+- `get_node(address)` -- Look up a single node.
+- `get_context(role_address, posture)` -- Create a frozen GovernanceContext for an agent.
+
+### Mutation API
+
+- `grant_clearance(role_address, clearance)` -- Grant clearance to a role.
+- `revoke_clearance(role_address)` -- Revoke clearance from a role.
+- `create_bridge(bridge)` -- Create a Cross-Functional Bridge.
+- `create_ksp(ksp)` -- Create a Knowledge Share Policy.
+- `set_role_envelope(envelope)` -- Set a standing role envelope.
+- `set_task_envelope(envelope)` -- Set an ephemeral task envelope.
+
+All methods are thread-safe (internal lock). All error paths are fail-closed (return BLOCKED or DENY). All mutations emit EATP audit anchors when an audit chain is configured.
+
+## GovernanceContext (Anti-Self-Modification)
+
+Agents receive a `GovernanceContext` -- a frozen (immutable) dataclass containing a snapshot of their governance state. They do NOT receive the GovernanceEngine. This is the anti-self-modification defense: agents can see their constraints but cannot change them.
+
+```python
+@dataclass(frozen=True)
+class GovernanceContext:
+    role_address: str
+    posture: TrustPostureLevel
+    effective_envelope: ConstraintEnvelopeConfig | None
+    clearance: RoleClearance | None
+    effective_clearance_level: ConfidentialityLevel | None
+    allowed_actions: frozenset[str]
+    compartments: frozenset[str]
+    org_id: str
+    created_at: datetime
+```
+
+Attempting `ctx.posture = TrustPostureLevel.DELEGATED` raises `FrozenInstanceError`.
 
 ## Cross-Functional Bridges
 
-Bridges (`workspace/bridge.py`) enable controlled communication between agent teams:
+Bridges connect two roles across organizational boundaries. Three types:
 
-| Bridge Type  | Duration     | Use Case                                              |
-| ------------ | ------------ | ----------------------------------------------------- |
-| **Standing** | Permanent    | Ongoing relationships (e.g., DM <-> Standards)        |
-| **Scoped**   | Time-bounded | Temporary access (e.g., 7-day read access for review) |
-| **Ad-Hoc**   | One-time     | Single request/response (e.g., governance review)     |
+| Type         | Duration                            | Use Case                                                     |
+| ------------ | ----------------------------------- | ------------------------------------------------------------ |
+| **Standing** | Permanent                           | Ongoing coordination (e.g., Provost-VP Admin budget reviews) |
+| **Scoped**   | Time-limited with operational scope | Project-specific collaboration (e.g., joint research)        |
+| **Ad-Hoc**   | One-time                            | Emergency access for a specific incident                     |
 
-All bridges require:
+Bridges are role-level (not unit-level). If the VP Admin has a bridge, the Finance Director does NOT inherit it. Use KSPs for unit-level access sharing.
 
-- Dual-side approval (both source and target teams)
-- Path-level access control (glob patterns for read/write)
-- Complete audit log of every data access
+When `bilateral=True`, both roles can access each other's data. When `bilateral=False`, only role_a can access role_b's data (unilateral).
 
----
+## Knowledge Share Policies (KSPs)
 
-## Integration with EATP SDK
-
-The CARE Platform integrates with the EATP SDK (`eatp` package) through the EATPBridge (`trust/eatp_bridge.py`):
+KSPs are directional unit-level access grants. Unlike bridges (role-to-role), KSPs work at the department/team level:
 
 ```
-CARE Platform                    EATP SDK
---------------                   --------
-GenesisConfig        --->        TrustOperations.establish()
-AgentConfig          --->        TrustOperations.delegate()
-ConstraintEnvelope   --->        EATP constraint strings
-verify_action()      --->        TrustOperations.verify()
-record_audit()       --->        TrustOperations.audit()
+source_unit_address -> target_unit_address
 ```
 
-The bridge manages:
+The source shares knowledge with the target. The `max_classification` caps what level of data may be shared. KSPs are one-way: if Academic Affairs shares with HR, HR cannot read Academic data through the same KSP.
 
-- **Authority registry** -- maps organizational authorities to EATP identities
-- **Key manager** -- Ed25519 key pair generation and registration
-- **Trust store** -- persists trust lineage chains (InMemoryTrustStore by default)
-- **Constraint mapping** -- translates five-dimension CARE envelopes to EATP constraint strings
+## Store Backends
 
-EATP constraint string format:
+All governance state (clearances, envelopes, bridges, KSPs, compiled orgs) is persisted through protocol-based stores:
 
-- Financial: `budget:500.0`, `approval_threshold:100.0`
-- Operational: `allow:read`, `block:publish`, `rate_limit:50`
-- Temporal: `time:09:00-18:00`
-- Data Access: `read:briefs/*`, `write:drafts/*`
-- Communication: `comm:internal_only`, `channel:slack`
+| Store             | Memory                  | SQLite                  |
+| ----------------- | ----------------------- | ----------------------- |
+| EnvelopeStore     | MemoryEnvelopeStore     | SqliteEnvelopeStore     |
+| ClearanceStore    | MemoryClearanceStore    | SqliteClearanceStore    |
+| AccessPolicyStore | MemoryAccessPolicyStore | SqliteAccessPolicyStore |
+| OrgStore          | MemoryOrgStore          | SqliteOrgStore          |
 
----
+Memory stores are the default for testing and development. SQLite stores provide persistence:
 
-## Extension Points
+```python
+engine = GovernanceEngine(
+    org_definition,
+    store_backend="sqlite",
+    store_url="/path/to/governance.db",
+)
+```
 
-### Custom Constraint Dimensions
+## EATP Audit Integration
 
-The five standard dimensions (Financial, Operational, Temporal, Data Access, Communication) can be extended by:
+When configured with an audit chain, every governance decision and mutation is recorded as an EATP audit anchor:
 
-1. Adding new fields to the dimension config models in `config/schema.py`
-2. Adding evaluation logic in `constraint/envelope.py` dimension evaluators
-3. Adding constraint mapping in `trust/eatp_bridge.py`
+```python
+from pact.trust.audit.pipeline import AuditChain
 
-### Custom Verification Rules
+audit = AuditChain()
+engine = GovernanceEngine(org_definition, audit_chain=audit)
 
-Add gradient rules in `VerificationGradientConfig`:
+# Now every verify_action, check_access, grant_clearance, etc.
+# emits an audit record to the chain
+```
 
-- Rules use glob patterns for action matching
-- First matching rule wins (ordered evaluation)
-- Rules can be defined at team level or agent level (agent overrides team)
-
-### Custom Storage Backends
-
-Implement the `TrustStore` protocol from `persistence/store.py`:
-
-- `store_envelope()` / `get_envelope()` / `list_envelopes()`
-- `store_audit_anchor()` / `get_audit_anchor()` / `query_anchors()`
-- `store_posture_change()` / `get_posture_history()`
-- `store_revocation()` / `get_revocations()`
-
-### Custom LLM Backends
-
-The execution layer (`execution/llm_backend.py`) abstracts LLM providers. Add new backends by implementing the backend interface and registering in `execution/registry.py`.
+Audit actions include: `verify_action`, `clearance_granted`, `clearance_revoked`, `bridge_established`, `ksp_created`, `envelope_created`.

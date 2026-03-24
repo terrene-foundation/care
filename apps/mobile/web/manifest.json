@@ -1,6 +1,6 @@
 {
-    "name": "care_platform_mobile",
-    "short_name": "care_platform_mobile",
+    "name": "pact_mobile",
+    "short_name": "pact_mobile",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

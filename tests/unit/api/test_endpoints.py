@@ -1,21 +1,21 @@
 # Copyright 2026 Terrene Foundation
 # Licensed under the Apache License, Version 2.0
-"""Tests for CARE Platform API layer (Task 408).
+"""Tests for PACT API layer (Task 408).
 
-Tests endpoint definitions and PlatformAPI handler logic using plain
+Tests endpoint definitions and PactAPI handler logic using plain
 dataclasses/Pydantic — not FastAPI or Nexus (which are not installed).
 """
 
 import pytest
 
-from care_platform.trust.store.cost_tracking import CostTracker
-from care_platform.use.api.endpoints import (
+from pact_platform.trust.store.cost_tracking import CostTracker
+from pact_platform.use.api.endpoints import (
     ApiResponse,
     EndpointDefinition,
-    PlatformAPI,
+    PactAPI,
 )
-from care_platform.use.execution.approval import ApprovalQueue, UrgencyLevel
-from care_platform.use.execution.registry import AgentRegistry
+from pact_platform.use.execution.approval import ApprovalQueue, UrgencyLevel
+from pact_platform.use.execution.registry import AgentRegistry
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -75,8 +75,8 @@ def cost_tracker():
 
 @pytest.fixture()
 def api(registry, approval_queue, cost_tracker):
-    """PlatformAPI wired with real components."""
-    return PlatformAPI(
+    """PactAPI wired with real components."""
+    return PactAPI(
         registry=registry,
         approval_queue=approval_queue,
         cost_tracker=cost_tracker,
@@ -116,7 +116,7 @@ class TestEndpointDefinitions:
         assert resp.error == "Not found"
 
     def test_platform_api_lists_endpoints(self, api):
-        """PlatformAPI.endpoints returns all defined endpoint schemas."""
+        """PactAPI.endpoints returns all defined endpoint schemas."""
         endpoints = api.endpoints
         assert isinstance(endpoints, list)
         assert len(endpoints) >= 7  # at least the 7 endpoints from todo
@@ -149,7 +149,7 @@ class TestListTeams:
     def test_list_teams_empty_registry(self, approval_queue, cost_tracker):
         """list_teams() returns empty list when no agents registered."""
         empty_reg = AgentRegistry()
-        api = PlatformAPI(
+        api = PactAPI(
             registry=empty_reg,
             approval_queue=approval_queue,
             cost_tracker=cost_tracker,
@@ -279,7 +279,7 @@ class TestHeldActions:
     def test_held_actions_empty_queue(self, registry, cost_tracker):
         """held_actions() returns empty when queue is empty."""
         empty_q = ApprovalQueue()
-        api = PlatformAPI(
+        api = PactAPI(
             registry=registry,
             approval_queue=empty_q,
             cost_tracker=cost_tracker,
@@ -312,33 +312,33 @@ class TestCostReport:
 
 
 # ---------------------------------------------------------------------------
-# Test: PlatformAPI requires all components
+# Test: PactAPI requires all components
 # ---------------------------------------------------------------------------
 
 
-class TestPlatformAPIConstruction:
+class TestPactAPIConstruction:
     def test_requires_registry(self, approval_queue, cost_tracker):
-        """PlatformAPI raises if registry is None."""
+        """PactAPI raises if registry is None."""
         with pytest.raises((TypeError, ValueError)):
-            PlatformAPI(
+            PactAPI(
                 registry=None,
                 approval_queue=approval_queue,
                 cost_tracker=cost_tracker,
             )
 
     def test_requires_approval_queue(self, registry, cost_tracker):
-        """PlatformAPI raises if approval_queue is None."""
+        """PactAPI raises if approval_queue is None."""
         with pytest.raises((TypeError, ValueError)):
-            PlatformAPI(
+            PactAPI(
                 registry=registry,
                 approval_queue=None,
                 cost_tracker=cost_tracker,
             )
 
     def test_requires_cost_tracker(self, registry, approval_queue):
-        """PlatformAPI raises if cost_tracker is None."""
+        """PactAPI raises if cost_tracker is None."""
         with pytest.raises((TypeError, ValueError)):
-            PlatformAPI(
+            PactAPI(
                 registry=registry,
                 approval_queue=approval_queue,
                 cost_tracker=None,

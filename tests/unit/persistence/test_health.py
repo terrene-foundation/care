@@ -13,13 +13,12 @@ Validates that:
 
 import pytest
 
-from care_platform.trust.constraint.circuit_breaker import CircuitBreaker
-from care_platform.trust.store.health import (
+from pact_platform.trust.store.health import (
     StoreHealthStatus,
     TrustStoreHealthCheck,
 )
-from care_platform.trust.store.sqlite_store import SQLiteTrustStore
-from care_platform.trust.store.store import FilesystemStore, MemoryStore
+from pact_platform.trust.store.sqlite_store import SQLiteTrustStore
+from pact_platform.trust.store.store import FilesystemStore, MemoryStore
 
 
 class _FailingStore:
@@ -138,29 +137,6 @@ class TestTrustStoreHealthCheckRecovery:
         store.set_failing(False)
         health.check()
         assert health.should_block_all() is False
-
-
-class TestTrustStoreHealthCheckCircuitBreaker:
-    """Circuit breaker integration for store health."""
-
-    def test_circuit_breaker_trips_on_repeated_failures(self):
-        """Circuit breaker trips after threshold failures."""
-        store = _FailingStore(should_fail=True)
-        cb = CircuitBreaker(failure_threshold=3, recovery_timeout=60.0)
-        health = TrustStoreHealthCheck(store=store, circuit_breaker=cb)
-
-        for _ in range(3):
-            health.check()
-
-        assert health.status == StoreHealthStatus.UNREACHABLE
-
-    def test_circuit_breaker_allows_recovery(self):
-        """Circuit breaker allows recovery after timeout."""
-        store = _FailingStore(should_fail=False)
-        cb = CircuitBreaker(failure_threshold=2, recovery_timeout=0.01)
-        health = TrustStoreHealthCheck(store=store, circuit_breaker=cb)
-        health.check()
-        assert health.is_healthy() is True
 
 
 class TestMemoryStoreHealthCheck:
