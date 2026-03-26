@@ -368,7 +368,7 @@ class ExecutionRuntime:
         with self._lock:
             self._agent_role_addresses[agent_id] = role_address
         logger.info(
-            "TODO-7022: Mapped agent '%s' to role address '%s'",
+            "Mapped agent '%s' to role address '%s'",
             agent_id,
             role_address,
         )
@@ -609,11 +609,10 @@ class ExecutionRuntime:
         if rate_limit_result is not None:
             return rate_limit_result
 
-        # TODO-7022: GovernanceEngine verification path.
+        # GovernanceEngine verification path.
         # When governance_engine is provided AND we have a role address for the
         # agent, use governance_engine.verify_action() instead of the standalone
-        # gradient/envelope path. This replaces constraint enforcer, envelope
-        # evaluation, and gradient classification for governed agents.
+        # gradient/envelope path.
         if self._governance_engine is not None:
             role_address = self._agent_role_addresses.get(agent.agent_id)
             if role_address is not None:
@@ -1160,7 +1159,7 @@ class ExecutionRuntime:
         agent: AgentRecord,
         role_address: str,
     ) -> Task | None:
-        """Run governance engine verification for a task (TODO-7022).
+        """Run governance engine verification for a task.
 
         Uses GovernanceEngine.verify_action() for pre-execution checks.
         Returns the task if it was BLOCKED or HELD (no further processing needed),
@@ -1211,8 +1210,7 @@ class ExecutionRuntime:
             )
 
             logger.info(
-                "TODO-7022: Governance verdict for task '%s' agent '%s' "
-                "role '%s' action '%s': %s -- %s",
+                "Governance verdict for task '%s' agent '%s' " "role '%s' action '%s': %s -- %s",
                 task.task_id,
                 agent.agent_id,
                 role_address,
@@ -1246,7 +1244,7 @@ class ExecutionRuntime:
 
             if verdict.level == "flagged":
                 logger.warning(
-                    "TODO-7022: Governance FLAGGED action '%s' for agent '%s' "
+                    "Governance FLAGGED action '%s' for agent '%s' "
                     "role '%s': %s -- proceeding with execution",
                     task.action,
                     agent.agent_id,
@@ -1266,7 +1264,7 @@ class ExecutionRuntime:
         except Exception as exc:
             # Fail-closed: governance error -> BLOCKED
             logger.error(
-                "TODO-7022: Governance verification failed for task '%s' "
+                "Governance verification failed for task '%s' "
                 "agent '%s' role '%s': %s -- fail-closed to BLOCKED",
                 task.task_id,
                 agent.agent_id,
