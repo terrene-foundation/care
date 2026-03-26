@@ -350,7 +350,7 @@ class AuditChain(BaseModel):
                     errors.append("Anchor 0: genesis anchor should have no previous_hash")
             else:
                 expected_prev = self.anchors[i - 1].content_hash
-                if anchor.previous_hash != expected_prev:
+                if not hmac.compare_digest(anchor.previous_hash or "", expected_prev):
                     errors.append(
                         f"Anchor {i}: previous_hash doesn't match anchor {i - 1} (gap or reorder?)"
                     )
