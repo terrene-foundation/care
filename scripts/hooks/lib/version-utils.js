@@ -41,10 +41,10 @@ function readLocalVersion(cwd) {
 function fetchUpstreamVersion(url) {
   if (!url) return null;
   try {
-    const result = execSync(
-      `curl -sf --max-time 3 "${url}" 2>/dev/null`,
-      { encoding: "utf8", timeout: 5000 }
-    );
+    const result = execSync(`curl -sf --max-time 3 "${url}" 2>/dev/null`, {
+      encoding: "utf8",
+      timeout: 5000,
+    });
     return JSON.parse(result);
   } catch {
     return null;
@@ -117,9 +117,26 @@ function isNewer(a, b) {
 }
 
 /**
+ * Check multiple upstreams (for orchestrators tracking both CO and COC sources).
+ * @param {object} local - local VERSION object with upstream[] array
+ * @returns {object[]} array of compareVersions results with name/tier added
+ */
+function checkMultipleUpstreams(local) {
+  if (!Array.isArray(local.upstream)) return [];
+
+  return local.upstream.map((upstream) => {
+    const remote = fetchUpstreamVersion(upstream.version_url);
+    // Build a pseudo-local object so compareVersions works
+    const pseudoLocal = { ...local, upstream };
+    const result = compareVersions(pseudoLocal, remote);
+    return { ...result, name: upstream.name, tier: upstream.tier };
+  });
+}
+
+/**
  * Main entry point for session-start hook.
  * @param {string} cwd - project root
- * @returns {object} { status, messages[] } for stderr output
+ * @returns {object} { status, messages[], upstreams[] } for stderr output
  */
 function checkVersion(cwd) {
   const local = readLocalVersion(cwd);
@@ -127,13 +144,44 @@ function checkVersion(cwd) {
     return { status: "no-version", messages: [] };
   }
 
-  const messages = [`[VERSION] ${local.description || local.type} v${local.version}`];
+  const messages = [
+    `[VERSION] ${local.description || local.type} v${local.version}`,
+  ];
 
   if (!local.upstream) {
     messages.push("[VERSION] Source repo — no upstream to check");
     return { status: "source", messages };
   }
 
+  // Handle array of upstreams (orchestrators tracking multiple sources)
+  if (Array.isArray(local.upstream)) {
+    const upstreams = checkMultipleUpstreams(local);
+    const updates = upstreams.filter((u) => u.status === "update-available");
+
+    for (const u of upstreams) {
+      if (u.status === "current") {
+        messages.push(`[UPSTREAM] ${u.name} v${u.trackedUpstream} — current`);
+      } else if (u.status === "update-available") {
+        messages.push(
+          `[UPSTREAM] ⚠ ${u.name} v${u.trackedUpstream} → v${u.remoteVersion}`,
+        );
+      } else {
+        messages.push(`[UPSTREAM] ${u.name} — ${u.message}`);
+      }
+    }
+
+    if (updates.length > 0) {
+      messages.push("[UPSTREAM] Run /check-upstream to review changes");
+    }
+
+    return {
+      status: updates.length > 0 ? "update-available" : "current",
+      messages,
+      upstreams,
+    };
+  }
+
+  // Single upstream (standard repos)
   const remote = fetchUpstreamVersion(local.upstream.version_url);
   const result = compareVersions(local, remote);
 
@@ -155,5 +203,6 @@ module.exports = {
   readLocalVersion,
   fetchUpstreamVersion,
   compareVersions,
+  checkMultipleUpstreams,
   checkVersion,
 };

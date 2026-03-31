@@ -3,7 +3,24 @@
   "type": "foundation-orchestrator",
   "description": "Terrene Foundation ecosystem orchestration",
   "released": "2026-03-31",
-  "upstream": null,
+  "upstream": [
+    {
+      "name": "atelier",
+      "repo": "terrene-foundation/atelier",
+      "version": "1.0.0",
+      "version_url": "https://raw.githubusercontent.com/terrene-foundation/atelier/main/.claude/VERSION",
+      "tier": "CO",
+      "components": ["hooks", "rules", "commands", "learning"]
+    },
+    {
+      "name": "loom",
+      "repo": "terrene-foundation/loom",
+      "version": "1.1.0",
+      "version_url": "https://raw.githubusercontent.com/terrene-foundation/loom/main/.claude/VERSION",
+      "tier": "COC",
+      "components": ["agents", "skills", "rules", "variants"]
+    }
+  ],
   "dependencies": {
     "atelier": { "version": "1.0.0", "relationship": "Hooks and CO methodology inherited" },
     "loom": { "version": "1.1.0", "relationship": "COC templates distributed to OSS stacks" }

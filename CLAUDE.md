@@ -20,7 +20,7 @@ Terrene (this repo)                 ← Ecosystem orchestrator
 ├── website/                        ← terrene.foundation public site (Astro + Starlight)
 ├── arbor/                          ← OSS: Knowledge graph framework
 ├── astra/                          ← OSS: AI platform
-├── care/                           ← Planned: Governance framework (not yet a git repo)
+├── care/                           ← CARE governance framework (initialized, not yet instrumented)
 ├── pact/                           ← OSS: Trust protocol implementation (Python, Kailash SDK)
 └── praxis/                         ← OSS: Practice layer
 ```
@@ -71,10 +71,11 @@ When coordinating content flow (especially foundation → website and publicatio
 
 ### Orchestration (this repo)
 
-| Command    | Purpose                                                            |
-| ---------- | ------------------------------------------------------------------ |
-| `/sync`    | Sync content or artifacts between child repos (read-only analysis) |
-| `/analyze` | Cross-repo analysis (content gaps, consistency, dependency health) |
+| Command           | Purpose                                                            |
+| ----------------- | ------------------------------------------------------------------ |
+| `/sync`           | Sync content or artifacts between child repos (read-only analysis) |
+| `/analyze`        | Cross-repo analysis (content gaps, consistency, dependency health) |
+| `/check-upstream` | Detect stale CO/COC artifacts from atelier and loom                |
 
 ### CO-Tier (inherited from atelier)
 
@@ -97,7 +98,7 @@ When coordinating content flow (especially foundation → website and publicatio
 | **website/**      | Public site (terrene.foundation), developer docs         | —              |
 | **arbor/**        | Knowledge graph framework (Python + JS, Kailash SDK)     | website (docs) |
 | **astra/**        | AI platform (Python, Kailash SDK)                        | website (docs) |
-| **care/**         | CARE governance implementation (planned, not yet a repo) | —              |
+| **care/**         | CARE governance implementation (initialized)             | —              |
 | **pact/**         | PACT trust protocol implementation (Python, Kailash SDK) | website (docs) |
 | **praxis/**       | Practice layer (Kailash SDK)                             | website (docs) |
 
@@ -208,5 +209,6 @@ terrene/                            ← Ecosystem orchestration
 | website/      | `git@github.com:terrene-foundation/terrene-website.git`  |
 | arbor/        | `https://github.com/terrene-foundation/arbor.git`        |
 | astra/        | `git@github.com:terrene-foundation/astra.git`            |
+| care/         | `git@github.com:terrene-foundation/care.git`             |
 | pact/         | `git@github.com:terrene-foundation/pact.git`             |
 | praxis/       | `git@github.com:terrene-foundation/praxis.git`           |

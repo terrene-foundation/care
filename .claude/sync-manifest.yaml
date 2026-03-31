@@ -13,7 +13,7 @@
 repositories:
   foundation:
     type: co-workspace
-    domain: COG  # CO for Governance
+    domain: COG # CO for Governance
     remote: git@github.com:terrene-foundation/foundation.git
     owns:
       - constitution
@@ -21,17 +21,17 @@ repositories:
       - governance
       - partnerships
       - naming-and-terminology
-      - standards-definitions  # CARE, EATP, CO, PACT, CDI source definitions
+      - standards-definitions # CARE, EATP, CO, PACT, CDI source definitions
     feeds:
       - website
 
   publications:
     type: co-workspace
-    domain: COR  # CO for Research
+    domain: COR # CO for Research
     remote: https://github.com/terrene-foundation/publications.git
     notes: No .claude/ directory yet — CO artifacts not synced
     owns:
-      - white-papers           # CARE, EATP, CO, COC, Constrained-Organization theses
+      - white-papers # CARE, EATP, CO, COC, Constrained-Organization theses
       - arxiv-submissions
       - pdf-publications
     feeds:
@@ -39,7 +39,7 @@ repositories:
 
   website:
     type: coc-project
-    domain: COC  # CO for Codegen (Astro + Starlight)
+    domain: COC # CO for Codegen (Astro + Starlight)
     remote: git@github.com:terrene-foundation/terrene-website.git
     consumes:
       - foundation: vision, mission, governance, constitution, strategy
@@ -61,9 +61,11 @@ repositories:
     coc-template: kailash-coc-claude-py
 
   care:
-    type: planned  # Not yet a git repo
+    type: coc-project
     domain: COC
-    notes: CARE governance framework implementation (planned)
+    remote: git@github.com:terrene-foundation/care.git
+    notes: CARE governance framework implementation (initialized, not yet instrumented)
+    coc-template: kailash-coc-claude-py
 
   pact:
     type: coc-project
@@ -88,30 +90,30 @@ tiers:
     - constitution
     - governance-structure
     - naming-and-terminology
-    - licensing-policy          # CC BY 4.0 (specs), Apache 2.0 (code)
+    - licensing-policy # CC BY 4.0 (specs), Apache 2.0 (code)
     - partnership-playbooks
     - competitive-positioning
 
   # Standards tier — specification content
   standards:
-    - care-spec                 # CARE: Collaborative Autonomous Reflective Enterprise
-    - eatp-spec                 # EATP: Enterprise Agent Trust Protocol
-    - co-spec                   # CO: Cognitive Orchestration
-    - pact-spec                 # PACT: Principled Architecture for Constrained Trust
-    - cdi-spec                  # CDI: Competency Dimensions Index
+    - care-spec # CARE: Collaborative Autonomous Reflective Enterprise
+    - eatp-spec # EATP: Enterprise Agent Trust Protocol
+    - co-spec # CO: Cognitive Orchestration
+    - pact-spec # PACT: Principled Architecture for Constrained Trust
+    - cdi-spec # CDI: Competency Dimensions Index
 
   # Publications tier — academic and public-facing content
   publications:
-    - white-papers              # Core theses (CARE, EATP, CO, COC, Constrained-Org)
-    - governance-layer-thesis   # Two-Era framework, five propositions
+    - white-papers # Core theses (CARE, EATP, CO, COC, Constrained-Org)
+    - governance-layer-thesis # Two-Era framework, five propositions
     - arxiv-submissions
-    - venue-specific-formats    # arXiv, SSRN, AIES, AI & Society
+    - venue-specific-formats # arXiv, SSRN, AIES, AI & Society
 
   # Technology tier — SDK and platform content
   technology:
-    - kailash-sdk-architecture  # Primitives, engine, entrypoints
-    - coc-methodology           # Five-layer architecture, anti-amnesia
-    - co-domain-applications    # COC, COR, COE, COG, COF
+    - kailash-sdk-architecture # Primitives, engine, entrypoints
+    - coc-methodology # Five-layer architecture, anti-amnesia
+    - co-domain-applications # COC, COR, COE, COG, COF
 
 # ─────────────────────────────────────────────────────────────────
 # WEBSITE CONTENT SOURCES
@@ -121,15 +123,15 @@ tiers:
 website-sources:
   standards/:
     primary: foundation/docs/02-standards/
-    secondary: publications/  # PDF links, thesis abstracts
+    secondary: publications/ # PDF links, thesis abstracts
   governance/:
     primary: foundation/docs/06-operations/constitution/
     secondary: foundation/docs/04-community/
   philosophy/:
-    primary: publications/  # CARE thesis, Constrained-Org thesis
+    primary: publications/ # CARE thesis, Constrained-Org thesis
     secondary: foundation/docs/00-anchor/
   developers/:
-    primary: loom/  # Kailash SDK docs
+    primary: loom/ # Kailash SDK docs
     secondary: foundation/docs/03-technology/
   research/:
     primary: publications/
