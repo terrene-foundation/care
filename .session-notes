@@ -1,0 +1,55 @@
+### Read These Files First (in order)
+
+1. `CLAUDE.md` — product spec, absolute directives, architecture, tech stack
+2. `src/care/conversation/engine.py` — conversation orchestrator (14-state machine, LLM-based screening/confirmation)
+3. `src/care/conversation/session.py` — session state enum, extracted data model, progress tracking
+4. `src/care/conversation/prompts.py` — system prompts, welcome message, transition prompts
+5. `src/care/diagnosis/engine.py` — maturity scoring (5 dimensions), gap analysis, recommendations
+6. `src/care/generator/pact_config.py` — PACT YAML generator targeting OrgGeneratorConfig
+7. `src/care/api/server.py` — FastAPI with SSE streaming, session CRUD, config download
+8. `apps/web/src/app/page.tsx` — main frontend (chat + side panel + radar + voice dialog)
+9. `journal/0001-DECISION-care-product-identity.md` — why care/ exists as distinct product
+
+### Accomplished
+
+- Bootstrapped care/ with full COC artifacts (kailash-coc-claude-py v1.2.0: 538 .claude/ + 57 scripts/)
+- Built complete Python backend: conversation engine, LLM abstraction (Anthropic/OpenAI/Ollama), diagnosis engine, PACT config generator, FastAPI API with SSE
+- Built complete Next.js 15 frontend: streaming chat UI, progress bar, maturity radar (SVG), voice input with privacy disclosure, config download
+- Ran deep analysis + red team to convergence — fixed all CRITICAL and HIGH findings
+- Key fixes: JSON extraction retry (C-3), LLM-based screening/confirmation replacing keyword matching (H-6/H-7), voice privacy dialog bug (M-2), falsy merge (N3), CORS hardening, input validation, error info leak
+- 19/19 tests passing (session state, PACT generator, API endpoints)
+- Initialized git repo, pushed to github.com/terrene-foundation/care (new repo, replaced old redirect)
+- Updated terrene/ sync-manifest to register care/ as active COC project
+
+### Outstanding
+
+- [ ] SSE event routing — `apps/web/src/lib/api.ts:113-137` uses data-shape heuristics instead of parsing `event:` header
+- [ ] Session persistence — in-memory dict only; needs SQLite for hosted deployment
+- [ ] Session TTL + cleanup — no expiry, unbounded memory growth
+- [ ] Rate limiting — no `slowapi` or equivalent; cost exposure on hosted deployment
+- [ ] Structured logging — zero `import logging` across backend
+- [ ] API key validation at startup — empty key sent silently if not configured
+- [ ] `npm install && npm run build` in `apps/web/` — frontend deps not yet installed
+- [ ] PDF report export — diagnosis and recommendations as downloadable PDF
+- [ ] Quick mode vs deep mode — 10-min basic vs 30-min full assessment
+- [ ] Save/resume sessions — requires persistence (#2 above)
+- [ ] `_extract_max_value` in `pact_config.py:260` — extracts last number, not the monetary value
+- [ ] SCREENING state in enum but never entered — dead state, remove or use
+
+### Oversight — Verify Before Starting
+
+- [ ] Tests pass: `cd /Users/esperie/repos/terrene/care && python -m pytest tests/ -v`
+- [ ] Git is clean: `git status` shows no uncommitted changes
+- [ ] Remote is current: `git log --oneline -1` matches `git log origin/main --oneline -1`
+- [ ] COC VERSION is 1.2.0: `cat .claude/VERSION | python3 -c "import sys,json;print(json.load(sys.stdin)['version'])"`
+
+### Oversight — Verify After Completing
+
+- [ ] All tests still pass: `python -m pytest tests/ -v`
+- [ ] No hardcoded model strings: `grep -rn "gpt-4\|claude-3\|gemini" src/ --include="*.py"`
+- [ ] No secrets in staged files: `git diff --cached --name-only | grep -E "\.env$"`
+- [ ] Frontend builds: `cd apps/web && npm run build`
+
+### Blockers
+
+- None. Next priorities are operational hardening (items 2-6 above) before hosted deployment.
