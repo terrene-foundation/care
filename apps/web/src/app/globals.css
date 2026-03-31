@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+:root {
+  --care-bg: #fafafa;
+  --care-surface: #ffffff;
+  --care-border: #e5e7eb;
+  --care-text: #111827;
+  --care-text-secondary: #6b7280;
+  --care-accent: #0f766e;
+  --care-accent-light: #99f6e4;
+  --care-accent-bg: #f0fdfa;
+  --care-warn: #d97706;
+  --care-error: #dc2626;
+  --care-success: #059669;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --care-bg: #0a0a0a;
+    --care-surface: #171717;
+    --care-border: #2e2e2e;
+    --care-text: #ededed;
+    --care-text-secondary: #a1a1a1;
+    --care-accent: #2dd4bf;
+    --care-accent-light: #134e4a;
+    --care-accent-bg: #0d1f1e;
+    --care-warn: #fbbf24;
+    --care-error: #f87171;
+    --care-success: #34d399;
+  }
+}
+
+body {
+  background: var(--care-bg);
+  color: var(--care-text);
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+/* Smooth scrolling for chat */
+.chat-scroll {
+  scroll-behavior: smooth;
+}
+
+/* Typing indicator animation */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+.typing-dot {
+  animation: pulse-dot 1.4s infinite ease-in-out;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* Voice recording pulse */
+@keyframes voice-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(15, 118, 110, 0.4); }
+  70% { box-shadow: 0 0 0 12px rgba(15, 118, 110, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(15, 118, 110, 0); }
+}
+
+.voice-active {
+  animation: voice-pulse 1.5s infinite;
+}

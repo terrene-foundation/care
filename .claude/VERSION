@@ -1,0 +1,12 @@
+{
+  "version": "1.2.0",
+  "type": "coc-project",
+  "variant": "py",
+  "updated": "2026-03-31",
+  "description": "CARE Assessment & Onboarding Kit",
+  "upstream": {
+    "template": "kailash-coc-claude-py",
+    "template_version": "1.2.0",
+    "synced_at": "2026-03-31T19:00:00Z"
+  }
+}
