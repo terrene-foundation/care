@@ -1,0 +1,153 @@
+# Sync Manifest — Content Flow for Terrene Foundation Ecosystem
+#
+# This manifest declares how content and artifacts flow between
+# child repositories in the Terrene Foundation ecosystem.
+#
+# Unlike loom's sync-manifest (which distributes COC artifacts to language templates),
+# this manifest tracks CONTENT FLOW between domain-specific repositories.
+
+# ─────────────────────────────────────────────────────────────────
+# REPOSITORY ROLES
+# ─────────────────────────────────────────────────────────────────
+
+repositories:
+  foundation:
+    type: co-workspace
+    domain: COG  # CO for Governance
+    remote: git@github.com:terrene-foundation/foundation.git
+    owns:
+      - constitution
+      - strategy
+      - governance
+      - partnerships
+      - naming-and-terminology
+      - standards-definitions  # CARE, EATP, CO, PACT, CDI source definitions
+    feeds:
+      - website
+
+  publications:
+    type: co-workspace
+    domain: COR  # CO for Research
+    remote: https://github.com/terrene-foundation/publications.git
+    notes: No .claude/ directory yet — CO artifacts not synced
+    owns:
+      - white-papers           # CARE, EATP, CO, COC, Constrained-Organization theses
+      - arxiv-submissions
+      - pdf-publications
+    feeds:
+      - website
+
+  website:
+    type: coc-project
+    domain: COC  # CO for Codegen (Astro + Starlight)
+    remote: git@github.com:terrene-foundation/terrene-website.git
+    consumes:
+      - foundation: vision, mission, governance, constitution, strategy
+      - publications: spec summaries, thesis abstracts, PDF links
+      - atelier: CO methodology descriptions, domain application summaries
+      - loom: Kailash SDK architecture, primitives, engine, entrypoints
+    coc-template: kailash-coc-claude-py
+
+  arbor:
+    type: coc-project
+    domain: COC
+    remote: https://github.com/terrene-foundation/arbor.git
+    coc-template: kailash-coc-claude-py
+
+  astra:
+    type: coc-project
+    domain: COC
+    remote: git@github.com:terrene-foundation/astra.git
+    coc-template: kailash-coc-claude-py
+
+  care:
+    type: planned  # Not yet a git repo
+    domain: COC
+    notes: CARE governance framework implementation (planned)
+
+  pact:
+    type: coc-project
+    domain: COC
+    remote: git@github.com:terrene-foundation/pact.git
+    coc-template: kailash-coc-claude-py
+
+  praxis:
+    type: coc-project
+    domain: COC
+    remote: git@github.com:terrene-foundation/praxis.git
+    coc-template: kailash-coc-claude-py
+
+# ─────────────────────────────────────────────────────────────────
+# CONTENT FLOW TIERS
+# ─────────────────────────────────────────────────────────────────
+# Tiers classify WHAT flows, not WHERE it lives.
+
+tiers:
+  # Foundation tier — corporate, governance, strategy content
+  foundation:
+    - constitution
+    - governance-structure
+    - naming-and-terminology
+    - licensing-policy          # CC BY 4.0 (specs), Apache 2.0 (code)
+    - partnership-playbooks
+    - competitive-positioning
+
+  # Standards tier — specification content
+  standards:
+    - care-spec                 # CARE: Collaborative Autonomous Reflective Enterprise
+    - eatp-spec                 # EATP: Enterprise Agent Trust Protocol
+    - co-spec                   # CO: Cognitive Orchestration
+    - pact-spec                 # PACT: Principled Architecture for Constrained Trust
+    - cdi-spec                  # CDI: Competency Dimensions Index
+
+  # Publications tier — academic and public-facing content
+  publications:
+    - white-papers              # Core theses (CARE, EATP, CO, COC, Constrained-Org)
+    - governance-layer-thesis   # Two-Era framework, five propositions
+    - arxiv-submissions
+    - venue-specific-formats    # arXiv, SSRN, AIES, AI & Society
+
+  # Technology tier — SDK and platform content
+  technology:
+    - kailash-sdk-architecture  # Primitives, engine, entrypoints
+    - coc-methodology           # Five-layer architecture, anti-amnesia
+    - co-domain-applications    # COC, COR, COE, COG, COF
+
+# ─────────────────────────────────────────────────────────────────
+# WEBSITE CONTENT SOURCES
+# ─────────────────────────────────────────────────────────────────
+# Maps website content sections to their authoritative sources.
+
+website-sources:
+  standards/:
+    primary: foundation/docs/02-standards/
+    secondary: publications/  # PDF links, thesis abstracts
+  governance/:
+    primary: foundation/docs/06-operations/constitution/
+    secondary: foundation/docs/04-community/
+  philosophy/:
+    primary: publications/  # CARE thesis, Constrained-Org thesis
+    secondary: foundation/docs/00-anchor/
+  developers/:
+    primary: loom/  # Kailash SDK docs
+    secondary: foundation/docs/03-technology/
+  research/:
+    primary: publications/
+    secondary: foundation/docs/08-research/
+  about/:
+    primary: foundation/docs/00-anchor/
+    secondary: foundation/docs/01-strategy/
+
+# ─────────────────────────────────────────────────────────────────
+# COC SYNC STATUS
+# ─────────────────────────────────────────────────────────────────
+# Tracks which child repos have been synced from loom's COC templates.
+
+coc-sync:
+  template: kailash-coc-claude-py
+  targets:
+    - arbor
+    - astra
+    - pact
+    - praxis
+    - website

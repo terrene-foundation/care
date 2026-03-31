@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": ".",
+			"name": "terrene (orchestrator)"
+		},
+		{
+			"path": "../training/building-management"
+		}
+	],
+	"settings": {}
+}

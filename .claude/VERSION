@@ -1,0 +1,26 @@
+{
+  "version": "1.0.0",
+  "type": "foundation-orchestrator",
+  "description": "Terrene Foundation ecosystem orchestration",
+  "released": "2026-03-31",
+  "upstream": null,
+  "dependencies": {
+    "atelier": { "version": "1.0.0", "relationship": "Hooks and CO methodology inherited" },
+    "loom": { "version": "1.1.0", "relationship": "COC templates distributed to OSS stacks" }
+  },
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-03-31",
+      "summary": "Initial orchestration layer with atelier/loom governance model",
+      "changes": [
+        "Established terrene/ as ecosystem orchestrator (modeled on atelier/loom)",
+        "Created content flow architecture (foundation, publications, website, OSS stacks)",
+        "Brought over CO hooks from atelier (session, learning, workspace, version tracking)",
+        "Created sync-manifest for cross-repo content flow",
+        "Renamed GitHub repo terrene-foundation/terrene to terrene-foundation/foundation",
+        "Defined orchestration agents, commands, and rules"
+      ]
+    }
+  ]
+}
