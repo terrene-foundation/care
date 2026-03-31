@@ -64,7 +64,10 @@ repositories:
     type: coc-project
     domain: COC
     remote: git@github.com:terrene-foundation/care.git
-    notes: CARE governance framework implementation (initialized, not yet instrumented)
+    description: CARE Assessment & Onboarding Kit — voice-first AI-guided governance assessment
+    consumes:
+      - foundation: CARE spec definitions, 5 constraint dimensions
+      - publications: CARE thesis, PACT thesis
     coc-template: kailash-coc-claude-py
 
   pact:
@@ -150,6 +153,7 @@ coc-sync:
   targets:
     - arbor
     - astra
+    - care
     - pact
     - praxis
     - website
