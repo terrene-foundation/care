@@ -1,0 +1,60 @@
+[project]
+name = "care-assessment-kit"
+version = "0.1.0"
+description = "CARE Assessment & Onboarding Kit — voice-first AI-guided governance assessment"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.11"
+authors = [{ name = "Terrene Foundation", email = "info@terrene.foundation" }]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn>=0.34.0",
+    "pydantic>=2.0.0",
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0.0",
+    "httpx>=0.28.0",
+    "sse-starlette>=2.0.0",
+]
+
+[project.optional-dependencies]
+anthropic = ["anthropic>=0.49.0"]
+openai = ["openai>=1.60.0"]
+whisper = ["faster-whisper>=1.1.0"]
+all = [
+    "care-assessment-kit[anthropic,openai,whisper]",
+]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=6.0",
+    "ruff>=0.9.0",
+]
+
+[project.scripts]
+care = "care.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/care"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
