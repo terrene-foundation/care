@@ -38,3 +38,4 @@ Content that flows from atelier/ and loom/ (external to this ecosystem) should b
 | Publications  | publications/        | website/       | PDF links, abstracts, dates |
 | Technology    | loom/ (external)     | website/       | SDK versions, architecture  |
 | Methodology   | atelier/ (external)  | website/       | CO descriptions, domain apps|
+
